@@ -1,0 +1,79 @@
+'use client';
+
+import React, { useState } from 'react';
+import { mockJobs } from '@/data/mock';
+import JobCard from '@/components/ui/JobCard';
+import SearchFilter from '@/components/ui/SearchFilter';
+
+export default function JobBoard() {
+  const [search, setSearch] = useState('');
+  const [type, setType] = useState('All');
+  const [sortBy, setSortBy] = useState('newest');
+
+  const types = ['Full-time', 'Part-time', 'Internship', 'Contract'];
+
+  const filteredJobs = mockJobs
+    .filter((job) => job.status === 'active')
+    .filter((job) => {
+      const matchesSearch = job.title.toLowerCase().includes(search.toLowerCase()) ||
+                            job.company.toLowerCase().includes(search.toLowerCase()) ||
+                            job.skills.some(skill => skill.toLowerCase().includes(search.toLowerCase()));
+      const matchesType = type === 'All' || job.type === type;
+      return matchesSearch && matchesType;
+    });
+
+  const sortOptions = [
+    { label: 'Newest Postings', value: 'newest' },
+    { label: 'Most Applicants', value: 'applicants' },
+  ];
+
+  const handleApply = (id: string) => {
+    alert(`Application submitted successfully for job ID: ${id}! Match score will be calculated.`);
+  };
+
+  return (
+    <div className="page-container">
+      <div className="page-header">
+        <h1 className="page-title">Job Placement Board</h1>
+        <p className="page-subtitle">Find jobs and internships tailored to your Skillzy profile accomplishments.</p>
+      </div>
+
+      <SearchFilter
+        searchPlaceholder="Search job titles, companies, or skills (e.g. React)..."
+        searchValue={search}
+        onSearchChange={setSearch}
+        categories={types}
+        selectedCategory={type}
+        onCategoryChange={setType}
+        sortOptions={sortOptions}
+        selectedSort={sortBy}
+        onSortChange={setSortBy}
+      />
+
+      {filteredJobs.length === 0 ? (
+        <div style={{ textAlign: 'center', padding: '3rem', color: 'var(--text-secondary)' }}>
+          <h3>No jobs found</h3>
+          <p>Try resetting the search terms or type filter.</p>
+        </div>
+      ) : (
+        <div className="grid-2 animate-fade-in-up">
+          {filteredJobs.map((job) => (
+            <JobCard
+              key={job.id}
+              id={job.id}
+              title={job.title}
+              company={job.company}
+              location={job.location}
+              type={job.type}
+              salary={job.salary}
+              skills={job.skills}
+              posted={job.posted}
+              applicants={job.applicants}
+              onApply={handleApply}
+            />
+          ))}
+        </div>
+      )}
+    </div>
+  );
+}
