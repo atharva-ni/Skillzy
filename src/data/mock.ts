@@ -135,7 +135,7 @@ export const mockCourses: Course[] = [
   {
     id: 'course-1',
     title: 'Full-Stack Web Development with React & Node.js',
-    description: 'Master modern web development with React, Node.js, Express, and PostgreSQL. Build production-ready applications from scratch.',
+    description: 'Master modern web development with React, Node.js and PostgreSQL. Build production-ready applications from scratch.',
     instructor: 'Priya Sharma',
     instructorAvatar: '👩‍🏫',
     category: 'Web Development',
