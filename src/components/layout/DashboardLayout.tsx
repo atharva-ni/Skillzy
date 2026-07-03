@@ -7,6 +7,7 @@ import { useRouter } from 'next/navigation';
 import Sidebar from './Sidebar';
 import Header from './Header';
 import styles from './DashboardLayout.module.css';
+import { motion, AnimatePresence } from 'framer-motion';
 
 export default function DashboardLayout({ children }: { children: React.ReactNode }) {
   const { isAuthenticated, isLoading } = useAuth();
@@ -21,23 +22,67 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
     }
   }, [clerkLoaded, isSignedIn, router]);
 
-  // Show loading spinner while checking auth
+  // Show premium loading state while checking auth
   if (!clerkLoaded || isLoading) {
     return (
       <div style={{
         display: 'flex', alignItems: 'center', justifyContent: 'center',
-        minHeight: '100vh', background: 'var(--bg-primary, #0a0e1a)',
-        flexDirection: 'column', gap: '16px'
+        minHeight: '100vh', background: 'var(--bg-primary, #05070f)',
+        flexDirection: 'column', gap: '24px',
+        position: 'relative', overflow: 'hidden'
       }}>
+        {/* Ambient background grid inside loader */}
+        <div className="grid-bg" />
         <div style={{
-          width: '40px', height: '40px', borderRadius: '50%',
-          border: '3px solid rgba(255,255,255,0.1)',
-          borderTop: '3px solid #6366f1',
-          animation: 'spin 0.8s linear infinite'
+          position: 'fixed', top: '30%', left: '40%', width: '30vw', height: '30vh',
+          background: 'radial-gradient(circle, rgba(99, 102, 241, 0.08) 0%, transparent 70%)',
+          filter: 'blur(50px)', pointerEvents: 'none'
         }} />
-        <p style={{ color: 'var(--text-secondary, #94a3b8)', fontSize: '0.875rem' }}>
-          Loading dashboard...
-        </p>
+
+        <div style={{ position: 'relative', width: '80px', height: '80px' }}>
+          {/* Concentric glowing rings */}
+          <div style={{
+            position: 'absolute', inset: 0, borderRadius: '50%',
+            border: '2px solid rgba(99, 102, 241, 0.05)',
+            borderTop: '2px solid var(--accent-primary)',
+            animation: 'spin 1s cubic-bezier(0.5, 0.2, 0.3, 1) infinite'
+          }} />
+          <div style={{
+            position: 'absolute', inset: '10px', borderRadius: '50%',
+            border: '2px solid rgba(139, 92, 246, 0.05)',
+            borderBottom: '2px solid var(--accent-secondary)',
+            animation: 'spin 0.75s cubic-bezier(0.5, 0.2, 0.3, 1) infinite reverse'
+          }} />
+          <div style={{
+            position: 'absolute', inset: '20px', borderRadius: '50%',
+            border: '2px solid rgba(217, 70, 239, 0.05)',
+            borderLeft: '2px solid var(--accent-tertiary)',
+            animation: 'spin 1.5s linear infinite'
+          }} />
+        </div>
+
+        <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '6px' }}>
+          <p style={{
+            color: 'var(--text-primary)',
+            fontFamily: 'monospace',
+            letterSpacing: '2px',
+            fontSize: '0.85rem',
+            textTransform: 'uppercase',
+            background: 'var(--accent-gradient)',
+            WebkitBackgroundClip: 'text',
+            WebkitTextFillColor: 'transparent',
+            fontWeight: 'bold',
+          }}>
+            initializing_dashboard...
+          </p>
+          <p style={{
+            color: 'var(--text-tertiary)',
+            fontSize: '0.75rem',
+            fontFamily: 'monospace'
+          }}>
+            compiling assets & security handshake
+          </p>
+        </div>
       </div>
     );
   }
@@ -49,10 +94,33 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
 
   return (
     <div className={styles.layout}>
+      {/* Background patterns */}
+      <div className="grid-bg" />
+      {/* Subtle warm ambient glow */}
+      <div style={{
+        position: 'fixed',
+        top: '20%',
+        right: '-10%',
+        width: '35vw',
+        height: '35vh',
+        background: 'radial-gradient(circle, rgba(245, 158, 11, 0.015) 0%, transparent 70%)',
+        filter: 'blur(100px)',
+        pointerEvents: 'none',
+        zIndex: -2,
+      }} />
       <Sidebar />
       <Header />
       <main className={styles.main}>
-        {children}
+        <AnimatePresence mode="wait">
+          <motion.div
+            initial={{ opacity: 0, y: 8 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: -8 }}
+            transition={{ duration: 0.3, ease: [0.16, 1, 0.3, 1] }}
+          >
+            {children}
+          </motion.div>
+        </AnimatePresence>
       </main>
     </div>
   );

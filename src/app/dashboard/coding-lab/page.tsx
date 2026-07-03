@@ -589,7 +589,39 @@ function CodingLabInner() {
             </div>
           ) : (
             <>
-              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '16px' }}>
+              {/* Problem selector dropdown */}
+              <div style={{ position: 'relative', width: '100%', marginBottom: '16px' }}>
+                <span style={{ position: 'absolute', left: '12px', top: '50%', transform: 'translateY(-50%)', opacity: 0.6, pointerEvents: 'none', fontSize: '0.85rem' }}>📚</span>
+                <select
+                  className="input select"
+                  value={selectedProblemId}
+                  onChange={(e) => setSelectedProblemId(e.target.value)}
+                  style={{
+                    paddingLeft: '2.5rem',
+                    backgroundColor: '#ffffff',
+                    borderColor: '#e5e5e5',
+                    borderRadius: 'var(--radius-md)',
+                    cursor: 'pointer',
+                    width: '100%',
+                    fontSize: 'var(--font-size-sm)',
+                    height: '42px',
+                    transition: 'all 0.2s ease'
+                  }}
+                >
+                  {codingProblems.map((problem) => (
+                    <option 
+                      key={problem.id} 
+                      value={problem.id}
+                      style={{ background: 'var(--bg-secondary)', color: 'var(--text-primary)' }}
+                    >
+                      {problem.title} ({problem.difficulty})
+                    </option>
+                  ))}
+                </select>
+              </div>
+
+              {/* Title & Badges */}
+              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '16px', borderBottom: '1px solid #e5e5e5', paddingBottom: '16px', marginBottom: '8px' }}>
                 <h2 style={{ fontSize: 'var(--font-size-lg)', fontWeight: 700, margin: 0 }}>{activeProblem.title}</h2>
                 <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap' }}>
                   <Badge variant={activeProblem.difficulty === 'Easy' ? 'success' : 'warning'}>{activeProblem.difficulty}</Badge>
@@ -597,28 +629,6 @@ function CodingLabInner() {
                     <Badge key={tag} variant="primary">{tag}</Badge>
                   ))}
                 </div>
-              </div>
-
-              {/* Problem selector grid */}
-              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, minmax(0, 1fr))', gap: '8px' }}>
-                {codingProblems.map((problem) => (
-                  <button
-                    key={problem.id}
-                    onClick={() => setSelectedProblemId(problem.id)}
-                    style={{
-                      padding: '10px 12px',
-                      borderRadius: '12px',
-                      border: problem.id === selectedProblemId ? '2px solid var(--accent-primary)' : '1px solid var(--border-primary)',
-                      background: problem.id === selectedProblemId ? 'var(--bg-secondary)' : 'transparent',
-                      color: problem.id === selectedProblemId ? 'var(--text-primary)' : 'var(--text-secondary)',
-                      cursor: 'pointer',
-                      textAlign: 'left',
-                      fontSize: 'var(--font-size-xs)',
-                    }}
-                  >
-                    {problem.title}
-                  </button>
-                ))}
               </div>
             </>
           )}
@@ -688,7 +698,7 @@ function CodingLabInner() {
               language={monacoLang}
               value={code}
               onChange={(val) => setCode(val ?? '')}
-              theme="vs-dark"
+              theme="light"
               options={{
                 fontSize: 14,
                 fontFamily: "'JetBrains Mono', 'Fira Code', Consolas, monospace",
@@ -732,9 +742,9 @@ function CodingLabInner() {
             ))}
           </div>
 
-          <div style={{ flex: 1, overflowY: 'auto', background: '#070a13', padding: '16px' }}>
+          <div style={{ flex: 1, overflowY: 'auto', backgroundColor: 'var(--bg-tertiary)', padding: '16px' }}>
             {activeTab === 'console' ? (
-              <pre style={{ margin: 0, color: '#94a3b8', fontFamily: 'monospace', fontSize: '13px', whiteSpace: 'pre-wrap', lineHeight: 1.6 }}>
+              <pre style={{ margin: 0, color: 'var(--text-secondary)', fontFamily: 'monospace', fontSize: '13px', whiteSpace: 'pre-wrap', lineHeight: 1.6 }}>
                 {consoleOutput}
               </pre>
             ) : (
@@ -861,7 +871,7 @@ function CodingLabInner() {
               {aiFeedback.optimalCode && (
                 <div style={{ background: 'var(--bg-secondary)', border: '1px solid var(--border-primary)', borderRadius: 'var(--radius-md)', padding: '12px' }}>
                   <div style={{ fontSize: 'var(--font-size-xs)', color: 'var(--text-tertiary)', marginBottom: '6px' }}>Optimal Implementation</div>
-                  <pre style={{ margin: 0, fontFamily: 'monospace', fontSize: '11px', color: '#a78bfa', overflowX: 'auto', whiteSpace: 'pre-wrap' }}>
+                  <pre style={{ margin: 0, fontFamily: 'monospace', fontSize: '11px', color: '#0969da', overflowX: 'auto', whiteSpace: 'pre-wrap' }}>
                     {aiFeedback.optimalCode}
                   </pre>
                 </div>

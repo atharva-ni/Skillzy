@@ -29,8 +29,8 @@ export default function RootLayout({
           <title>Clerk Configuration Required | Skillzy</title>
         </head>
         <body style={{
-          background: '#0a0e1a',
-          color: '#f1f5f9',
+          background: '#fafafa',
+          color: '#171717',
           fontFamily: 'Inter, system-ui, sans-serif',
           minHeight: '100vh',
           display: 'flex',
@@ -40,37 +40,36 @@ export default function RootLayout({
           margin: 0
         }}>
           <div style={{
-            background: 'rgba(17, 24, 39, 0.7)',
-            border: '1px solid rgba(255, 255, 255, 0.06)',
+            background: '#ffffff',
+            border: '1px solid #e5e5e5',
             borderRadius: '16px',
             padding: '40px 32px',
             maxWidth: '520px',
             width: '100%',
             textAlign: 'center',
-            boxShadow: '0 24px 60px rgba(0,0,0,0.6)',
-            backdropFilter: 'blur(16px)'
+            boxShadow: '0 4px 24px rgba(0,0,0,0.06)',
           }}>
             <div style={{ fontSize: '3.5rem', marginBottom: '16px' }}>🔑</div>
-            <h1 style={{ fontSize: '1.625rem', fontWeight: 800, marginBottom: '12px', background: 'linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent' }}>
+            <h1 style={{ fontSize: '1.625rem', fontWeight: 800, marginBottom: '12px', color: '#171717' }}>
               Clerk Configuration Required
             </h1>
-            <p style={{ color: '#94a3b8', fontSize: '0.9375rem', lineHeight: '1.6', marginBottom: '24px' }}>
+            <p style={{ color: '#525252', fontSize: '0.9375rem', lineHeight: '1.6', marginBottom: '24px' }}>
               SkillBridge relies on <strong>Clerk</strong> to handle secure multi-role logins. Provide your publishable key in the <code>.env</code> file to run the app.
             </p>
             <div style={{
-              background: 'rgba(255, 255, 255, 0.02)',
-              border: '1px solid rgba(255, 255, 255, 0.06)',
+              background: '#f4f4f5',
+              border: '1px solid #e5e5e5',
               borderRadius: '10px',
               padding: '16px 20px',
               textAlign: 'left',
               fontSize: '0.8125rem',
               fontFamily: 'Consolas, monospace',
-              color: '#a78bfa',
+              color: '#525252',
               marginBottom: '24px',
               overflowX: 'auto',
               whiteSpace: 'nowrap'
             }}>
-              # Add to your <strong style={{ color: '#f1f5f9' }}>.env</strong> or <strong style={{ color: '#f1f5f9' }}>.env.local</strong> file:<br/>
+              # Add to your <strong style={{ color: '#171717' }}>.env</strong> or <strong style={{ color: '#171717' }}>.env.local</strong> file:<br/>
               NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY=pk_test_...<br/>
               CLERK_SECRET_KEY=sk_test_...
             </div>
@@ -80,14 +79,13 @@ export default function RootLayout({
                 target="_blank"
                 rel="noopener noreferrer"
                 style={{
-                  background: 'linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%)',
+                  background: '#171717',
                   color: '#fff',
                   padding: '10px 20px',
                   borderRadius: '8px',
                   fontWeight: 600,
                   fontSize: '0.875rem',
                   textDecoration: 'none',
-                  boxShadow: '0 4px 12px rgba(99, 102, 241, 0.25)'
                 }}
               >
                 Get Keys from Clerk.com →

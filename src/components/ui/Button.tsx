@@ -1,4 +1,5 @@
 import React from 'react';
+import { motion } from 'framer-motion';
 
 interface ButtonProps extends React.ButtonHTMLAttributes<HTMLButtonElement> {
   variant?: 'primary' | 'secondary' | 'outline' | 'ghost' | 'danger';
@@ -14,12 +15,16 @@ export default function Button({
   ...props
 }: ButtonProps) {
   const sizeClass = size !== 'md' ? `btn-${size}` : '';
+  
   return (
-    <button
+    <motion.button
       className={`btn btn-${variant} ${sizeClass} ${className}`}
-      {...props}
+      whileHover={{ scale: 1.02, y: -1 }}
+      whileTap={{ scale: 0.98 }}
+      transition={{ type: 'spring', stiffness: 500, damping: 15 }}
+      {...(props as any)}
     >
       {children}
-    </button>
+    </motion.button>
   );
 }

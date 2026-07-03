@@ -4,7 +4,7 @@
   left: var(--sidebar-width);
   right: 0;
   height: var(--header-height);
-  background: rgba(10, 14, 26, 0.8);
+  background: #ffffff;
   backdrop-filter: blur(20px);
   border-bottom: 1px solid var(--border-primary);
   display: flex;
@@ -199,8 +199,8 @@
 }
 
 .activeRole {
-  background: rgba(99, 102, 241, 0.1);
-  color: var(--accent-primary-hover);
+  background: #f4f4f5;
+  color: var(--text-primary);
 }
 
 .checkmark {
