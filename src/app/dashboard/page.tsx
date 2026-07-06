@@ -2,6 +2,7 @@
 
 import React, { useState, useEffect } from 'react';
 import { useAuth } from '@/context/AuthContext';
+import { useRouter } from 'next/navigation';
 import styles from './page.module.css';
 import Link from 'next/link';
 import { toast } from 'sonner';
@@ -17,8 +18,17 @@ import {
 } from 'lucide-react';
 import ProgressBar from '@/components/ui/ProgressBar';
 
+// Map each role to its dedicated dashboard path
+const roleDashboardPaths: Record<string, string> = {
+  admin: '/dashboard/admin',
+  super_admin: '/dashboard/admin',
+  instructor: '/dashboard/instructor',
+  recruiter: '/dashboard/recruiter',
+};
+
 export default function StudentDashboard() {
   const { user } = useAuth();
+  const router = useRouter();
   const [enrolledCourses, setEnrolledCourses] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [stats, setStats] = useState({
@@ -27,6 +37,14 @@ export default function StudentDashboard() {
     certificatesCount: 0,
     applicationsCount: 0,
   });
+
+  // Redirect non-student roles to their dedicated dashboards
+  useEffect(() => {
+    if (user?.role && roleDashboardPaths[user.role]) {
+      router.replace(roleDashboardPaths[user.role]);
+    }
+  }, [user?.role, router]);
+
 
   useEffect(() => {
     async function loadDashboardData() {
@@ -287,65 +305,90 @@ export default function StudentDashboard() {
         transition={{ delay: 0.3 }}
       >
         <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '16px' }}>
-          <Sparkles size={16} className="text-gradient" />
+          <Sparkles size={16} style={{ color: 'var(--text-tertiary)' }} />
           <h2 className="section-title" style={{ margin: 0, fontSize: '1.15rem' }}>Recent AI Feedback</h2>
         </div>
 
         <div 
-          className={styles.aiFeedbackCard}
           style={{
             background: '#ffffff',
             border: '1px solid #e5e5e5',
             borderRadius: 'var(--radius-lg)',
-            padding: '24px',
-            position: 'relative',
             overflow: 'hidden',
             boxShadow: 'var(--shadow-premium)',
           }}
         >
-          {/* Subtle code terminal glow background overlay */}
+          {/* Header */}
           <div style={{
-            position: 'absolute', top: 0, right: 0, width: '200px', height: '100%',
-            background: 'radial-gradient(circle at top right, rgba(16, 185, 129, 0.05) 0%, transparent 70%)',
-            pointerEvents: 'none'
-          }} />
-
-          <div className={styles.aiHeader} style={{ display: 'flex', gap: '16px', alignItems: 'center', borderBottom: '1px solid #e5e5e5', paddingBottom: '16px', marginBottom: '16px' }}>
+            display: 'flex',
+            alignItems: 'center',
+            gap: '12px',
+            padding: '16px 20px',
+            borderBottom: '1px solid #f0f0f0',
+          }}>
             <div style={{
-              background: 'rgba(16, 185, 129, 0.06)',
+              background: 'rgba(16, 185, 129, 0.08)',
               border: '1px solid rgba(16, 185, 129, 0.15)',
               borderRadius: 'var(--radius-md)',
-              width: '40px',
-              height: '40px',
+              width: '36px',
+              height: '36px',
               display: 'flex',
               alignItems: 'center',
               justifyContent: 'center',
-              color: 'var(--success)'
+              color: '#10b981',
+              flexShrink: 0,
             }}>
-              <TerminalIcon size={18} />
+              <TerminalIcon size={16} />
             </div>
-            <div>
-              <h4 style={{ color: 'var(--text-primary)', fontSize: 'var(--font-size-sm)', fontWeight: 700 }}>REST API Assignment — Code Review</h4>
+            <div style={{ flex: 1, minWidth: 0 }}>
+              <h4 style={{ color: 'var(--text-primary)', fontSize: 'var(--font-size-sm)', fontWeight: 700, margin: 0 }}>REST API Assignment — Code Review</h4>
               <p style={{ color: 'var(--text-tertiary)', fontSize: 'var(--font-size-xs)', marginTop: '2px' }}>Interactive optimization feedback</p>
             </div>
-            <span className={`badge badge-success`} style={{ marginLeft: 'auto', background: 'rgba(16, 185, 129, 0.1)', border: '1px solid rgba(16, 185, 129, 0.2)', padding: '4px 10px', fontSize: '11px', borderRadius: 'var(--radius-sm)' }}>
+            <span style={{
+              background: 'rgba(16, 185, 129, 0.08)',
+              color: '#059669',
+              border: '1px solid rgba(16, 185, 129, 0.2)',
+              padding: '4px 12px',
+              fontSize: '0.75rem',
+              fontWeight: 700,
+              borderRadius: 'var(--radius-full)',
+              flexShrink: 0,
+              fontVariantNumeric: 'tabular-nums',
+            }}>
               87/100
             </span>
           </div>
 
-          <div className={styles.aiBody} style={{ display: 'flex', flexDirection: 'column', gap: '10px', fontFamily: 'var(--font-family)', fontSize: 'var(--font-size-sm)' }}>
-            <div style={{ display: 'flex', gap: '8px', color: 'var(--text-secondary)' }}>
-              <span style={{ color: 'var(--success)', fontWeight: 'bold' }}>✓</span>
-              <p>Good use of async/await patterns and error handling middleware.</p>
-            </div>
-            <div style={{ display: 'flex', gap: '8px', color: 'var(--text-secondary)' }}>
-              <span style={{ color: 'var(--accent-primary)', fontWeight: 'bold' }}>⚡</span>
-              <p>Consider using connection pooling for database queries to improve performance by ~40%.</p>
-            </div>
-            <div style={{ display: 'flex', gap: '8px', color: 'var(--text-secondary)' }}>
-              <span style={{ color: 'var(--error)', fontWeight: 'bold' }}>🔒</span>
-              <p>Add input validation with a library like Zod to prevent SQL injection vectors.</p>
-            </div>
+          {/* Feedback items */}
+          <div style={{ padding: '16px 20px', display: 'flex', flexDirection: 'column', gap: '12px' }}>
+            {[
+              { icon: '✓', color: '#10b981', bg: 'rgba(16, 185, 129, 0.08)', text: 'Good use of async/await patterns and error handling middleware.' },
+              { icon: '⚡', color: '#f59e0b', bg: 'rgba(245, 158, 11, 0.08)', text: 'Consider using connection pooling for database queries to improve performance by ~40%.' },
+              { icon: '🛡', color: '#ef4444', bg: 'rgba(239, 68, 68, 0.08)', text: 'Add input validation with a library like Zod to prevent SQL injection vectors.' },
+            ].map((item, i) => (
+              <div key={i} style={{
+                display: 'flex',
+                alignItems: 'flex-start',
+                gap: '12px',
+                padding: '10px 12px',
+                background: item.bg,
+                borderRadius: 'var(--radius-md)',
+              }}>
+                <span style={{
+                  fontSize: '0.875rem',
+                  lineHeight: '1.5',
+                  flexShrink: 0,
+                  width: '20px',
+                  textAlign: 'center',
+                }}>{item.icon}</span>
+                <p style={{
+                  color: 'var(--text-secondary)',
+                  fontSize: 'var(--font-size-sm)',
+                  lineHeight: '1.5',
+                  margin: 0,
+                }}>{item.text}</p>
+              </div>
+            ))}
           </div>
         </div>
       </motion.section>

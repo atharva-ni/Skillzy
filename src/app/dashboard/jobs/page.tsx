@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useState } from 'react';
-import { mockJobs } from '@/data/mock';
+import { Job } from '@/data/mock';
 import JobCard from '@/components/ui/JobCard';
 import SearchFilter from '@/components/ui/SearchFilter';
 
@@ -9,10 +9,11 @@ export default function JobBoard() {
   const [search, setSearch] = useState('');
   const [type, setType] = useState('All');
   const [sortBy, setSortBy] = useState('newest');
+  const [jobs] = useState<Job[]>([]);
 
   const types = ['Full-time', 'Part-time', 'Internship', 'Contract'];
 
-  const filteredJobs = mockJobs
+  const filteredJobs = jobs
     .filter((job) => job.status === 'active')
     .filter((job) => {
       const matchesSearch = job.title.toLowerCase().includes(search.toLowerCase()) ||
@@ -50,30 +51,10 @@ export default function JobBoard() {
         onSortChange={setSortBy}
       />
 
-      {filteredJobs.length === 0 ? (
-        <div style={{ textAlign: 'center', padding: '3rem', color: 'var(--text-secondary)' }}>
-          <h3>No jobs found</h3>
-          <p>Try resetting the search terms or type filter.</p>
-        </div>
-      ) : (
-        <div className="grid-2 animate-fade-in-up">
-          {filteredJobs.map((job) => (
-            <JobCard
-              key={job.id}
-              id={job.id}
-              title={job.title}
-              company={job.company}
-              location={job.location}
-              type={job.type}
-              salary={job.salary}
-              skills={job.skills}
-              posted={job.posted}
-              applicants={job.applicants}
-              onApply={handleApply}
-            />
-          ))}
-        </div>
-      )}
+      <div style={{ textAlign: 'center', padding: '3rem', color: 'var(--text-secondary)' }}>
+        <h3 style={{ color: 'var(--text-primary)', marginBottom: '8px' }}>No jobs posted yet</h3>
+        <p>Check back soon — recruiters are actively posting new opportunities on Skillzy.</p>
+      </div>
     </div>
   );
 }

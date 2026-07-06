@@ -103,3 +103,63 @@ export async function PUT(req: Request) {
     return apiError(error?.message || 'Failed to update user role', 400);
   }
 }
+
+export async function POST(req: Request) {
+  try {
+    // 1. Authenticate as admin
+    const adminUser = await requireRole(UserRole.admin, UserRole.super_admin);
+
+    const body = await req.json();
+    const { email, role, firstName, lastName } = body;
+
+    if (!email) {
+      return apiError('Email is required', 400);
+    }
+    if (!role || (role !== 'instructor' && role !== 'recruiter')) {
+      return apiError('Valid role (instructor or recruiter) is required', 400);
+    }
+
+    const emailClean = email.toLowerCase().trim();
+
+    // Check if user already exists
+    const existingUser = await prisma.user.findUnique({
+      where: { email: emailClean },
+    });
+
+    if (existingUser) {
+      return apiError('User with this email already exists', 400);
+    }
+
+    // Generate a unique placeholder username
+    const username = emailClean.split('@')[0] + '_' + Math.floor(Math.random() * 10000);
+
+    // Create a pending user in the database
+    const newUser = await prisma.user.create({
+      data: {
+        clerkId: `pending:${emailClean}`,
+        email: emailClean,
+        role: role as any,
+        firstName: firstName || null,
+        lastName: lastName || null,
+        username,
+        isVerified: true, // Mark pre-approved profile as verified
+      },
+    });
+
+    console.log(`Admin ${adminUser.id} pre-created user profile for: ${emailClean} as ${role}`);
+
+    return apiSuccess({
+      success: true,
+      user: {
+        id: newUser.id,
+        email: newUser.email,
+        role: newUser.role,
+        firstName: newUser.firstName,
+        lastName: newUser.lastName,
+      },
+    });
+  } catch (error: any) {
+    console.error('Error pre-creating user profile:', error);
+    return apiError(error?.message || 'Failed to create user profile', 400);
+  }
+}

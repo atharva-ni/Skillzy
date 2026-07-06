@@ -65,6 +65,16 @@ export default function Sidebar() {
 
   const items = navConfig[user.role] ? navConfig[user.role](collapsed) : [];
 
+  // Determine the correct dashboard home path based on the user's role
+  const dashboardHome = user.role === 'admin' || user.role === ('super_admin' as UserRole)
+    ? '/dashboard/admin'
+    : user.role === 'instructor'
+    ? '/dashboard/instructor'
+    : user.role === 'recruiter'
+    ? '/dashboard/recruiter'
+    : '/dashboard';
+
+
   return (
     <motion.aside 
       className={`${styles.sidebar} ${collapsed ? styles.collapsed : ''}`}
@@ -76,7 +86,7 @@ export default function Sidebar() {
       }}
     >
       <div className={styles.brand} style={{ borderBottom: '1px solid #e5e5e5' }}>
-        <Link href="/dashboard" className={styles.logo}>
+        <Link href={dashboardHome} className={styles.logo}>
           <motion.span 
             className={styles.logoIcon}
             animate={{ rotate: [0, 10, -10, 0] }}

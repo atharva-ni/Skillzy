@@ -1,39 +1,38 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useAuth } from '@/context/AuthContext';
-import { mockCourses } from '@/data/mock';
 import Badge from '@/components/ui/Badge';
 import Button from '@/components/ui/Button';
 
 export default function InstructorCourses() {
   const { user } = useAuth();
-  const [courses, setCourses] = useState(mockCourses.filter((c) => c.instructor === user?.name));
+  const [courses, setCourses] = useState<any[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    async function fetchCourses() {
+      try {
+        const res = await fetch('/api/courses');
+        if (res.ok) {
+          const data = await res.json();
+          const myCourses = (data.courses || []).filter((c: any) => {
+            const instructorName = `${c.instructor?.firstName || ''} ${c.instructor?.lastName || ''}`.trim();
+            return instructorName === user?.name;
+          });
+          setCourses(myCourses);
+        }
+      } catch (err) {
+        console.error('Failed to load courses:', err);
+      } finally {
+        setLoading(false);
+      }
+    }
+    if (user) fetchCourses();
+  }, [user]);
 
   const handleCreateCourse = () => {
-    const title = prompt('Enter Course Title:');
-    if (!title) return;
-    const category = prompt('Enter Course Category (e.g. Web Development):') || 'Programming';
-
-    const newCourse = {
-      id: `course-${Date.now()}`,
-      title,
-      description: 'Course description placeholder text.',
-      instructor: user?.name || 'Priya Sharma',
-      instructorAvatar: '👩‍🏫',
-      category,
-      level: 'Beginner' as const,
-      price: 1999,
-      rating: 5.0,
-      studentsEnrolled: 0,
-      duration: '10 hours',
-      modules: 1,
-      lessons: 5,
-      image: '/placeholder.jpg',
-      status: 'draft' as const,
-    };
-
-    setCourses([...courses, newCourse]);
+    alert('Course creation will be available soon. This feature requires an API endpoint.');
   };
 
   return (
@@ -46,46 +45,53 @@ export default function InstructorCourses() {
         <Button onClick={handleCreateCourse}>+ New Course</Button>
       </div>
 
-      <div className="grid-3 animate-fade-in-up">
-        {courses.map((course) => (
-          <div key={course.id} className="card card-interactive" style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-              <span style={{ fontSize: 'var(--font-size-xs)', fontWeight: 600, color: 'var(--accent-primary-hover)' }}>
-                {course.category}
-              </span>
-              <Badge variant={course.status === 'published' ? 'success' : course.status === 'pending' ? 'info' : 'warning'}>
-                {course.status}
-              </Badge>
-            </div>
+      {courses.length === 0 ? (
+        <div className="card" style={{ padding: '3rem', textAlign: 'center', color: 'var(--text-secondary)' }}>
+          <h3 style={{ marginBottom: '8px', color: 'var(--text-primary)' }}>No courses yet</h3>
+          <p>Create your first course to start teaching on Skillzy.</p>
+        </div>
+      ) : (
+        <div className="grid-3 animate-fade-in-up">
+          {courses.map((course: any) => (
+            <div key={course.id} className="card card-interactive" style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                <span style={{ fontSize: 'var(--font-size-xs)', fontWeight: 600, color: 'var(--accent-primary-hover)' }}>
+                  {course.category?.name || 'Uncategorized'}
+                </span>
+                <Badge variant={course.status === 'published' ? 'success' : course.status === 'pending' ? 'info' : 'warning'}>
+                  {course.status}
+                </Badge>
+              </div>
 
-            <h3 style={{ fontSize: 'var(--font-size-md)', fontWeight: 700 }}>{course.title}</h3>
-            <p style={{ fontSize: 'var(--font-size-xs)', color: 'var(--text-secondary)' }}>
-              Modules: {course.modules} • Lessons: {course.lessons} • Level: {course.level}
-            </p>
+              <h3 style={{ fontSize: 'var(--font-size-md)', fontWeight: 700 }}>{course.title}</h3>
+              <p style={{ fontSize: 'var(--font-size-xs)', color: 'var(--text-secondary)' }}>
+                Lessons: {course._count?.lessons || 0} • Level: {course.level || 'N/A'}
+              </p>
 
-            <div style={{
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'space-between',
-              marginTop: 'auto',
-              paddingTop: '12px',
-              borderTop: '1px solid var(--border-primary)',
-              fontSize: 'var(--font-size-sm)'
-            }}>
-              <span style={{ fontWeight: 600, color: 'var(--text-primary)' }}>
-                ₹{course.price.toLocaleString('en-IN')}
-              </span>
-              <button
-                onClick={() => alert(`Editing course layout for course ID: ${course.id}`)}
-                className="btn btn-ghost btn-sm"
-                style={{ color: 'var(--accent-primary-hover)', fontWeight: 600 }}
-              >
-                Manage ➔
-              </button>
+              <div style={{
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'space-between',
+                marginTop: 'auto',
+                paddingTop: '12px',
+                borderTop: '1px solid var(--border-primary)',
+                fontSize: 'var(--font-size-sm)'
+              }}>
+                <span style={{ fontWeight: 600, color: 'var(--text-primary)' }}>
+                  ₹{(course.price || 0).toLocaleString('en-IN')}
+                </span>
+                <button
+                  onClick={() => alert(`Editing course layout for course ID: ${course.id}`)}
+                  className="btn btn-ghost btn-sm"
+                  style={{ color: 'var(--accent-primary-hover)', fontWeight: 600 }}
+                >
+                  Manage ➔
+                </button>
+              </div>
             </div>
-          </div>
-        ))}
-      </div>
+          ))}
+        </div>
+      )}
     </div>
   );
 }

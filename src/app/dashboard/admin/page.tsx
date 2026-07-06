@@ -1,8 +1,8 @@
 'use client';
 
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { useAuth } from '@/context/AuthContext';
-import { platformStats, mockCourses, Payment } from '@/data/mock';
+import { Payment } from '@/data/mock';
 import StatsCard from '@/components/ui/StatsCard';
 import DataTable from '@/components/ui/DataTable';
 import Badge from '@/components/ui/Badge';
@@ -10,19 +10,46 @@ import Link from 'next/link';
 
 export default function AdminDashboard() {
   const { user, payments } = useAuth();
+  const [stats, setStats] = useState({
+    totalUsers: 0,
+    totalCourses: 0,
+    pendingCourses: 0,
+  });
+  const [loading, setLoading] = useState(true);
 
-  const pendingCourses = mockCourses.filter((c) => c.status === 'pending');
+  useEffect(() => {
+    async function fetchStats() {
+      try {
+        // Fetch real course count
+        const coursesRes = await fetch('/api/courses');
+        let totalCourses = 0;
+        let pendingCourses = 0;
+        if (coursesRes.ok) {
+          const data = await coursesRes.json();
+          totalCourses = data.courses?.length || 0;
+          pendingCourses = (data.courses || []).filter((c: any) => c.status === 'pending').length;
+        }
+
+        setStats({ totalUsers: 0, totalCourses, pendingCourses });
+      } catch (err) {
+        console.error('Failed to load admin stats:', err);
+      } finally {
+        setLoading(false);
+      }
+    }
+    fetchStats();
+  }, []);
+
   const recentPayments = payments.slice(0, 4);
 
   const totalRevenueCalculated = payments
     .filter(p => p.status === 'completed')
     .reduce((sum, p) => sum + p.amount, 0);
 
-  const stats = [
-    { label: 'Total Users', value: platformStats.totalUsers.toLocaleString(), icon: '👥', trend: `+${platformStats.monthlyGrowth}% MoM` },
-    { label: 'Courses Created', value: platformStats.totalCourses, icon: '📚', trend: `${pendingCourses.length} pending approval` },
-    { label: 'Total Revenue', value: `₹${(totalRevenueCalculated / 100000).toFixed(2)}L`, icon: '💳', trend: 'Secure flow' },
-    { label: 'Active Job Roles', value: platformStats.activeJobs, icon: '💼', trend: '89 positions' },
+  const statCards = [
+    { label: 'Total Courses', value: stats.totalCourses.toString(), icon: '📚', trend: `${stats.pendingCourses} pending approval` },
+    { label: 'Total Revenue', value: `₹${(totalRevenueCalculated / 100000).toFixed(2)}L`, icon: '💳', trend: 'From payments' },
+    { label: 'Transactions', value: payments.length.toString(), icon: '🧾', trend: 'All time' },
   ];
 
   const columns = [
@@ -52,13 +79,13 @@ export default function AdminDashboard() {
   return (
     <div className="page-container">
       <div className="page-header">
-        <h1 className="page-title">Super Admin Control Center</h1>
-        <p className="page-subtitle">Welcome back, {user?.name}. Monitor business analytics and approve platform resources.</p>
+        <h1 className="page-title">Admin Control Center</h1>
+        <p className="page-subtitle">Welcome back, {user?.name}. Monitor platform analytics and manage resources.</p>
       </div>
 
       {/* Stats Grid */}
-      <div className="grid-4" style={{ marginBottom: 'var(--spacing-xl)' }}>
-        {stats.map((stat) => (
+      <div className="grid-3" style={{ marginBottom: 'var(--spacing-xl)' }}>
+        {statCards.map((stat) => (
           <StatsCard
             key={stat.label}
             label={stat.label}
@@ -80,7 +107,7 @@ export default function AdminDashboard() {
         <DataTable
           columns={columns}
           data={recentPayments}
-          emptyMessage="No payment transactions logged."
+          emptyMessage="No payment transactions recorded yet."
         />
       </section>
 
@@ -92,21 +119,16 @@ export default function AdminDashboard() {
             Review Board →
           </Link>
         </div>
-        <div className="grid-3 animate-fade-in-up">
-          {pendingCourses.length === 0 ? (
-            <div style={{ color: 'var(--text-secondary)', padding: '12px' }}>All courses are reviewed!</div>
-          ) : (
-            pendingCourses.map((course) => (
-              <div className="card" key={course.id} style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
-                <span style={{ fontSize: 'var(--font-size-xs)', fontWeight: 600, color: 'var(--accent-primary-hover)' }}>
-                  {course.category}
-                </span>
-                <h3 style={{ fontSize: 'var(--font-size-sm)', fontWeight: 700 }}>{course.title}</h3>
-                <p style={{ fontSize: 'var(--font-size-xs)', color: 'var(--text-secondary)' }}>Instructor: {course.instructor}</p>
-              </div>
-            ))
-          )}
-        </div>
+        {stats.pendingCourses === 0 ? (
+          <div className="card" style={{ padding: '24px', color: 'var(--text-secondary)', textAlign: 'center' }}>
+            All courses are reviewed! No pending submissions.
+          </div>
+        ) : (
+          <div className="card" style={{ padding: '24px', color: 'var(--text-secondary)', textAlign: 'center' }}>
+            {stats.pendingCourses} course(s) awaiting review.{' '}
+            <Link href="/dashboard/admin/courses" style={{ fontWeight: 600, color: 'var(--accent-primary)' }}>View →</Link>
+          </div>
+        )}
       </section>
     </div>
   );

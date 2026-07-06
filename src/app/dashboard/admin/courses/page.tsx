@@ -1,12 +1,48 @@
 'use client';
 
-import React, { useState } from 'react';
-import { mockCourses } from '@/data/mock';
+import React, { useState, useEffect } from 'react';
 import Badge from '@/components/ui/Badge';
 import DataTable from '@/components/ui/DataTable';
 
+interface CourseRow {
+  id: string;
+  title: string;
+  instructor: string;
+  category: string;
+  price: number;
+  status: 'published' | 'draft' | 'pending';
+}
+
 export default function CourseApprovals() {
-  const [courses, setCourses] = useState(mockCourses.filter((c) => c.status === 'pending' || c.status === 'published'));
+  const [courses, setCourses] = useState<CourseRow[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    async function fetchCourses() {
+      try {
+        const res = await fetch('/api/courses');
+        if (res.ok) {
+          const data = await res.json();
+          const filtered = (data.courses || [])
+            .filter((c: any) => c.status === 'pending' || c.status === 'published')
+            .map((c: any) => ({
+              id: c.id,
+              title: c.title,
+              instructor: `${c.instructor?.firstName || ''} ${c.instructor?.lastName || ''}`.trim() || 'Unknown',
+              category: c.category?.name || 'Uncategorized',
+              price: c.price || 0,
+              status: c.status,
+            }));
+          setCourses(filtered);
+        }
+      } catch (err) {
+        console.error('Failed to load courses:', err);
+      } finally {
+        setLoading(false);
+      }
+    }
+    fetchCourses();
+  }, []);
 
   const handleApprove = (id: string) => {
     setCourses(
@@ -16,18 +52,18 @@ export default function CourseApprovals() {
   };
 
   const columns = [
-    { header: 'Title', accessor: 'title' as keyof typeof mockCourses[0] },
-    { header: 'Instructor', accessor: 'instructor' as keyof typeof mockCourses[0] },
-    { header: 'Category', accessor: 'category' as keyof typeof mockCourses[0] },
+    { header: 'Title', accessor: 'title' as keyof CourseRow },
+    { header: 'Instructor', accessor: 'instructor' as keyof CourseRow },
+    { header: 'Category', accessor: 'category' as keyof CourseRow },
     {
       header: 'Price',
-      accessor: (item: typeof mockCourses[0]) => (
+      accessor: (item: CourseRow) => (
         <span>₹{item.price.toLocaleString('en-IN')}</span>
       )
     },
     {
       header: 'Status',
-      accessor: (item: typeof mockCourses[0]) => (
+      accessor: (item: CourseRow) => (
         <Badge variant={item.status === 'published' ? 'success' : 'warning'}>
           {item.status}
         </Badge>
@@ -35,7 +71,7 @@ export default function CourseApprovals() {
     },
     {
       header: 'Action',
-      accessor: (item: typeof mockCourses[0]) => (
+      accessor: (item: CourseRow) => (
         <div style={{ display: 'flex', gap: '8px' }}>
           {item.status === 'pending' ? (
             <button
@@ -63,7 +99,7 @@ export default function CourseApprovals() {
       <DataTable
         columns={columns}
         data={courses}
-        emptyMessage="No pending course applications to review."
+        emptyMessage="No courses to review. Courses will appear here once instructors submit them."
       />
     </div>
   );

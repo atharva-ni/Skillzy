@@ -1,11 +1,13 @@
 'use client';
 
 import React, { useState } from 'react';
-import { mockPosts } from '@/data/mock';
+import { CommunityPost } from '@/data/mock';
+import { useAuth } from '@/context/AuthContext';
 import Button from '@/components/ui/Button';
 
 export default function Community() {
-  const [posts, setPosts] = useState(mockPosts);
+  const { user } = useAuth();
+  const [posts, setPosts] = useState<CommunityPost[]>([]);
   const [newPostContent, setNewPostContent] = useState('');
   const [selectedTag, setSelectedTag] = useState('All');
 
@@ -15,9 +17,9 @@ export default function Community() {
     e.preventDefault();
     if (!newPostContent.trim()) return;
 
-    const newPost = {
+    const newPost: CommunityPost = {
       id: `post-${Date.now()}`,
-      author: 'Aarav Mehta',
+      author: user?.name || 'Anonymous',
       authorAvatar: '🎓',
       content: newPostContent,
       timestamp: 'Just now',
@@ -68,74 +70,81 @@ export default function Community() {
         </div>
 
         {/* Posts List */}
-        <div style={{ display: 'flex', flexDirection: 'column', gap: 'var(--spacing-base)' }}>
-          {filteredPosts.map((post) => (
-            <div key={post.id} className="card animate-fade-in-up" style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
-              {/* Header */}
-              <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+        {filteredPosts.length === 0 ? (
+          <div className="card" style={{ padding: '3rem', textAlign: 'center', color: 'var(--text-secondary)' }}>
+            <h3 style={{ color: 'var(--text-primary)', marginBottom: '8px' }}>No posts yet</h3>
+            <p>Be the first to start a conversation in the community!</p>
+          </div>
+        ) : (
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 'var(--spacing-base)' }}>
+            {filteredPosts.map((post) => (
+              <div key={post.id} className="card animate-fade-in-up" style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
+                {/* Header */}
+                <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+                  <div style={{
+                    width: '40px',
+                    height: '40px',
+                    borderRadius: 'var(--radius-full)',
+                    background: 'var(--bg-glass)',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    fontSize: '1.25rem'
+                  }}>
+                    {post.authorAvatar}
+                  </div>
+                  <div>
+                    <h4 style={{ fontWeight: 600, fontSize: 'var(--font-size-sm)' }}>{post.author}</h4>
+                    <p style={{ fontSize: 'var(--font-size-xs)', color: 'var(--text-tertiary)' }}>{post.timestamp}</p>
+                  </div>
+                </div>
+
+                {/* Content */}
+                <p style={{ fontSize: 'var(--font-size-sm)', color: 'var(--text-secondary)', lineHeight: 1.6 }}>
+                  {post.content}
+                </p>
+
+                {/* Tags */}
+                <div style={{ display: 'flex', gap: '6px', flexWrap: 'wrap' }}>
+                  {post.tags.map((tag) => (
+                    <span
+                      key={tag}
+                      onClick={() => setSelectedTag(tag)}
+                      style={{
+                        fontSize: 'var(--font-size-xs)',
+                        color: 'var(--accent-primary-hover)',
+                        background: 'rgba(99, 102, 241, 0.1)',
+                        padding: '2px 8px',
+                        borderRadius: 'var(--radius-sm)',
+                        cursor: 'pointer'
+                      }}
+                    >
+                      #{tag}
+                    </span>
+                  ))}
+                </div>
+
+                {/* Actions */}
                 <div style={{
-                  width: '40px',
-                  height: '40px',
-                  borderRadius: 'var(--radius-full)',
-                  background: 'var(--bg-glass)',
                   display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  fontSize: '1.25rem'
+                  gap: '24px',
+                  paddingTop: '12px',
+                  borderTop: '1px solid var(--border-primary)',
+                  fontSize: 'var(--font-size-xs)',
+                  color: 'var(--text-secondary)'
                 }}>
-                  {post.authorAvatar}
-                </div>
-                <div>
-                  <h4 style={{ fontWeight: 600, fontSize: 'var(--font-size-sm)' }}>{post.author}</h4>
-                  <p style={{ fontSize: 'var(--font-size-xs)', color: 'var(--text-tertiary)' }}>{post.timestamp}</p>
-                </div>
-              </div>
-
-              {/* Content */}
-              <p style={{ fontSize: 'var(--font-size-sm)', color: 'var(--text-secondary)', lineHeight: 1.6 }}>
-                {post.content}
-              </p>
-
-              {/* Tags */}
-              <div style={{ display: 'flex', gap: '6px', flexWrap: 'wrap' }}>
-                {post.tags.map((tag) => (
-                  <span
-                    key={tag}
-                    onClick={() => setSelectedTag(tag)}
-                    style={{
-                      fontSize: 'var(--font-size-xs)',
-                      color: 'var(--accent-primary-hover)',
-                      background: 'rgba(99, 102, 241, 0.1)',
-                      padding: '2px 8px',
-                      borderRadius: 'var(--radius-sm)',
-                      cursor: 'pointer'
-                    }}
+                  <button
+                    onClick={() => handleLike(post.id)}
+                    style={{ background: 'transparent', display: 'flex', alignItems: 'center', gap: '6px', color: 'inherit' }}
                   >
-                    #{tag}
-                  </span>
-                ))}
+                    ❤️ {post.likes} Likes
+                  </button>
+                  <span>💬 {post.comments} Comments</span>
+                </div>
               </div>
-
-              {/* Actions */}
-              <div style={{
-                display: 'flex',
-                gap: '24px',
-                paddingTop: '12px',
-                borderTop: '1px solid var(--border-primary)',
-                fontSize: 'var(--font-size-xs)',
-                color: 'var(--text-secondary)'
-              }}>
-                <button
-                  onClick={() => handleLike(post.id)}
-                  style={{ background: 'transparent', display: 'flex', alignItems: 'center', gap: '6px', color: 'inherit' }}
-                >
-                  ❤️ {post.likes} Likes
-                </button>
-                <span>💬 {post.comments} Comments</span>
-              </div>
-            </div>
-          ))}
-        </div>
+            ))}
+          </div>
+        )}
       </div>
 
       {/* Sidebar Filters */}

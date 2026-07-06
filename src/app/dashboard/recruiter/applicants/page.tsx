@@ -1,14 +1,14 @@
 'use client';
 
 import React, { useState } from 'react';
-import { mockApplicants } from '@/data/mock';
+import { Applicant } from '@/data/mock';
 import Badge from '@/components/ui/Badge';
 import DataTable from '@/components/ui/DataTable';
 
 export default function RecruiterApplicants() {
-  const [applicants, setApplicants] = useState(mockApplicants);
+  const [applicants, setApplicants] = useState<Applicant[]>([]);
 
-  const handleStatusChange = (id: string, newStatus: typeof mockApplicants[0]['status']) => {
+  const handleStatusChange = (id: string, newStatus: Applicant['status']) => {
     setApplicants(
       applicants.map((a) => (a.id === id ? { ...a, status: newStatus } : a))
     );
@@ -16,12 +16,12 @@ export default function RecruiterApplicants() {
   };
 
   const columns = [
-    { header: 'Applicant Name', accessor: 'name' as keyof typeof mockApplicants[0] },
-    { header: 'Email', accessor: 'email' as keyof typeof mockApplicants[0] },
-    { header: 'Target Job', accessor: 'jobTitle' as keyof typeof mockApplicants[0] },
+    { header: 'Applicant Name', accessor: 'name' as keyof Applicant },
+    { header: 'Email', accessor: 'email' as keyof Applicant },
+    { header: 'Target Job', accessor: 'jobTitle' as keyof Applicant },
     {
       header: 'Skill Match',
-      accessor: (item: typeof mockApplicants[0]) => (
+      accessor: (item: Applicant) => (
         <span style={{
           fontWeight: 700,
           color: item.matchScore >= 90 ? 'var(--success)' : item.matchScore >= 80 ? 'var(--accent-primary-hover)' : 'var(--warning)'
@@ -30,10 +30,10 @@ export default function RecruiterApplicants() {
         </span>
       )
     },
-    { header: 'Experience', accessor: 'experience' as keyof typeof mockApplicants[0] },
+    { header: 'Experience', accessor: 'experience' as keyof Applicant },
     {
       header: 'Status',
-      accessor: (item: typeof mockApplicants[0]) => (
+      accessor: (item: Applicant) => (
         <Badge variant={
           item.status === 'hired' ? 'success' :
           item.status === 'interviewing' ? 'info' :
@@ -46,7 +46,7 @@ export default function RecruiterApplicants() {
     },
     {
       header: 'Actions',
-      accessor: (item: typeof mockApplicants[0]) => (
+      accessor: (item: Applicant) => (
         <div style={{ display: 'flex', gap: '8px' }}>
           {item.status === 'applied' && (
             <button
@@ -99,7 +99,7 @@ export default function RecruiterApplicants() {
       <DataTable
         columns={columns}
         data={applicants}
-        emptyMessage="No applicants found."
+        emptyMessage="No applicants found. Candidates will appear here once they apply to your jobs."
       />
     </div>
   );

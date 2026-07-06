@@ -1,47 +1,31 @@
 'use client';
 
 import React, { useState } from 'react';
-import { mockAssignments } from '@/data/mock';
+import { Assignment } from '@/data/mock';
 import Badge from '@/components/ui/Badge';
 import Button from '@/components/ui/Button';
 import DataTable from '@/components/ui/DataTable';
 
 export default function InstructorAssignments() {
-  const [assignments, setAssignments] = useState(mockAssignments);
+  const [assignments, setAssignments] = useState<Assignment[]>([]);
 
   const handleCreateAssignment = () => {
-    const title = prompt('Enter Assignment Title:');
-    if (!title) return;
-    const courseName = prompt('Enter Course Name:') || 'Full-Stack Web Development';
-
-    const newAssignment = {
-      id: `assign-${Date.now()}`,
-      title,
-      courseId: 'course-1',
-      courseName,
-      dueDate: '2026-07-15',
-      submissions: 0,
-      totalStudents: 35,
-      status: 'draft' as const,
-      type: 'coding' as const,
-    };
-
-    setAssignments([...assignments, newAssignment]);
+    alert('Assignment creation will be available soon. This feature requires an API endpoint.');
   };
 
   const columns = [
-    { header: 'Title', accessor: 'title' as keyof typeof mockAssignments[0] },
-    { header: 'Course', accessor: 'courseName' as keyof typeof mockAssignments[0] },
-    { header: 'Due Date', accessor: 'dueDate' as keyof typeof mockAssignments[0] },
+    { header: 'Title', accessor: 'title' as keyof Assignment },
+    { header: 'Course', accessor: 'courseName' as keyof Assignment },
+    { header: 'Due Date', accessor: 'dueDate' as keyof Assignment },
     {
       header: 'Submissions',
-      accessor: (item: typeof mockAssignments[0]) => (
+      accessor: (item: Assignment) => (
         <span>{item.submissions} / {item.totalStudents}</span>
       )
     },
     {
       header: 'Status',
-      accessor: (item: typeof mockAssignments[0]) => (
+      accessor: (item: Assignment) => (
         <Badge variant={item.status === 'active' ? 'success' : 'error'}>
           {item.status}
         </Badge>
@@ -49,7 +33,7 @@ export default function InstructorAssignments() {
     },
     {
       header: 'Action',
-      accessor: (item: typeof mockAssignments[0]) => (
+      accessor: (item: Assignment) => (
         <button
           onClick={() => alert(`Modifying assignment configuration for ${item.title}`)}
           className="btn btn-ghost btn-sm"
@@ -74,7 +58,7 @@ export default function InstructorAssignments() {
       <DataTable
         columns={columns}
         data={assignments}
-        emptyMessage="No assignments created yet."
+        emptyMessage="No assignments created yet. Create your first assignment to get started."
       />
     </div>
   );
