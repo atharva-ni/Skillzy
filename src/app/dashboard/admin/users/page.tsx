@@ -7,9 +7,11 @@ import DataTable from '@/components/ui/DataTable';
 import Button from '@/components/ui/Button';
 import { toast } from 'sonner';
 import { motion, AnimatePresence } from 'framer-motion';
-import { UserPlus, Users, Loader2, Award, Briefcase, GraduationCap } from 'lucide-react';
+import { UserPlus, Users, Loader2, Award, Briefcase, GraduationCap, Trash2 } from 'lucide-react';
+import { useAuth } from '@/context/AuthContext';
 
 export default function UserManagement() {
+  const { user: currentUser } = useAuth();
   const [users, setUsers] = useState<User[]>([]);
   const [loading, setLoading] = useState(true);
   const [submitting, setSubmitting] = useState(false);
@@ -99,6 +101,29 @@ export default function UserManagement() {
     }
   };
 
+  const handleDeleteUser = async (userId: string, userEmail: string) => {
+    if (!window.confirm(`Are you sure you want to permanently delete the user profile for ${userEmail}? This action cannot be undone.`)) {
+      return;
+    }
+
+    try {
+      const res = await fetch(`/api/users?userId=${userId}`, {
+        method: 'DELETE',
+      });
+
+      const data = await res.json();
+      if (res.ok) {
+        toast.success(`User ${userEmail} deleted successfully`);
+        fetchUsers();
+      } else {
+        toast.error(data.error || 'Failed to delete user');
+      }
+    } catch (err) {
+      console.error(err);
+      toast.error('Connection error deleting user');
+    }
+  };
+
   // Filter users based on active tab
   const partnerUsers = users.filter((u) => u.role === 'instructor' || u.role === 'recruiter');
   const normalUsers = users.filter((u) => u.role === 'student' || u.role === 'admin');
@@ -162,6 +187,30 @@ export default function UserManagement() {
           </span>
         </div>
       )
+    },
+    {
+      header: 'Actions',
+      accessor: (item: User) => {
+        const isSelf = currentUser?.id === item.id;
+        return (
+          <Button
+            variant="danger"
+            size="sm"
+            onClick={() => handleDeleteUser(item.id, item.email)}
+            disabled={isSelf}
+            style={{
+              padding: '4px 10px',
+              display: 'flex',
+              alignItems: 'center',
+              gap: '6px',
+              fontSize: '11px',
+              height: '30px'
+            }}
+          >
+            <Trash2 size={12} /> Delete
+          </Button>
+        );
+      }
     }
   ];
 
@@ -221,6 +270,30 @@ export default function UserManagement() {
           <option value="admin">Admin</option>
         </select>
       )
+    },
+    {
+      header: 'Actions',
+      accessor: (item: User) => {
+        const isSelf = currentUser?.id === item.id;
+        return (
+          <Button
+            variant="danger"
+            size="sm"
+            onClick={() => handleDeleteUser(item.id, item.email)}
+            disabled={isSelf}
+            style={{
+              padding: '4px 10px',
+              display: 'flex',
+              alignItems: 'center',
+              gap: '6px',
+              fontSize: '11px',
+              height: '30px'
+            }}
+          >
+            <Trash2 size={12} /> Delete
+          </Button>
+        );
+      }
     }
   ];
 

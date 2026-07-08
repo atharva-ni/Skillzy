@@ -40,10 +40,17 @@ export async function GET(req: NextRequest) {
     }
 
     // Apply status filter (default: published only, unless admin/instructor requesting)
-    if (query.status) {
+    if (query.status && query.status !== 'all') {
       try {
-        const user = await requireRole(UserRole.instructor, UserRole.admin, UserRole.super_admin);
+        await requireRole(UserRole.instructor, UserRole.admin, UserRole.super_admin);
         where.status = query.status;
+      } catch {
+        where.status = 'published';
+      }
+    } else if (query.status === 'all') {
+      try {
+        await requireRole(UserRole.instructor, UserRole.admin, UserRole.super_admin);
+        // Do not set where.status to fetch all statuses
       } catch {
         where.status = 'published';
       }
@@ -52,7 +59,7 @@ export async function GET(req: NextRequest) {
     }
 
     // Dynamic Cache Key based on query params
-    const cacheKey = `courses:list:search=${query.search || ''}&cat=${query.category || ''}&lvl=${query.level || ''}&sort=${query.sort}&page=${query.page}&limit=${query.limit}&status=${where.status}`;
+    const cacheKey = `courses:list:search=${query.search || ''}&cat=${query.category || ''}&lvl=${query.level || ''}&sort=${query.sort}&page=${query.page}&limit=${query.limit}&status=${where.status || 'all'}`;
     
     // Attempt to serve from cache
     const cachedRaw = await cache.get(cacheKey);

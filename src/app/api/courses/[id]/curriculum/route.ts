@@ -3,6 +3,7 @@ import prisma from '@/lib/prisma';
 import { requireRole, apiError, apiSuccess } from '@/lib/auth';
 import { createModuleSchema, createLessonSchema, createLessonStepSchema } from '@/lib/validations';
 import { UserRole } from '@prisma/client';
+import { cache } from '@/lib/redis';
 
 interface RouteParams {
   params: Promise<{ id: string }>;
@@ -68,6 +69,8 @@ export async function POST(req: Request, { params }: RouteParams) {
           courseId,
         },
       });
+      // Invalidate course detail cache
+      await cache.del(`course:detail:${courseId}`);
       return apiSuccess({ success: true, module: newModule }, 201);
     } 
     
@@ -83,6 +86,8 @@ export async function POST(req: Request, { params }: RouteParams) {
       const newLesson = await prisma.lesson.create({
         data: validatedData,
       });
+      // Invalidate course detail cache
+      await cache.del(`course:detail:${courseId}`);
       return apiSuccess({ success: true, lesson: newLesson }, 201);
     } 
     
@@ -102,6 +107,8 @@ export async function POST(req: Request, { params }: RouteParams) {
       const newStep = await prisma.lessonStep.create({
         data: validatedData,
       });
+      // Invalidate course detail cache
+      await cache.del(`course:detail:${courseId}`);
       return apiSuccess({ success: true, step: newStep }, 201);
     }
 
@@ -111,3 +118,4 @@ export async function POST(req: Request, { params }: RouteParams) {
     return apiError(error?.message || 'Failed to update curriculum', 400);
   }
 }
+

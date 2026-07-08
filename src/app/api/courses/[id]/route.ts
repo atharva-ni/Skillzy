@@ -175,6 +175,11 @@ export async function PUT(req: Request, { params }: RouteParams) {
     const body = await req.json();
     const validatedData = updateCourseSchema.parse(body);
 
+    // Sanitize categoryId: convert empty string to null to support uncategorizing courses
+    if (validatedData.categoryId === '') {
+      validatedData.categoryId = null;
+    }
+
     const updatedCourse = await prisma.course.update({
       where: { id },
       data: validatedData,
@@ -195,13 +200,18 @@ export async function PUT(req: Request, { params }: RouteParams) {
 export async function DELETE(req: Request, { params }: RouteParams) {
   try {
     const { id } = await params;
-    
-    // Only admins can delete courses
-    await requireRole(UserRole.admin, UserRole.super_admin);
+    const dbUser = await requireRole(UserRole.instructor, UserRole.admin, UserRole.super_admin);
 
     const course = await prisma.course.findUnique({ where: { id } });
     if (!course) {
       return apiError('Course not found', 404);
+    }
+
+    const isCreator = course.instructorId === dbUser.id;
+    const isAdmin = dbUser.role === UserRole.admin || dbUser.role === UserRole.super_admin;
+
+    if (!isCreator && !isAdmin) {
+      return apiError('Forbidden: only course creator or admin can delete this course', 403);
     }
 
     await prisma.course.delete({ where: { id } });

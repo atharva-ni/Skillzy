@@ -6,7 +6,7 @@ export const createCourseSchema = z.object({
   title: z.string().min(3).max(255),
   description: z.string().min(10),
   shortDescription: z.string().max(500).optional(),
-  categoryId: z.string().optional(),
+  categoryId: z.string().nullable().optional(),
   level: z.enum(['beginner', 'intermediate', 'advanced']).default('beginner'),
   price: z.number().int().min(0).default(0),
   currency: z.string().default('INR'),
@@ -100,5 +100,5 @@ export const courseQuerySchema = paginationSchema.extend({
   category: z.string().optional(),
   level: z.enum(['beginner', 'intermediate', 'advanced']).optional(),
   sort: z.enum(['rating', 'price_asc', 'price_desc', 'newest', 'popular']).default('popular'),
-  status: z.enum(['draft', 'pending', 'published', 'archived']).optional(),
+  status: z.enum(['draft', 'pending', 'published', 'archived', 'all']).optional(),
 });

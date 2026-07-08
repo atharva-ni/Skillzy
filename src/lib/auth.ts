@@ -72,20 +72,20 @@ export async function syncClerkUser(clerkUser: {
 
   const emailClean = email.toLowerCase().trim();
 
-  // Check if a pending user pre-created by the admin exists with this email
-  const pendingUser = await prisma.user.findUnique({
+  // Check if a user pre-created by the admin or already existing exists with this email
+  const existingUserByEmail = await prisma.user.findUnique({
     where: { email: emailClean },
   });
 
-  if (pendingUser && pendingUser.clerkId.startsWith('pending:')) {
-    // Claim the pending account by updating the clerkId
+  if (existingUserByEmail && existingUserByEmail.clerkId !== clerkUser.id) {
+    // Claim or re-sync the account with the new clerkId
     await prisma.user.update({
-      where: { id: pendingUser.id },
+      where: { id: existingUserByEmail.id },
       data: {
         clerkId: clerkUser.id,
-        firstName: pendingUser.firstName || clerkUser.firstName,
-        lastName: pendingUser.lastName || clerkUser.lastName,
-        username: pendingUser.username || clerkUser.username,
+        firstName: existingUserByEmail.firstName || clerkUser.firstName,
+        lastName: existingUserByEmail.lastName || clerkUser.lastName,
+        username: existingUserByEmail.username || clerkUser.username,
         avatarUrl: clerkUser.imageUrl,
         lastLoginAt: new Date(),
       },
@@ -95,8 +95,8 @@ export async function syncClerkUser(clerkUser: {
   // Determine the role: admin if email is in the hardcoded list, otherwise check if there's pre-assigned role, otherwise student
   const assignedRole: UserRole = isAdminEmail(emailClean) 
     ? 'admin' 
-    : pendingUser 
-    ? pendingUser.role 
+    : existingUserByEmail 
+    ? existingUserByEmail.role 
     : 'student';
 
   const dbUser = await prisma.user.upsert({

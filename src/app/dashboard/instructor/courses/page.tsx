@@ -2,18 +2,21 @@
 
 import React, { useState, useEffect } from 'react';
 import { useAuth } from '@/context/AuthContext';
+import { useRouter } from 'next/navigation';
 import Badge from '@/components/ui/Badge';
 import Button from '@/components/ui/Button';
+import { toast } from 'sonner';
 
 export default function InstructorCourses() {
   const { user } = useAuth();
+  const router = useRouter();
   const [courses, setCourses] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     async function fetchCourses() {
       try {
-        const res = await fetch('/api/courses');
+        const res = await fetch('/api/courses?status=all');
         if (res.ok) {
           const data = await res.json();
           const myCourses = (data.courses || []).filter((c: any) => {
@@ -31,8 +34,35 @@ export default function InstructorCourses() {
     if (user) fetchCourses();
   }, [user]);
 
-  const handleCreateCourse = () => {
-    alert('Course creation will be available soon. This feature requires an API endpoint.');
+  const handleCreateCourse = async () => {
+    const title = window.prompt('Enter new Course Title (min 3 characters):');
+    if (!title) return;
+    if (title.length < 3) {
+      toast.error('Course title must be at least 3 characters long');
+      return;
+    }
+
+    try {
+      const res = await fetch('/api/courses', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          title,
+          description: 'This is a placeholder description for the new course. Please edit it.'
+        })
+      });
+
+      const data = await res.json();
+      if (res.ok) {
+        toast.success('Course created successfully');
+        router.push(`/dashboard/instructor/courses/${data.course.id}`);
+      } else {
+        toast.error(data.error || 'Failed to create course');
+      }
+    } catch (err) {
+      console.error(err);
+      toast.error('Connection error creating course');
+    }
   };
 
   return (
@@ -81,7 +111,7 @@ export default function InstructorCourses() {
                   ₹{(course.price || 0).toLocaleString('en-IN')}
                 </span>
                 <button
-                  onClick={() => alert(`Editing course layout for course ID: ${course.id}`)}
+                  onClick={() => router.push(`/dashboard/instructor/courses/${course.id}`)}
                   className="btn btn-ghost btn-sm"
                   style={{ color: 'var(--accent-primary-hover)', fontWeight: 600 }}
                 >

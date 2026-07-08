@@ -163,3 +163,67 @@ export async function POST(req: Request) {
     return apiError(error?.message || 'Failed to create user profile', 400);
   }
 }
+
+export async function DELETE(req: NextRequest) {
+  try {
+    // 1. Authenticate as admin
+    const adminUser = await requireRole(UserRole.admin, UserRole.super_admin);
+
+    const { searchParams } = new URL(req.url);
+    const userId = searchParams.get('userId');
+
+    if (!userId) {
+      return apiError('User ID is required', 400);
+    }
+
+    // 2. Prevent self-deletion
+    if (adminUser.id === userId) {
+      return apiError('You cannot delete your own account', 400);
+    }
+
+    // 3. Fetch the target user to delete
+    const targetUser = await prisma.user.findUnique({ where: { id: userId } });
+    if (!targetUser) {
+      return apiError('User not found', 404);
+    }
+
+    // 4. Role authorization checks
+    if (targetUser.role === UserRole.super_admin) {
+      return apiError('Forbidden: Super Admins cannot be deleted', 403);
+    }
+
+    if (targetUser.role === UserRole.admin && adminUser.role !== UserRole.super_admin) {
+      return apiError('Forbidden: Only Super Admins can delete Admin accounts', 403);
+    }
+
+    // 5. Check if user is active instructor of any courses
+    const courseCount = await prisma.course.count({
+      where: { instructorId: userId }
+    });
+
+    if (courseCount > 0) {
+      return apiError('Cannot delete user: This user is an active instructor of one or more courses. Please reassign the courses first.', 400);
+    }
+
+    // 6. Delete payments and user inside a transaction (handling onDelete: Restrict on payments)
+    await prisma.$transaction([
+      prisma.payment.deleteMany({
+        where: { userId }
+      }),
+      prisma.user.delete({
+        where: { id: userId }
+      })
+    ]);
+
+    console.log(`Admin ${adminUser.id} deleted user account ${userId} (${targetUser.email})`);
+
+    return apiSuccess({
+      success: true,
+      message: `User ${targetUser.email} has been successfully deleted.`
+    });
+  } catch (error: any) {
+    console.error('Error deleting user:', error);
+    return apiError(error?.message || 'Failed to delete user', 400);
+  }
+}
+
