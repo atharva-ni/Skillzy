@@ -144,12 +144,12 @@ export default function StepWiseLearningPage({ params }: PageProps) {
     );
   }
 
-  if (!course || flatSteps.length === 0) {
+  if (!course) {
     return (
       <div style={{ textAlign: 'center', padding: '4rem 16px' }}>
-        <h2>Learning Environment Empty</h2>
-        <p style={{ margin: '1rem 0 2rem 0', color: 'var(--text-secondary)' }}>No lessons are available for this course yet.</p>
-        <Link href={`/dashboard/courses/${courseId}`} className="btn btn-primary">Back to course detail</Link>
+        <h2>Course Not Found</h2>
+        <p style={{ margin: '1rem 0 2rem 0', color: 'var(--text-secondary)' }}>The requested course could not be loaded.</p>
+        <Link href="/dashboard" className="btn btn-primary">Back to Dashboard</Link>
       </div>
     );
   }
@@ -308,7 +308,7 @@ export default function StepWiseLearningPage({ params }: PageProps) {
         </div>
 
         {/* Step Content Area */}
-        {activeStep && (
+        {activeStep ? (
           <div style={{ flex: 1, display: 'flex', flexDirection: 'column', gap: '24px' }}>
             {/* Header info */}
             <div>
@@ -424,6 +424,28 @@ export default function StepWiseLearningPage({ params }: PageProps) {
                   ✓ Mark Complete & Next
                 </button>
               )}
+            </div>
+          </div>
+        ) : (
+          <div style={{
+            flex: 1,
+            display: 'flex',
+            flexDirection: 'column',
+            alignItems: 'center',
+            justifyContent: 'center',
+            textAlign: 'center',
+            padding: '80px 16px',
+            background: 'var(--bg-glass)',
+            border: '1px dashed var(--border-primary)',
+            borderRadius: 'var(--radius-lg)',
+            gap: '16px',
+          }}>
+            <span style={{ fontSize: '3.5rem' }}>📖</span>
+            <div>
+              <h3 style={{ fontSize: 'var(--font-size-lg)', fontWeight: 700, color: 'var(--text-primary)' }}>No learning steps created yet</h3>
+              <p style={{ color: 'var(--text-secondary)', marginTop: '8px', maxWidth: '440px', fontSize: 'var(--font-size-sm)' }}>
+                This course has lessons configured, but no learning steps (text content, videos, or coding exercises) have been added by the instructor yet.
+              </p>
             </div>
           </div>
         )}

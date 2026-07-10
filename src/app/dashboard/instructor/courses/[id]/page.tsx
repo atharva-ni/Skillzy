@@ -1,21 +1,75 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import Link from 'next/link';
 import Editor from '@monaco-editor/react';
 import { toast } from 'sonner';
 import { 
   BookOpen, Folder, FileText, Video, Code, Plus, Trash2, ArrowUp, ArrowDown, 
-  ChevronRight, Save, Eye, ArrowLeft, Loader2, CheckCircle2, AlertCircle 
+  ChevronRight, ChevronDown, Save, Eye, ArrowLeft, Loader2, CheckCircle2, AlertCircle, X, Menu
 } from 'lucide-react';
 import Button from '@/components/ui/Button';
 import Badge from '@/components/ui/Badge';
+import { useAuth } from '@/context/AuthContext';
+
+// Inline form mini-component for sidebar (defined outside CourseEditor to prevent focus loss)
+interface InlineCreateFormProps {
+  placeholder: string;
+  value: string;
+  onChange: (v: string) => void;
+  onConfirm: () => void;
+  onCancel: () => void;
+  inputRef?: React.RefObject<HTMLInputElement | null>;
+}
+
+const InlineCreateForm = ({ placeholder, value, onChange, onConfirm, onCancel, inputRef }: InlineCreateFormProps) => (
+  <div style={{
+    display: 'flex',
+    alignItems: 'center',
+    gap: '4px',
+    padding: '4px',
+    background: 'var(--bg-primary)',
+    borderRadius: '6px',
+    border: '1px solid var(--accent-primary)',
+  }}>
+    <input
+      ref={inputRef}
+      type="text"
+      placeholder={placeholder}
+      value={value}
+      onChange={(e) => onChange(e.target.value)}
+      onKeyDown={(e) => { if (e.key === 'Enter') onConfirm(); if (e.key === 'Escape') onCancel(); }}
+      style={{
+        flex: 1,
+        border: 'none',
+        outline: 'none',
+        background: 'transparent',
+        fontSize: '11px',
+        padding: '4px 6px',
+        color: 'var(--text-primary)',
+      }}
+    />
+    <button
+      onClick={onConfirm}
+      style={{ background: 'var(--accent-primary)', border: 'none', borderRadius: '4px', padding: '3px 6px', cursor: 'pointer', display: 'flex', alignItems: 'center' }}
+    >
+      <CheckCircle2 size={12} style={{ color: 'white' }} />
+    </button>
+    <button
+      onClick={onCancel}
+      style={{ background: 'transparent', border: 'none', padding: '3px', cursor: 'pointer', display: 'flex', alignItems: 'center' }}
+    >
+      <X size={12} style={{ color: 'var(--text-tertiary)' }} />
+    </button>
+  </div>
+);
 
 export default function CourseEditor() {
   const params = useParams();
   const router = useRouter();
   const courseId = params.id as string;
+  const { user } = useAuth();
 
   // State Management
   const [course, setCourse] = useState<any>(null);
@@ -39,6 +93,38 @@ export default function CourseEditor() {
 
   // Active sub-tab inside Coding Lab editor
   const [activeLabTab, setActiveLabTab] = useState<'instructions' | 'starter' | 'solution'>('instructions');
+
+  // Collapsible tree state
+  const [expandedModules, setExpandedModules] = useState<Set<string>>(new Set());
+  const [expandedLessons, setExpandedLessons] = useState<Set<string>>(new Set());
+
+  // Inline creation forms
+  const [inlineAddModule, setInlineAddModule] = useState(false);
+  const [inlineAddModuleTitle, setInlineAddModuleTitle] = useState('');
+  const [inlineAddLesson, setInlineAddLesson] = useState<string | null>(null); // moduleId or null
+  const [inlineAddLessonTitle, setInlineAddLessonTitle] = useState('');
+  const [inlineAddStep, setInlineAddStep] = useState<{ lessonId: string; type: 'text' | 'video' | 'lab' } | null>(null);
+  const [inlineAddStepTitle, setInlineAddStepTitle] = useState('');
+
+  // Drag and drop states for modules
+  const [draggedModuleId, setDraggedModuleId] = useState<string | null>(null);
+  const [dragOverModuleId, setDragOverModuleId] = useState<string | null>(null);
+
+  // Refs for inline form auto-focus
+  const moduleInputRef = useRef<HTMLInputElement>(null);
+  const lessonInputRef = useRef<HTMLInputElement>(null);
+  const stepInputRef = useRef<HTMLInputElement>(null);
+
+  // Unsaved changes tracking
+  const [savedSnapshot, setSavedSnapshot] = useState<string>('');
+  const hasUnsavedChanges = useCallback(() => {
+    let currentData = '';
+    if (selectedNode.type === 'course') currentData = JSON.stringify(editCourse);
+    else if (selectedNode.type === 'module') currentData = JSON.stringify(editModule);
+    else if (selectedNode.type === 'lesson') currentData = JSON.stringify(editLesson);
+    else if (selectedNode.type === 'step') currentData = JSON.stringify(editStep);
+    return savedSnapshot !== '' && currentData !== savedSnapshot;
+  }, [selectedNode, editCourse, editModule, editLesson, editStep, savedSnapshot]);
 
   // Load course full curriculum tree and categories
   const fetchData = async () => {
@@ -72,6 +158,16 @@ export default function CourseEditor() {
         const catData = await catRes.json();
         setCategories(catData.categories || []);
       }
+
+      // Auto-expand all modules on first load
+      if (courseData.modules) {
+        setExpandedModules(new Set(courseData.modules.map((m: any) => m.id)));
+        const lessonIds = new Set<string>();
+        courseData.modules.forEach((m: any) => {
+          (m.lessons || []).forEach((l: any) => lessonIds.add(l.id));
+        });
+        setExpandedLessons(lessonIds);
+      }
     } catch (err: any) {
       console.error(err);
       toast.error(err.message || 'Error loading course builder details');
@@ -89,7 +185,7 @@ export default function CourseEditor() {
     if (!course) return;
 
     if (selectedNode.type === 'course') {
-      setEditCourse({
+      const data = {
         title: course.title || '',
         description: course.description || '',
         shortDescription: course.shortDescription || '',
@@ -98,16 +194,20 @@ export default function CourseEditor() {
         categoryId: course.categoryId || '',
         status: course.status || 'draft',
         isFree: course.isFree || false
-      });
+      };
+      setEditCourse(data);
+      setSavedSnapshot(JSON.stringify(data));
     } else if (selectedNode.type === 'module') {
       const activeModule = modules.find(m => m.id === selectedNode.id);
       if (activeModule) {
-        setEditModule({
+        const data = {
           title: activeModule.title || '',
           description: activeModule.description || '',
           sortOrder: activeModule.sortOrder || 0,
           isFree: activeModule.isFree || false
-        });
+        };
+        setEditModule(data);
+        setSavedSnapshot(JSON.stringify(data));
       }
     } else if (selectedNode.type === 'lesson') {
       // Find lesson inside modules
@@ -120,13 +220,15 @@ export default function CourseEditor() {
         }
       }
       if (activeLesson) {
-        setEditLesson({
+        const data = {
           title: activeLesson.title || '',
           description: activeLesson.description || '',
           durationMins: activeLesson.durationMins || 0,
           isFree: activeLesson.isFree || false,
           moduleId: activeLesson.moduleId || ''
-        });
+        };
+        setEditLesson(data);
+        setSavedSnapshot(JSON.stringify(data));
       }
     } else if (selectedNode.type === 'step') {
       // Find step inside lessons
@@ -141,7 +243,7 @@ export default function CourseEditor() {
         }
       }
       if (activeStep) {
-        setEditStep({
+        const data = {
           title: activeStep.title || '',
           stepType: activeStep.stepType || 'text',
           textContent: activeStep.textContent || '',
@@ -152,10 +254,66 @@ export default function CourseEditor() {
           labSolutionCode: activeStep.labSolutionCode || '',
           labInstructions: activeStep.labInstructions || '',
           lessonId: activeStep.lessonId || ''
-        });
+        };
+        setEditStep(data);
+        setSavedSnapshot(JSON.stringify(data));
       }
     }
   }, [selectedNode, modules, course]);
+
+  // Ctrl+S keyboard shortcut
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if ((e.ctrlKey || e.metaKey) && e.key === 's') {
+        e.preventDefault();
+        handleSave();
+      }
+    };
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [selectedNode, editCourse, editModule, editLesson, editStep]);
+
+  // Beforeunload warning for unsaved changes
+  useEffect(() => {
+    const handleBeforeUnload = (e: BeforeUnloadEvent) => {
+      if (hasUnsavedChanges()) {
+        e.preventDefault();
+        e.returnValue = '';
+      }
+    };
+    window.addEventListener('beforeunload', handleBeforeUnload);
+    return () => window.removeEventListener('beforeunload', handleBeforeUnload);
+  }, [hasUnsavedChanges]);
+
+  // Auto-focus inline form inputs
+  useEffect(() => {
+    if (inlineAddModule && moduleInputRef.current) moduleInputRef.current.focus();
+  }, [inlineAddModule]);
+  useEffect(() => {
+    if (inlineAddLesson && lessonInputRef.current) lessonInputRef.current.focus();
+  }, [inlineAddLesson]);
+  useEffect(() => {
+    if (inlineAddStep && stepInputRef.current) stepInputRef.current.focus();
+  }, [inlineAddStep]);
+
+  // Toggle tree collapse
+  const toggleModule = (modId: string) => {
+    setExpandedModules(prev => {
+      const next = new Set(prev);
+      if (next.has(modId)) next.delete(modId);
+      else next.add(modId);
+      return next;
+    });
+  };
+
+  const toggleLesson = (lesId: string) => {
+    setExpandedLessons(prev => {
+      const next = new Set(prev);
+      if (next.has(lesId)) next.delete(lesId);
+      else next.add(lesId);
+      return next;
+    });
+  };
 
   // ----------------------------------------------------
   // Save Action Handlers
@@ -191,6 +349,8 @@ export default function CourseEditor() {
       if (!res.ok) throw new Error(data.error || 'Failed to save changes');
 
       toast.success('Changes saved successfully');
+      // Update saved snapshot
+      setSavedSnapshot(JSON.stringify(bodyData));
       await fetchData();
     } catch (err: any) {
       console.error(err);
@@ -201,19 +361,11 @@ export default function CourseEditor() {
   };
 
   // ----------------------------------------------------
-  // Add Curriculum Nodes (Module, Lesson, Step)
+  // Add Curriculum Nodes (Module, Lesson, Step) — inline
   // ----------------------------------------------------
   const handleAddModule = async () => {
-    const title = window.prompt('Enter new Module Title:');
-    if (!title) return;
-
-    // Reset edit state immediately to clear previous input data
-    setEditModule({
-      title: title,
-      description: '',
-      sortOrder: modules.length + 1,
-      isFree: false
-    });
+    const title = inlineAddModuleTitle.trim();
+    if (!title) { toast.error('Module title is required'); return; }
 
     try {
       const res = await fetch(`/api/courses/${courseId}/curriculum`, {
@@ -232,7 +384,11 @@ export default function CourseEditor() {
       if (!res.ok) throw new Error(data.error || 'Failed to create module');
 
       toast.success('Module added');
+      setInlineAddModule(false);
+      setInlineAddModuleTitle('');
       setSelectedNode({ type: 'module', id: data.module.id });
+      // Auto-expand new module
+      setExpandedModules(prev => new Set(prev).add(data.module.id));
       await fetchData();
     } catch (err: any) {
       toast.error(err.message || 'Error adding module');
@@ -240,17 +396,8 @@ export default function CourseEditor() {
   };
 
   const handleAddLesson = async (moduleId: string, currentLessonsCount: number) => {
-    const title = window.prompt('Enter new Lesson Title:');
-    if (!title) return;
-
-    // Reset edit state immediately to clear previous input data
-    setEditLesson({
-      title: title,
-      description: '',
-      durationMins: 0,
-      isFree: false,
-      moduleId: moduleId
-    });
+    const title = inlineAddLessonTitle.trim();
+    if (!title) { toast.error('Lesson title is required'); return; }
 
     try {
       const res = await fetch(`/api/courses/${courseId}/curriculum`, {
@@ -270,7 +417,12 @@ export default function CourseEditor() {
       if (!res.ok) throw new Error(data.error || 'Failed to create lesson');
 
       toast.success('Lesson added');
+      setInlineAddLesson(null);
+      setInlineAddLessonTitle('');
       setSelectedNode({ type: 'lesson', id: data.lesson.id });
+      // Auto-expand parent module + new lesson
+      setExpandedModules(prev => new Set(prev).add(moduleId));
+      setExpandedLessons(prev => new Set(prev).add(data.lesson.id));
       await fetchData();
     } catch (err: any) {
       toast.error(err.message || 'Error adding lesson');
@@ -278,22 +430,8 @@ export default function CourseEditor() {
   };
 
   const handleAddStep = async (lessonId: string, currentStepsCount: number, type: 'text' | 'video' | 'lab') => {
-    const title = window.prompt(`Enter new ${type === 'lab' ? 'Coding Lab' : type === 'video' ? 'Video' : 'Text'} Step Title:`);
-    if (!title) return;
-
-    // Reset edit state immediately to clear previous input data
-    setEditStep({
-      title: title,
-      stepType: type,
-      textContent: type === 'text' ? 'Write your content here...' : '',
-      videoUrl: '',
-      videoDurationSecs: 0,
-      labLanguage: type === 'lab' ? 'javascript' : 'javascript',
-      labStarterCode: type === 'lab' ? '// Starter code here' : '',
-      labSolutionCode: '',
-      labInstructions: type === 'lab' ? 'Enter instructions here' : '',
-      lessonId: lessonId
-    });
+    const title = inlineAddStepTitle.trim();
+    if (!title) { toast.error('Step title is required'); return; }
 
     try {
       const res = await fetch(`/api/courses/${courseId}/curriculum`, {
@@ -318,6 +456,8 @@ export default function CourseEditor() {
       if (!res.ok) throw new Error(data.error || 'Failed to create step');
 
       toast.success('Lesson step added');
+      setInlineAddStep(null);
+      setInlineAddStepTitle('');
       setSelectedNode({ type: 'step', id: data.step.id });
       await fetchData();
     } catch (err: any) {
@@ -348,6 +488,39 @@ export default function CourseEditor() {
       await fetchData();
     } catch (err: any) {
       toast.error(err.message || `Error deleting ${type}`);
+    }
+  };
+
+  // Drag and Drop modules order swap
+  const handleDropModule = async (draggedId: string, targetId: string) => {
+    if (draggedId === targetId) return;
+
+    const draggedMod = modules.find(m => m.id === draggedId);
+    const targetMod = modules.find(m => m.id === targetId);
+    if (!draggedMod || !targetMod) return;
+
+    try {
+      setSaving(true);
+      
+      const update1 = fetch(`/api/modules/${draggedId}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ sortOrder: targetMod.sortOrder })
+      });
+
+      const update2 = fetch(`/api/modules/${targetId}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ sortOrder: draggedMod.sortOrder })
+      });
+
+      await Promise.all([update1, update2]);
+      toast.success('Modules reordered successfully');
+      await fetchData();
+    } catch (err) {
+      toast.error('Failed to reorder modules');
+    } finally {
+      setSaving(false);
     }
   };
 
@@ -419,6 +592,7 @@ export default function CourseEditor() {
     }
   };
 
+
   if (loading) {
     return (
       <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', height: '80vh', gap: '16px' }}>
@@ -427,6 +601,8 @@ export default function CourseEditor() {
       </div>
     );
   }
+
+  const unsaved = hasUnsavedChanges();
 
   return (
     <div className="page-container" style={{ padding: '20px 24px', maxWidth: '100%' }}>
@@ -442,7 +618,11 @@ export default function CourseEditor() {
         gap: '16px'
       }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-          <Link href="/dashboard/instructor/courses" className="btn btn-ghost" style={{ display: 'flex', alignItems: 'center', gap: '6px', padding: '6px 12px' }}>
+          <Link 
+            href={((user?.role as string) === 'admin' || (user?.role as string) === 'super_admin') ? '/dashboard/admin/courses' : '/dashboard/instructor/courses'} 
+            className="btn btn-ghost" 
+            style={{ display: 'flex', alignItems: 'center', gap: '6px', padding: '6px 12px' }}
+          >
             <ArrowLeft size={16} /> Back
           </Link>
           <div style={{ height: '24px', width: '1px', background: 'var(--border-primary)' }}></div>
@@ -455,7 +635,7 @@ export default function CourseEditor() {
                 {course?.status}
               </Badge>
               <span style={{ fontSize: '11px', color: 'var(--text-tertiary)' }}>
-                ₹{((course?.price || 0) / 100).toLocaleString('en-IN')} paise base price
+                {course?.isFree ? 'Free Course' : `₹${(course?.price || 0).toLocaleString('en-IN')}`}
               </span>
             </div>
           </div>
@@ -502,9 +682,27 @@ export default function CourseEditor() {
           <Button 
             onClick={handleSave} 
             disabled={saving} 
-            style={{ height: '36px', gap: '6px', fontSize: 'var(--font-size-xs)' }}
+            style={{ 
+              height: '36px', 
+              gap: '6px', 
+              fontSize: 'var(--font-size-xs)',
+              position: 'relative'
+            }}
           >
-            {saving ? <Loader2 size={14} className="animate-spin" /> : <Save size={14} />} Save Changes
+            {saving ? <Loader2 size={14} className="animate-spin" /> : <Save size={14} />} 
+            Save Changes
+            {unsaved && (
+              <span style={{
+                position: 'absolute',
+                top: '-3px',
+                right: '-3px',
+                width: '10px',
+                height: '10px',
+                borderRadius: '50%',
+                background: 'var(--warning)',
+                border: '2px solid var(--bg-primary)',
+              }} />
+            )}
           </Button>
 
           <button 
@@ -535,6 +733,26 @@ export default function CourseEditor() {
         </div>
       </div>
 
+      {/* Unsaved changes banner */}
+      {unsaved && (
+        <div style={{
+          display: 'flex',
+          alignItems: 'center',
+          gap: '8px',
+          padding: '8px 16px',
+          marginBottom: '16px',
+          background: 'rgba(234, 179, 8, 0.1)',
+          border: '1px solid rgba(234, 179, 8, 0.3)',
+          borderRadius: '8px',
+          fontSize: '12px',
+          color: 'var(--warning)',
+          fontWeight: 500,
+        }}>
+          <AlertCircle size={14} />
+          You have unsaved changes. Press <kbd style={{ padding: '1px 6px', background: 'var(--bg-secondary)', borderRadius: '4px', border: '1px solid var(--border-primary)', fontSize: '11px', fontWeight: 600, color: 'var(--text-primary)' }}>Ctrl+S</kbd> or click Save.
+        </div>
+      )}
+
       {/* Main Split-Pane Workspace */}
       <div style={{ display: 'flex', gap: '24px', minHeight: 'calc(80vh - 100px)', alignItems: 'flex-start' }}>
         
@@ -556,11 +774,40 @@ export default function CourseEditor() {
               <Folder size={14} /> Curriculum Outline
             </h2>
             <button 
-              onClick={handleAddModule}
+              onClick={() => { setInlineAddModule(true); setInlineAddModuleTitle(''); }}
               className="btn btn-ghost btn-sm"
               style={{ fontSize: '11px', display: 'flex', alignItems: 'center', gap: '4px', color: 'var(--accent-primary-hover)', fontWeight: 600 }}
             >
               <Plus size={12} /> Module
+            </button>
+          </div>
+
+          {/* Expand/Collapse All Actions */}
+          <div style={{ display: 'flex', gap: '8px', fontSize: '10px', color: 'var(--text-secondary)', borderBottom: '1px solid var(--border-primary)', paddingBottom: '8px' }}>
+            <button 
+              onClick={() => {
+                setExpandedModules(new Set());
+                setExpandedLessons(new Set());
+              }}
+              className="btn btn-ghost btn-xs"
+              style={{ padding: '2px 6px', height: 'auto', fontSize: '10px', color: 'var(--text-secondary)' }}
+            >
+              Collapse All
+            </button>
+            <span style={{ color: 'var(--border-secondary)' }}>|</span>
+            <button 
+              onClick={() => {
+                setExpandedModules(new Set(modules.map(m => m.id)));
+                const lessonIds = new Set<string>();
+                modules.forEach(m => {
+                  (m.lessons || []).forEach((l: any) => lessonIds.add(l.id));
+                });
+                setExpandedLessons(lessonIds);
+              }}
+              className="btn btn-ghost btn-xs"
+              style={{ padding: '2px 6px', height: 'auto', fontSize: '10px', color: 'var(--text-secondary)' }}
+            >
+              Expand All
             </button>
           </div>
 
@@ -579,7 +826,8 @@ export default function CourseEditor() {
                 border: '1px solid',
                 borderColor: selectedNode.type === 'course' ? 'var(--border-secondary)' : 'transparent',
                 background: selectedNode.type === 'course' ? 'var(--bg-primary)' : 'transparent',
-                fontWeight: selectedNode.type === 'course' ? 600 : 500
+                fontWeight: selectedNode.type === 'course' ? 600 : 500,
+                transition: 'all 0.15s ease',
               }}
             >
               <span style={{ fontSize: 'var(--font-size-xs)', color: 'var(--text-primary)' }}>
@@ -589,13 +837,69 @@ export default function CourseEditor() {
 
             <div style={{ height: '1px', background: 'var(--border-primary)', margin: '4px 0' }}></div>
 
+            {/* Empty state when no modules */}
+            {modules.length === 0 && !inlineAddModule && (
+              <div style={{
+                padding: '20px 16px',
+                textAlign: 'center',
+                borderRadius: '8px',
+                border: '1px dashed var(--border-secondary)',
+                background: 'var(--bg-primary)',
+              }}>
+                <Folder size={24} style={{ color: 'var(--text-tertiary)', marginBottom: '8px' }} />
+                <p style={{ fontSize: '12px', color: 'var(--text-secondary)', margin: '0 0 12px 0' }}>
+                  Start building your course by adding the first module.
+                </p>
+                <button
+                  onClick={() => { setInlineAddModule(true); setInlineAddModuleTitle(''); }}
+                  className="btn btn-ghost"
+                  style={{ fontSize: '11px', color: 'var(--accent-primary-hover)', fontWeight: 600, display: 'inline-flex', alignItems: 'center', gap: '4px' }}
+                >
+                  <Plus size={12} /> Add First Module
+                </button>
+              </div>
+            )}
+
+            {/* Inline Add Module Form */}
+            {inlineAddModule && (
+              <InlineCreateForm
+                placeholder="New module title..."
+                value={inlineAddModuleTitle}
+                onChange={setInlineAddModuleTitle}
+                onConfirm={handleAddModule}
+                onCancel={() => { setInlineAddModule(false); setInlineAddModuleTitle(''); }}
+                inputRef={moduleInputRef}
+              />
+            )}
+
             {/* Modules Loop */}
             {modules.sort((a, b) => a.sortOrder - b.sortOrder).map((mod: any, mIdx: number) => {
               const isModSelected = selectedNode.type === 'module' && selectedNode.id === mod.id;
+              const isModExpanded = expandedModules.has(mod.id);
               return (
                 <div key={mod.id} style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
                   {/* Module Header Card */}
                   <div 
+                    onClick={() => {
+                      setSelectedNode({ type: 'module', id: mod.id });
+                      toggleModule(mod.id);
+                    }}
+                    onDragOver={(e) => {
+                      e.preventDefault();
+                      if (draggedModuleId && draggedModuleId !== mod.id) {
+                        setDragOverModuleId(mod.id);
+                      }
+                    }}
+                    onDragLeave={() => {
+                      setDragOverModuleId(null);
+                    }}
+                    onDrop={(e) => {
+                      e.preventDefault();
+                      setDragOverModuleId(null);
+                      if (draggedModuleId) {
+                        handleDropModule(draggedModuleId, mod.id);
+                      }
+                    }}
                     style={{
                       display: 'flex',
                       alignItems: 'center',
@@ -604,167 +908,251 @@ export default function CourseEditor() {
                       borderRadius: '8px',
                       cursor: 'pointer',
                       border: '1px solid',
-                      borderColor: isModSelected ? 'var(--border-secondary)' : 'var(--border-primary)',
-                      background: isModSelected ? 'var(--bg-primary)' : 'var(--card-bg)'
+                      borderColor: dragOverModuleId === mod.id 
+                        ? 'var(--accent-primary)' 
+                        : isModSelected 
+                          ? 'var(--border-secondary)' 
+                          : 'var(--border-primary)',
+                      background: dragOverModuleId === mod.id
+                        ? 'var(--bg-secondary)'
+                        : isModSelected 
+                          ? 'var(--bg-primary)' 
+                          : 'var(--card-bg)',
+                      transform: dragOverModuleId === mod.id ? 'scale(1.02)' : 'none',
+                      opacity: draggedModuleId === mod.id ? 0.4 : 1,
+                      transition: 'all 0.15s ease',
                     }}
                   >
                     <div 
-                      onClick={() => setSelectedNode({ type: 'module', id: mod.id })}
                       style={{ display: 'flex', alignItems: 'center', gap: '6px', flex: 1 }}
                     >
-                      <ChevronRight size={12} style={{ color: 'var(--text-tertiary)' }} />
-                      <span style={{ fontSize: 'var(--font-size-xs)', fontWeight: 600, color: 'var(--text-primary)' }}>
+                      <div style={{ display: 'flex', alignItems: 'center' }}>
+                        {isModExpanded 
+                          ? <ChevronDown size={12} style={{ color: 'var(--text-tertiary)' }} />
+                          : <ChevronRight size={12} style={{ color: 'var(--text-tertiary)' }} />
+                        }
+                      </div>
+                      <span 
+                        style={{ fontSize: 'var(--font-size-xs)', fontWeight: 600, color: 'var(--text-primary)' }}
+                      >
                         {mod.title}
                       </span>
                     </div>
 
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '2px' }}>
-                      <button className="btn btn-ghost" style={{ padding: '2px' }} onClick={() => handleShiftRank('module', mod, 'up')} disabled={mIdx === 0}>
-                        <ArrowUp size={11} />
-                      </button>
-                      <button className="btn btn-ghost" style={{ padding: '2px' }} onClick={() => handleShiftRank('module', mod, 'down')} disabled={mIdx === modules.length - 1}>
-                        <ArrowDown size={11} />
-                      </button>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
+                      <div
+                        draggable
+                        onDragStart={(e) => {
+                          e.stopPropagation();
+                          setDraggedModuleId(mod.id);
+                        }}
+                        onDragEnd={() => {
+                          setDraggedModuleId(null);
+                        }}
+                        onClick={(e) => {
+                          e.stopPropagation();
+                        }}
+                        style={{
+                          cursor: 'grab',
+                          display: 'flex',
+                          alignItems: 'center',
+                          padding: '4px',
+                          color: 'var(--text-tertiary)',
+                          borderRadius: '4px',
+                          transition: 'background 0.15s ease',
+                        }}
+                        title="Drag to reorder module"
+                        onMouseEnter={(e) => {
+                          (e.currentTarget as HTMLDivElement).style.background = 'var(--bg-primary)';
+                        }}
+                        onMouseLeave={(e) => {
+                          (e.currentTarget as HTMLDivElement).style.background = 'transparent';
+                        }}
+                      >
+                        <Menu size={12} />
+                      </div>
                       <button 
                         className="btn btn-ghost" 
                         style={{ padding: '2px', color: 'var(--error)' }} 
-                        onClick={() => handleDeleteNode('module', mod.id)}
+                        onClick={(e) => { e.stopPropagation(); handleDeleteNode('module', mod.id); }}
                       >
                         <Trash2 size={11} />
                       </button>
                     </div>
                   </div>
 
-                  {/* Lessons inside Module */}
-                  <div style={{ paddingLeft: '16px', display: 'flex', flexDirection: 'column', gap: '4px' }}>
-                    {(mod.lessons || []).sort((a: any, b: any) => a.sortOrder - b.sortOrder).map((les: any, lIdx: number) => {
-                      const isLesSelected = selectedNode.type === 'lesson' && selectedNode.id === les.id;
-                      return (
-                        <div key={les.id} style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
-                          <div 
-                            style={{
-                              display: 'flex',
-                              alignItems: 'center',
-                              justifyContent: 'space-between',
-                              padding: '6px 8px',
-                              borderRadius: '6px',
-                              cursor: 'pointer',
-                              border: '1px solid',
-                              borderColor: isLesSelected ? 'var(--border-secondary)' : 'transparent',
-                              background: isLesSelected ? 'var(--bg-primary)' : 'transparent'
-                            }}
+                  {/* Lessons inside Module (collapsible) */}
+                  {isModExpanded && (
+                    <div style={{ paddingLeft: '16px', display: 'flex', flexDirection: 'column', gap: '4px' }}>
+                      {(mod.lessons || []).length === 0 && inlineAddLesson !== mod.id && (
+                        <div style={{ padding: '8px 10px', fontSize: '11px', color: 'var(--text-tertiary)', fontStyle: 'italic' }}>
+                          No lessons yet — 
+                          <button
+                            onClick={() => { setInlineAddLesson(mod.id); setInlineAddLessonTitle(''); }}
+                            style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--accent-primary-hover)', fontWeight: 600, fontSize: '11px', fontStyle: 'normal', padding: '0 2px' }}
                           >
-                            <span 
-                              onClick={() => setSelectedNode({ type: 'lesson', id: les.id })}
-                              style={{ fontSize: 'var(--font-size-xs)', color: 'var(--text-secondary)', fontWeight: isLesSelected ? 600 : 500, flex: 1 }}
+                            add one
+                          </button>
+                        </div>
+                      )}
+
+                      {(mod.lessons || []).sort((a: any, b: any) => a.sortOrder - b.sortOrder).map((les: any, lIdx: number) => {
+                        const isLesSelected = selectedNode.type === 'lesson' && selectedNode.id === les.id;
+                        const isLesExpanded = expandedLessons.has(les.id);
+                        return (
+                          <div key={les.id} style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
+                            <div 
+                              onClick={() => {
+                                setSelectedNode({ type: 'lesson', id: les.id });
+                                toggleLesson(les.id);
+                              }}
+                              style={{
+                                display: 'flex',
+                                alignItems: 'center',
+                                justifyContent: 'space-between',
+                                padding: '6px 8px',
+                                borderRadius: '6px',
+                                cursor: 'pointer',
+                                border: '1px solid',
+                                borderColor: isLesSelected ? 'var(--border-secondary)' : 'transparent',
+                                background: isLesSelected ? 'var(--bg-primary)' : 'transparent',
+                                transition: 'all 0.15s ease',
+                              }}
                             >
-                              📖 {les.title}
-                            </span>
-
-                            <div style={{ display: 'flex', alignItems: 'center', gap: '1px' }}>
-                              <button className="btn btn-ghost" style={{ padding: '1px' }} onClick={() => handleShiftRank('lesson', les, 'up')} disabled={lIdx === 0}>
-                                <ArrowUp size={10} />
-                              </button>
-                              <button className="btn btn-ghost" style={{ padding: '1px' }} onClick={() => handleShiftRank('lesson', les, 'down')} disabled={lIdx === (mod.lessons || []).length - 1}>
-                                <ArrowDown size={10} />
-                              </button>
-                              <button 
-                                className="btn btn-ghost" 
-                                style={{ padding: '1px', color: 'var(--error)' }} 
-                                onClick={() => handleDeleteNode('lesson', les.id)}
-                              >
-                                <Trash2 size={10} />
-                              </button>
-                            </div>
-                          </div>
-
-                          {/* Steps inside Lesson */}
-                          <div style={{ paddingLeft: '14px', display: 'flex', flexDirection: 'column', gap: '2px' }}>
-                            {(les.steps || []).sort((a: any, b: any) => a.sortOrder - b.sortOrder).map((stp: any, sIdx: number) => {
-                              const isStpSelected = selectedNode.type === 'step' && selectedNode.id === stp.id;
-                              return (
-                                <div 
-                                  key={stp.id}
-                                  style={{
-                                    display: 'flex',
-                                    alignItems: 'center',
-                                    justifyContent: 'space-between',
-                                    padding: '4px 6px',
-                                    borderRadius: '4px',
-                                    cursor: 'pointer',
-                                    background: isStpSelected ? 'var(--border-primary)' : 'transparent'
-                                  }}
+                              <div style={{ display: 'flex', alignItems: 'center', gap: '4px', flex: 1 }}>
+                                <div style={{ display: 'flex', alignItems: 'center' }}>
+                                  {isLesExpanded
+                                    ? <ChevronDown size={10} style={{ color: 'var(--text-tertiary)' }} />
+                                    : <ChevronRight size={10} style={{ color: 'var(--text-tertiary)' }} />
+                                  }
+                                </div>
+                                <span 
+                                  style={{ fontSize: 'var(--font-size-xs)', color: 'var(--text-secondary)', fontWeight: isLesSelected ? 600 : 500, flex: 1 }}
                                 >
-                                  <span 
-                                    onClick={() => setSelectedNode({ type: 'step', id: stp.id })}
-                                    style={{ 
-                                      fontSize: '11px', 
-                                      color: 'var(--text-tertiary)', 
-                                      display: 'flex', 
-                                      alignItems: 'center', 
-                                      gap: '4px',
-                                      flex: 1
-                                    }}
-                                  >
-                                    {getStepIcon(stp.stepType)} {stp.title}
-                                  </span>
+                                  📖 {les.title}
+                                </span>
+                              </div>
 
-                                  <div style={{ display: 'flex', alignItems: 'center', gap: '1px' }}>
-                                    <button className="btn btn-ghost" style={{ padding: '1px' }} onClick={() => handleShiftRank('step', stp, 'up')} disabled={sIdx === 0}>
-                                      <ArrowUp size={8} />
-                                    </button>
-                                    <button className="btn btn-ghost" style={{ padding: '1px' }} onClick={() => handleShiftRank('step', stp, 'down')} disabled={sIdx === (les.steps || []).length - 1}>
-                                      <ArrowDown size={8} />
+                              <div style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
+                                <button 
+                                  className="btn btn-ghost" 
+                                  style={{ padding: '2px', color: 'var(--error)' }} 
+                                  onClick={(e) => { e.stopPropagation(); handleDeleteNode('lesson', les.id); }}
+                                >
+                                  <Trash2 size={10} />
+                                </button>
+                              </div>
+                            </div>
+
+                            {/* Steps inside Lesson (collapsible) */}
+                            {isLesExpanded && (
+                              <div style={{ paddingLeft: '14px', display: 'flex', flexDirection: 'column', gap: '2px' }}>
+                                {(les.steps || []).sort((a: any, b: any) => a.sortOrder - b.sortOrder).map((stp: any, sIdx: number) => {
+                                  const isStpSelected = selectedNode.type === 'step' && selectedNode.id === stp.id;
+                                  return (
+                                    <div 
+                                      key={stp.id}
+                                      style={{
+                                        display: 'flex',
+                                        alignItems: 'center',
+                                        justifyContent: 'space-between',
+                                        padding: '4px 6px',
+                                        borderRadius: '4px',
+                                        cursor: 'pointer',
+                                        background: isStpSelected ? 'var(--border-primary)' : 'transparent',
+                                        transition: 'all 0.15s ease',
+                                      }}
+                                    >
+                                      <span 
+                                        onClick={() => setSelectedNode({ type: 'step', id: stp.id })}
+                                        style={{ 
+                                          fontSize: '11px', 
+                                          color: 'var(--text-tertiary)', 
+                                          display: 'flex', 
+                                          alignItems: 'center', 
+                                          gap: '4px',
+                                          flex: 1
+                                        }}
+                                      >
+                                        {getStepIcon(stp.stepType)} {stp.title}
+                                      </span>
+
+                                      <div style={{ display: 'flex', alignItems: 'center' }}>
+                                        <button 
+                                          className="btn btn-ghost" 
+                                          style={{ padding: '1px', color: 'var(--error)' }} 
+                                          onClick={() => handleDeleteNode('step', stp.id)}
+                                        >
+                                          <Trash2 size={8} />
+                                        </button>
+                                      </div>
+                                    </div>
+                                  );
+                                })}
+                                
+                                {/* Inline Add Step Form */}
+                                {inlineAddStep && inlineAddStep.lessonId === les.id ? (
+                                  <InlineCreateForm
+                                    placeholder={`New ${inlineAddStep.type} step title...`}
+                                    value={inlineAddStepTitle}
+                                    onChange={setInlineAddStepTitle}
+                                    onConfirm={() => handleAddStep(les.id, (les.steps || []).length, inlineAddStep.type)}
+                                    onCancel={() => { setInlineAddStep(null); setInlineAddStepTitle(''); }}
+                                    inputRef={stepInputRef}
+                                  />
+                                ) : (
+                                  /* Add Step trigger inside lesson */
+                                  <div style={{ display: 'flex', gap: '6px', paddingLeft: '4px', marginTop: '4px' }}>
+                                    <button 
+                                      onClick={() => { setInlineAddStep({ lessonId: les.id, type: 'text' }); setInlineAddStepTitle(''); }}
+                                      className="btn btn-ghost" 
+                                      style={{ fontSize: '9px', padding: '2px 4px', color: 'var(--text-secondary)' }}
+                                    >
+                                      + Text
                                     </button>
                                     <button 
+                                      onClick={() => { setInlineAddStep({ lessonId: les.id, type: 'video' }); setInlineAddStepTitle(''); }}
                                       className="btn btn-ghost" 
-                                      style={{ padding: '1px', color: 'var(--error)' }} 
-                                      onClick={() => handleDeleteNode('step', stp.id)}
+                                      style={{ fontSize: '9px', padding: '2px 4px', color: 'var(--text-secondary)' }}
                                     >
-                                      <Trash2 size={8} />
+                                      + Video
+                                    </button>
+                                    <button 
+                                      onClick={() => { setInlineAddStep({ lessonId: les.id, type: 'lab' }); setInlineAddStepTitle(''); }}
+                                      className="btn btn-ghost" 
+                                      style={{ fontSize: '9px', padding: '2px 4px', color: 'var(--accent-primary-hover)' }}
+                                    >
+                                      + Lab
                                     </button>
                                   </div>
-                                </div>
-                              );
-                            })}
-                            
-                            {/* Add Step trigger inside lesson */}
-                            <div style={{ display: 'flex', gap: '6px', paddingLeft: '4px', marginTop: '4px' }}>
-                              <button 
-                                onClick={() => handleAddStep(les.id, (les.steps || []).length, 'text')}
-                                className="btn btn-ghost" 
-                                style={{ fontSize: '9px', padding: '2px 4px', color: 'var(--text-secondary)' }}
-                              >
-                                + Text
-                              </button>
-                              <button 
-                                onClick={() => handleAddStep(les.id, (les.steps || []).length, 'video')}
-                                className="btn btn-ghost" 
-                                style={{ fontSize: '9px', padding: '2px 4px', color: 'var(--text-secondary)' }}
-                              >
-                                + Video
-                              </button>
-                              <button 
-                                onClick={() => handleAddStep(les.id, (les.steps || []).length, 'lab')}
-                                className="btn btn-ghost" 
-                                style={{ fontSize: '9px', padding: '2px 4px', color: 'var(--accent-primary-hover)' }}
-                              >
-                                + Lab
-                              </button>
-                            </div>
+                                )}
+                              </div>
+                            )}
                           </div>
-                        </div>
-                      );
-                    })}
+                        );
+                      })}
 
-                    <button 
-                      onClick={() => handleAddLesson(mod.id, (mod.lessons || []).length)}
-                      className="btn btn-ghost" 
-                      style={{ fontSize: '10px', alignSelf: 'flex-start', color: 'var(--text-secondary)', padding: '2px 8px', marginTop: '4px' }}
-                    >
-                      + Add Lesson
-                    </button>
-                  </div>
+                      {/* Inline Add Lesson Form */}
+                      {inlineAddLesson === mod.id ? (
+                        <InlineCreateForm
+                          placeholder="New lesson title..."
+                          value={inlineAddLessonTitle}
+                          onChange={setInlineAddLessonTitle}
+                          onConfirm={() => handleAddLesson(mod.id, (mod.lessons || []).length)}
+                          onCancel={() => { setInlineAddLesson(null); setInlineAddLessonTitle(''); }}
+                          inputRef={lessonInputRef}
+                        />
+                      ) : (
+                        <button 
+                          onClick={() => { setInlineAddLesson(mod.id); setInlineAddLessonTitle(''); }}
+                          className="btn btn-ghost" 
+                          style={{ fontSize: '10px', alignSelf: 'flex-start', color: 'var(--text-secondary)', padding: '2px 8px', marginTop: '4px' }}
+                        >
+                          + Add Lesson
+                        </button>
+                      )}
+                    </div>
+                  )}
                 </div>
               );
             })}
@@ -842,7 +1230,7 @@ export default function CourseEditor() {
 
               <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: '16px' }}>
                 <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
-                  <label className="label">Course Price (in paise: ₹1 = 100)</label>
+                  <label className="label">Course Price (₹)</label>
                   <input 
                     type="number" 
                     className="input" 

@@ -210,7 +210,7 @@ export default function CourseDetail({ params }: PageProps) {
               <div>
                 <span style={{ fontSize: 'var(--font-size-xs)', color: 'var(--text-tertiary)' }}>Course Price</span>
                 <div style={{ fontSize: '2rem', fontWeight: 900, color: 'var(--text-primary)', margin: '4px 0' }}>
-                  ₹{(course.price / 100).toLocaleString('en-IN')}
+                  ₹{(course.price).toLocaleString('en-IN')}
                 </div>
                 <div style={{ fontSize: 'var(--font-size-xs)', color: 'var(--success)' }}>✓ 30-day money-back guarantee</div>
               </div>

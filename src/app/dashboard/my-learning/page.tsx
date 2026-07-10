@@ -123,7 +123,7 @@ export default function MyLearning() {
               title={course.title}
               instructor={`${course.instructor?.firstName ?? ''} ${course.instructor?.lastName ?? ''}`.trim() || 'Instructor'}
               category={course.category?.name || 'Technology'}
-              price={course.price / 100}
+              price={course.price}
               rating={Number(course.ratingAvg || 0)}
               studentsEnrolled={course.studentsEnrolled || 0}
               duration={`${Math.round(course.durationHours || 0)} hours`}

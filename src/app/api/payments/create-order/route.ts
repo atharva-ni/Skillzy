@@ -60,7 +60,7 @@ export async function POST(req: Request) {
     if (isRazorpayConfigured) {
       try {
         razorpayOrder = await razorpay.orders.create({
-          amount: course.price, // Already stored in paise (e.g. 299900 = ₹2999)
+          amount: course.price * 100, // Convert ₹ to paise for Razorpay API
           currency: course.currency || 'INR',
           receipt,
           notes: {
@@ -82,7 +82,7 @@ export async function POST(req: Request) {
     if (isDemoMode || !razorpayOrder) {
       razorpayOrder = {
         id: `order_demo_${Math.random().toString(36).substring(2, 10)}`,
-        amount: course.price,
+        amount: course.price * 100, // paise for consistency with Razorpay
         currency: course.currency || 'INR',
       };
     }

@@ -114,7 +114,7 @@ export default function CourseApprovals() {
     {
       header: 'Price',
       accessor: (item: CourseRow) => (
-        <span>₹{((item.price || 0) / 100).toLocaleString('en-IN')}</span>
+        <span>₹{(item.price || 0).toLocaleString('en-IN')}</span>
       )
     },
     {

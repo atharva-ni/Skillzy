@@ -56,7 +56,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           id: p.id,
           studentName: data.user.name,
           courseName: p.metadata?.courseTitle || 'Course Purchase',
-          amount: p.amount / 100, // convert paise to INR
+          amount: p.amount, // already in ₹
           status: p.status === 'completed' ? 'completed' : p.status === 'failed' ? 'failed' : 'pending',
           date: p.paidAt ? p.paidAt.slice(0, 10) : p.createdAt.slice(0, 10),
           method: p.method || 'UPI',

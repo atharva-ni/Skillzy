@@ -242,6 +242,11 @@ button {
   50% { box-shadow: 0 0 40px rgba(99, 102, 241, 0.4); }
 }
 
+@keyframes pulse {
+  0%, 100% { opacity: 0.4; }
+  50% { opacity: 0.15; }
+}
+
 @keyframes shimmer {
   0% { background-position: -200% 0; }
   100% { background-position: 200% 0; }

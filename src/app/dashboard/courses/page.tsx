@@ -110,7 +110,7 @@ export default function CourseCatalog() {
               title={course.title}
               instructor={`${course.instructor?.firstName ?? ''} ${course.instructor?.lastName ?? ''}`.trim() || 'Instructor'}
               category={course.category?.name || 'Technology'}
-              price={course.price / 100} // convert paise to INR for UI display
+              price={course.price} // already in ₹ for UI display
               rating={Number(course.ratingAvg)}
               studentsEnrolled={course.studentsEnrolled}
               duration={`${Math.round(course.durationHours || 0)} hours`}

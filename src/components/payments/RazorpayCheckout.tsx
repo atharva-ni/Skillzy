@@ -89,7 +89,7 @@ export default function RazorpayCheckout({
       // 4. Handle Demo Mode (Simulated Payment)
       if (orderData.isDemoMode) {
         const confirmSimulatedPayment = window.confirm(
-          `Demo Mode Active:\n\nWould you like to simulate a successful payment of ₹${(coursePrice / 100).toLocaleString('en-IN')} for "${courseTitle}"?\n\nThis will trigger the full backend order processing, enroll you in the course, and issue an invoice without charging real money.`
+          `Demo Mode Active:\n\nWould you like to simulate a successful payment of ₹${(coursePrice).toLocaleString('en-IN')} for "${courseTitle}"?\n\nThis will trigger the full backend order processing, enroll you in the course, and issue an invoice without charging real money.`
         );
 
         if (!confirmSimulatedPayment) {
@@ -214,7 +214,7 @@ export default function RazorpayCheckout({
       onClick={handlePayment}
       disabled={loading}
     >
-      {loading ? 'Opening Secure Gateway...' : `Buy Course — ₹${(coursePrice / 100).toLocaleString('en-IN')} →`}
+      {loading ? 'Opening Secure Gateway...' : `Buy Course — ₹${(coursePrice).toLocaleString('en-IN')} →`}
     </Button>
   );
 }
