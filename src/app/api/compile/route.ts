@@ -3,6 +3,8 @@ import { requireAuth, apiError, apiSuccess } from '@/lib/auth';
 import prisma from '@/lib/prisma';
 import { executeCode } from '@/lib/compiler';
 import { z } from 'zod';
+import { analyzeBuggyCode } from '@/lib/socraticTutorAgent';
+
 
 const compileRequestSchema = z.object({
   code: z.string(),
@@ -119,60 +121,95 @@ export async function POST(req: NextRequest) {
       }
     }
 
-    // 5. If this is a step submission, record progress and submission in database
-    if (isSubmit && stepId && dbStep) {
-      // Create a submission record in the database
-      const dbSubmission = await prisma.submission.create({
-        data: {
-          assignmentId: stepId, // Map stepId as assignmentId for representation
-          userId: dbUser.id,
-          code,
-          language,
-          status: testPassed ? 'graded' : 'pending',
-          grade: testPassed ? 100.00 : 0.00,
-          feedback: testPassed 
-            ? 'All assertions passed successfully! Excellent work.' 
-            : `Failed verification: ${testSummary}`,
-        },
-      });
+    // 5. If this is a submission, record progress and submission in database
+    let aiFeedbackResponse: any = null;
 
-      // If tests passed, complete the lesson step automatically
-      if (testPassed) {
-        await prisma.lessonProgress.upsert({
-          where: {
-            userId_stepId: {
-              userId: dbUser.id,
-              stepId,
-            },
-          },
-          update: {
-            isCompleted: true,
-            completedAt: new Date(),
-          },
-          create: {
-            userId: dbUser.id,
-            stepId,
-            isCompleted: true,
-            completedAt: new Date(),
-          },
+    if (isSubmit) {
+      const targetId = stepId || problemId;
+      if (targetId) {
+        // Find if this is a step or a standalone problem to check assignment existence
+        const assignment = await prisma.assignment.findUnique({
+          where: { id: targetId }
         });
 
-        // Re-calculate user's course progress percentage
-        // Get total steps in course
-        const stepDetails = await prisma.lessonStep.findUnique({
-          where: { id: stepId },
-          include: {
-            lesson: {
-              include: {
-                module: {
-                  include: {
-                    course: {
-                      include: {
-                        modules: {
-                          include: {
-                            lessons: {
-                              include: {
-                                steps: true
+        if (assignment) {
+          // Create submission record
+          const dbSubmission = await prisma.submission.create({
+            data: {
+              assignmentId: targetId,
+              userId: dbUser.id,
+              code,
+              language,
+              status: testPassed ? 'graded' : 'pending',
+              grade: testPassed ? 100.00 : 0.00,
+              feedback: testPassed 
+                ? 'All assertions passed successfully! Excellent work.' 
+                : `Failed verification: ${testSummary}`,
+            },
+          });
+
+          if (testPassed) {
+            // Success feedback
+            aiFeedbackResponse = {
+              score: 100,
+              metrics: { complexity: 'Optimal', performance: 'All tests passed', style: 'Excellent' },
+              suggestions: ['Congratulations! Your solution is fully correct and passed all verification checks.'],
+              optimalExplanation: 'Your solution has successfully met the correctness requirements.',
+              optimalCode: code,
+            };
+
+            await prisma.aiReview.create({
+              data: {
+                submissionId: dbSubmission.id,
+                overallScore: 100,
+                summary: 'Perfect submission! All test cases passed.',
+                strengths: ['Correct logical implementation', 'Passed all standard assertions'],
+                improvements: [],
+                styleFeedback: 'Excellent work completing the exercise!',
+                rawResponse: { success: true },
+                modelUsed: 'Static Checker'
+              }
+            });
+
+            // If tests passed and this is a lesson step, complete the lesson step automatically
+            if (stepId && dbStep) {
+              await prisma.lessonProgress.upsert({
+                where: {
+                  userId_stepId: {
+                    userId: dbUser.id,
+                    stepId,
+                  },
+                },
+                update: {
+                  isCompleted: true,
+                  completedAt: new Date(),
+                },
+                create: {
+                  userId: dbUser.id,
+                  stepId,
+                  isCompleted: true,
+                  completedAt: new Date(),
+                },
+              });
+
+              // Re-calculate user's course progress percentage
+              const stepDetails = await prisma.lessonStep.findUnique({
+                where: { id: stepId },
+                include: {
+                  lesson: {
+                    include: {
+                      module: {
+                        include: {
+                          course: {
+                            include: {
+                              modules: {
+                                include: {
+                                  lessons: {
+                                    include: {
+                                      steps: true
+                                    }
+                                  }
+                                }
                               }
                             }
                           }
@@ -181,46 +218,114 @@ export async function POST(req: NextRequest) {
                     }
                   }
                 }
+              });
+
+              if (stepDetails?.lesson?.module?.course) {
+                const course = stepDetails.lesson.module.course;
+                const allStepIds: string[] = [];
+                course.modules.forEach(m => {
+                  m.lessons.forEach(l => {
+                    l.steps.forEach(s => {
+                      allStepIds.push(s.id);
+                    });
+                  });
+                });
+
+                const completedCount = await prisma.lessonProgress.count({
+                  where: {
+                    userId: dbUser.id,
+                    stepId: { in: allStepIds },
+                    isCompleted: true
+                  }
+                });
+
+                const progressPct = allStepIds.length > 0 
+                  ? Math.min((completedCount / allStepIds.length) * 100, 100) 
+                  : 0;
+
+                await prisma.enrollment.update({
+                  where: {
+                    userId_courseId: {
+                      userId: dbUser.id,
+                      courseId: course.id
+                    }
+                  },
+                  data: {
+                    progressPct: progressPct,
+                    completedAt: progressPct === 100 ? new Date() : null
+                  }
+                });
               }
+            }
+          } else {
+            // Incorrect code -> Call Socratic Tutor
+            let calculatedScore = 50;
+            let suggestions: string[] = ['Review test case assertions and edge cases.'];
+            let optimalExplanation = 'Examine code logic and resolve failures.';
+            
+            try {
+              const challengeTitle = dbStep?.title || dbProblem?.title || 'Coding Challenge';
+              const socratic = await analyzeBuggyCode(code, language, challengeTitle);
+
+              const logicalCount = socratic.logicalErrors?.length || 0;
+              const syntaxCount = socratic.syntaxErrors?.length || 0;
+              calculatedScore = Math.max(10, 100 - (logicalCount * 15) - (syntaxCount * 10));
+
+              suggestions = [
+                ...(socratic.logicalErrors?.map(e => `Line ${e.line}: ${e.issue} - Hint: ${e.hint}`) || []),
+                ...(socratic.syntaxErrors?.map(s => `Syntax: ${s}`) || []),
+                ...(socratic.inefficiencies?.map(i => `Performance: ${i.area} - ${i.reason}. Hint: ${i.hint}`) || []),
+                ...(socratic.nextSteps?.map(n => `Next Step: ${n.step} - Review ${n.concept}. Hint: ${n.hint}`) || [])
+              ];
+              if (suggestions.length === 0) {
+                suggestions = ['Verify test inputs and code structure.'];
+              }
+
+              optimalExplanation = socratic.primaryHint || socratic.educationalTips || 'Review the details below to improve your solution.';
+
+              aiFeedbackResponse = {
+                score: calculatedScore,
+                metrics: {
+                  complexity: socratic.inefficiencies?.map(i => i.area).join(', ') || 'Standard',
+                  performance: socratic.inefficiencies?.length > 0 ? 'Review inefficiencies' : 'Passed checks',
+                  style: socratic.syntaxErrors?.length > 0 ? 'Needs attention' : 'Good formatting'
+                },
+                suggestions,
+                optimalExplanation,
+                secondaryHint: socratic.secondaryHint || 'Take another look at the logic structure and operators.',
+                optimalCode: '// Review the hints to write the optimal code!',
+              };
+
+              await prisma.aiReview.create({
+                data: {
+                  submissionId: dbSubmission.id,
+                  overallScore: calculatedScore,
+                  summary: socratic.codeIntent || 'Socratic Analysis Feedback',
+                  strengths: socratic.positives || [],
+                  improvements: [
+                    ...(socratic.logicalErrors?.map(e => e.issue) || []),
+                    ...(socratic.syntaxErrors || []),
+                    ...(socratic.inefficiencies?.map(i => i.reason) || [])
+                  ],
+                  complexityAnalysis: socratic.inefficiencies?.map(i => i.area).join(', ') || null,
+                  performanceTips: socratic.inefficiencies?.map(i => i.hint).join('\n') || null,
+                  styleFeedback: socratic.educationalTips || null,
+                  rawResponse: socratic as any,
+                  modelUsed: process.env.GROQ_MODEL || "llama-3.3-70b-versatile"
+                }
+              });
+            } catch (aiErr) {
+              console.error('Failed to run Socratic tutor or save AI review:', aiErr);
+              aiFeedbackResponse = {
+                score: 50,
+                metrics: { complexity: 'N/A', performance: 'Failed review', style: 'Needs review' },
+                suggestions: ['Socratic Reviewer temporarily unavailable. Check test output logs for details.'],
+                optimalExplanation: 'Review compile error log outputs.',
+                secondaryHint: 'Ensure your environment variables are configured correctly.',
+                optimalCode: '// Review standard documentation',
+              };
             }
           }
-        });
-
-        if (stepDetails?.lesson?.module?.course) {
-          const course = stepDetails.lesson.module.course;
-          const allStepIds: string[] = [];
-          course.modules.forEach(m => {
-            m.lessons.forEach(l => {
-              l.steps.forEach(s => {
-                allStepIds.push(s.id);
-              });
-            });
-          });
-
-          const completedCount = await prisma.lessonProgress.count({
-            where: {
-              userId: dbUser.id,
-              stepId: { in: allStepIds },
-              isCompleted: true
-            }
-          });
-
-          const progressPct = allStepIds.length > 0 
-            ? Math.min((completedCount / allStepIds.length) * 100, 100) 
-            : 0;
-
-          await prisma.enrollment.update({
-            where: {
-              userId_courseId: {
-                userId: dbUser.id,
-                courseId: course.id
-              }
-            },
-            data: {
-              progressPct: progressPct,
-              completedAt: progressPct === 100 ? new Date() : null
-            }
-          });
         }
       }
     }
@@ -240,7 +345,8 @@ export async function POST(req: NextRequest) {
         passedCount,
         totalCount
       } : null,
-      testCases: parsedTestCases.length > 0 ? parsedTestCases : null
+      testCases: parsedTestCases.length > 0 ? parsedTestCases : null,
+      aiFeedback: aiFeedbackResponse
     });
   } catch (error: any) {
     console.error('Compiler Route error:', error);

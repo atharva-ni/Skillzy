@@ -40,6 +40,30 @@ export async function GET() {
       orderBy: { createdAt: 'desc' },
     });
 
+    // Fetch latest submissions with their AI reviews
+    const latestSubmission = await prisma.submission.findFirst({
+      where: { userId: dbUser.id },
+      orderBy: { submittedAt: 'desc' },
+      include: {
+        aiReviews: {
+          orderBy: { createdAt: 'desc' },
+          take: 1,
+        },
+        assignment: {
+          select: { title: true }
+        }
+      }
+    });
+
+    const recentAiFeedback = latestSubmission && latestSubmission.aiReviews.length > 0 ? {
+      title: latestSubmission.assignment?.title || 'Coding Practice Lab',
+      score: latestSubmission.aiReviews[0].overallScore || 0,
+      summary: latestSubmission.aiReviews[0].summary || '',
+      strengths: latestSubmission.aiReviews[0].strengths || [],
+      improvements: latestSubmission.aiReviews[0].improvements || [],
+      styleFeedback: latestSubmission.aiReviews[0].styleFeedback || '',
+    } : null;
+
     return apiSuccess({
       user: {
         id: dbUser.id,
@@ -58,6 +82,7 @@ export async function GET() {
       },
       enrolledCourseIds,
       payments,
+      recentAiFeedback,
     });
   } catch (error: any) {
     console.error('Error fetching /api/users/me:', error);

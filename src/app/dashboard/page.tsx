@@ -30,6 +30,7 @@ export default function StudentDashboard() {
   const { user } = useAuth();
   const router = useRouter();
   const [enrolledCourses, setEnrolledCourses] = useState<any[]>([]);
+  const [recentAiFeedback, setRecentAiFeedback] = useState<any>(null);
   const [loading, setLoading] = useState(true);
   const [stats, setStats] = useState({
     enrolledCount: 0,
@@ -62,6 +63,7 @@ export default function StudentDashboard() {
         const meData = await meRes.json();
         
         const courseIds = meData.enrolledCourseIds || [];
+        setRecentAiFeedback(meData.recentAiFeedback || null);
         
         // Match course IDs to full courses details
         const fullEnrolled = data.courses.filter((c: any) => courseIds.includes(c.id));
@@ -309,88 +311,136 @@ export default function StudentDashboard() {
           <h2 className="section-title" style={{ margin: 0, fontSize: '1.15rem' }}>Recent AI Feedback</h2>
         </div>
 
-        <div 
-          style={{
-            background: '#ffffff',
-            border: '1px solid #e5e5e5',
-            borderRadius: 'var(--radius-lg)',
-            overflow: 'hidden',
-            boxShadow: 'var(--shadow-premium)',
-          }}
-        >
-          {/* Header */}
-          <div style={{
-            display: 'flex',
-            alignItems: 'center',
-            gap: '12px',
-            padding: '16px 20px',
-            borderBottom: '1px solid #f0f0f0',
-          }}>
+        {recentAiFeedback ? (
+          <div 
+            style={{
+              background: '#ffffff',
+              border: '1px solid #e5e5e5',
+              borderRadius: 'var(--radius-lg)',
+              overflow: 'hidden',
+              boxShadow: 'var(--shadow-premium)',
+            }}
+          >
+            {/* Header */}
             <div style={{
-              background: 'rgba(16, 185, 129, 0.08)',
-              border: '1px solid rgba(16, 185, 129, 0.15)',
-              borderRadius: 'var(--radius-md)',
-              width: '36px',
-              height: '36px',
               display: 'flex',
               alignItems: 'center',
-              justifyContent: 'center',
-              color: '#10b981',
-              flexShrink: 0,
+              gap: '12px',
+              padding: '16px 20px',
+              borderBottom: '1px solid #f0f0f0',
             }}>
-              <TerminalIcon size={16} />
-            </div>
-            <div style={{ flex: 1, minWidth: 0 }}>
-              <h4 style={{ color: 'var(--text-primary)', fontSize: 'var(--font-size-sm)', fontWeight: 700, margin: 0 }}>REST API Assignment — Code Review</h4>
-              <p style={{ color: 'var(--text-tertiary)', fontSize: 'var(--font-size-xs)', marginTop: '2px' }}>Interactive optimization feedback</p>
-            </div>
-            <span style={{
-              background: 'rgba(16, 185, 129, 0.08)',
-              color: '#059669',
-              border: '1px solid rgba(16, 185, 129, 0.2)',
-              padding: '4px 12px',
-              fontSize: '0.75rem',
-              fontWeight: 700,
-              borderRadius: 'var(--radius-full)',
-              flexShrink: 0,
-              fontVariantNumeric: 'tabular-nums',
-            }}>
-              87/100
-            </span>
-          </div>
-
-          {/* Feedback items */}
-          <div style={{ padding: '16px 20px', display: 'flex', flexDirection: 'column', gap: '12px' }}>
-            {[
-              { icon: '✓', color: '#10b981', bg: 'rgba(16, 185, 129, 0.08)', text: 'Good use of async/await patterns and error handling middleware.' },
-              { icon: '⚡', color: '#f59e0b', bg: 'rgba(245, 158, 11, 0.08)', text: 'Consider using connection pooling for database queries to improve performance by ~40%.' },
-              { icon: '🛡', color: '#ef4444', bg: 'rgba(239, 68, 68, 0.08)', text: 'Add input validation with a library like Zod to prevent SQL injection vectors.' },
-            ].map((item, i) => (
-              <div key={i} style={{
-                display: 'flex',
-                alignItems: 'flex-start',
-                gap: '12px',
-                padding: '10px 12px',
-                background: item.bg,
+              <div style={{
+                background: recentAiFeedback.score >= 80 ? 'rgba(16, 185, 129, 0.08)' : 'rgba(245, 158, 11, 0.08)',
+                border: `1px solid ${recentAiFeedback.score >= 80 ? 'rgba(16, 185, 129, 0.15)' : 'rgba(245, 158, 11, 0.15)'}`,
                 borderRadius: 'var(--radius-md)',
+                width: '36px',
+                height: '36px',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                color: recentAiFeedback.score >= 80 ? '#10b981' : '#f59e0b',
+                flexShrink: 0,
               }}>
-                <span style={{
-                  fontSize: '0.875rem',
-                  lineHeight: '1.5',
-                  flexShrink: 0,
-                  width: '20px',
-                  textAlign: 'center',
-                }}>{item.icon}</span>
-                <p style={{
-                  color: 'var(--text-secondary)',
-                  fontSize: 'var(--font-size-sm)',
-                  lineHeight: '1.5',
-                  margin: 0,
-                }}>{item.text}</p>
+                <TerminalIcon size={16} />
               </div>
-            ))}
+              <div style={{ flex: 1, minWidth: 0 }}>
+                <h4 style={{ color: 'var(--text-primary)', fontSize: 'var(--font-size-sm)', fontWeight: 700, margin: 0 }}>{recentAiFeedback.title}</h4>
+                <p style={{ color: 'var(--text-tertiary)', fontSize: 'var(--font-size-xs)', marginTop: '2px' }}>
+                  {recentAiFeedback.summary || 'Interactive optimization feedback'}
+                </p>
+              </div>
+              <span style={{
+                background: recentAiFeedback.score >= 80 ? 'rgba(16, 185, 129, 0.08)' : 'rgba(245, 158, 11, 0.08)',
+                color: recentAiFeedback.score >= 80 ? '#059669' : '#d97706',
+                border: `1px solid ${recentAiFeedback.score >= 80 ? 'rgba(16, 185, 129, 0.2)' : 'rgba(245, 158, 11, 0.2)'}`,
+                padding: '4px 12px',
+                fontSize: '0.75rem',
+                fontWeight: 700,
+                borderRadius: 'var(--radius-full)',
+                flexShrink: 0,
+                fontVariantNumeric: 'tabular-nums',
+              }}>
+                {recentAiFeedback.score}/100
+              </span>
+            </div>
+
+            {/* Feedback items */}
+            <div style={{ padding: '16px 20px', display: 'flex', flexDirection: 'column', gap: '12px' }}>
+              {/* Render Strengths */}
+              {(recentAiFeedback.strengths as string[] || []).slice(0, 2).map((text, i) => (
+                <div key={`strength-${i}`} style={{
+                  display: 'flex',
+                  alignItems: 'flex-start',
+                  gap: '12px',
+                  padding: '10px 12px',
+                  background: 'rgba(16, 185, 129, 0.04)',
+                  borderRadius: 'var(--radius-md)',
+                  borderLeft: '3px solid #10b981'
+                }}>
+                  <span style={{ fontSize: '0.875rem', lineHeight: '1.5', flexShrink: 0, width: '20px', textAlign: 'center', color: '#10b981' }}>✓</span>
+                  <p style={{ color: 'var(--text-secondary)', fontSize: 'var(--font-size-sm)', lineHeight: '1.5', margin: 0 }}>
+                    <strong>Strength:</strong> {text}
+                  </p>
+                </div>
+              ))}
+
+              {/* Render Improvements */}
+              {(recentAiFeedback.improvements as string[] || []).slice(0, 2).map((text, i) => (
+                <div key={`improvement-${i}`} style={{
+                  display: 'flex',
+                  alignItems: 'flex-start',
+                  gap: '12px',
+                  padding: '10px 12px',
+                  background: 'rgba(245, 158, 11, 0.04)',
+                  borderRadius: 'var(--radius-md)',
+                  borderLeft: '3px solid #f59e0b'
+                }}>
+                  <span style={{ fontSize: '0.875rem', lineHeight: '1.5', flexShrink: 0, width: '20px', textAlign: 'center', color: '#f59e0b' }}>⚡</span>
+                  <p style={{ color: 'var(--text-secondary)', fontSize: 'var(--font-size-sm)', lineHeight: '1.5', margin: 0 }}>
+                    <strong>Tip:</strong> {text}
+                  </p>
+                </div>
+              ))}
+
+              {recentAiFeedback.styleFeedback && (
+                <div style={{
+                  display: 'flex',
+                  alignItems: 'flex-start',
+                  gap: '12px',
+                  padding: '10px 12px',
+                  background: 'rgba(59, 130, 246, 0.04)',
+                  borderRadius: 'var(--radius-md)',
+                  borderLeft: '3px solid #3b82f6'
+                }}>
+                  <span style={{ fontSize: '0.875rem', lineHeight: '1.5', flexShrink: 0, width: '20px', textAlign: 'center', color: '#3b82f6' }}>🛡</span>
+                  <p style={{ color: 'var(--text-secondary)', fontSize: 'var(--font-size-sm)', lineHeight: '1.5', margin: 0 }}>
+                    <strong>Advice:</strong> {recentAiFeedback.styleFeedback}
+                  </p>
+                </div>
+              )}
+            </div>
           </div>
-        </div>
+        ) : (
+          <div 
+            style={{
+              background: '#ffffff',
+              border: '1px solid #e5e5e5',
+              borderRadius: 'var(--radius-lg)',
+              padding: '32px 24px',
+              textAlign: 'center',
+              boxShadow: 'var(--shadow-premium)',
+              color: 'var(--text-secondary)'
+            }}
+          >
+            <p style={{ fontSize: 'var(--font-size-sm)', margin: 0, fontWeight: 500 }}>No AI code reviews generated yet.</p>
+            <p style={{ fontSize: 'var(--font-size-xs)', color: 'var(--text-tertiary)', marginTop: '6px', marginBottom: '16px' }}>
+              Complete interactive coding steps or attempt standalone challenges in the Coding Lab to receive socratic AI code reviews here.
+            </p>
+            <Link href="/dashboard/coding-lab" className="btn btn-outline btn-sm" style={{ display: 'inline-block', textDecoration: 'none' }}>
+              Go to Coding Lab
+            </Link>
+          </div>
+        )}
       </motion.section>
     </div>
   );

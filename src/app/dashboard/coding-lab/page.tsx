@@ -13,6 +13,7 @@ interface AiFeedbackType {
   suggestions: string[];
   optimalCode?: string;
   optimalExplanation?: string;
+  secondaryHint?: string;
 }
 
 type Language = 'javascript' | 'python' | 'cpp' | 'java';
@@ -35,6 +36,7 @@ interface ExecutionOutput {
   wallTime: number | null;
   testResults: TestResult | null;
   testCases: { index: number; passed: boolean; actual: string }[] | null;
+  aiFeedback?: AiFeedbackType | null;
 }
 
 function CodingLabInner() {
@@ -49,6 +51,7 @@ function CodingLabInner() {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [showAiFeedback, setShowAiFeedback] = useState(false);
   const [aiFeedback, setAiFeedback] = useState<AiFeedbackType | null>(null);
+  const [showSecondaryHint, setShowSecondaryHint] = useState(false);
   const [execOutput, setExecOutput] = useState<ExecutionOutput | null>(null);
   const [selectedCaseIdx, setSelectedCaseIdx] = useState(0);
 
@@ -164,29 +167,37 @@ function CodingLabInner() {
     setIsSubmitting(true);
     setActiveTab('report');
     setExecOutput(null);
+    setShowSecondaryHint(false);
     const result = await callCompileApi(true);
     setIsSubmitting(false);
     if (result) {
       setExecOutput(result);
-      // Show AI feedback panel after submission (dynamic lookup from DB)
-      const feedbackData = isStepMode
-        ? (dbStep?.metadata?.aiFeedback || dbStep?.metadata || {})
-        : (activeProblem?.aiFeedback || {});
-
-      const feedback = {
-        score: feedbackData.score || 82,
-        metrics: feedbackData.metrics || { complexity: 'O(N) Time', performance: 'Good Runtime', style: 'Readable' },
-        suggestions: feedbackData.suggestions || ['Great work! Review edge cases and consider space optimizations.'],
-        optimalExplanation: feedbackData.optimalExplanation || 'Review the problem constraints and choose the simplest correct approach.',
-        optimalCode: feedbackData.optimalCode || code,
-      };
-      setAiFeedback(feedback);
-      setShowAiFeedback(true);
 
       if (result.testResults?.passed) {
-        toast.success(`✅ All ${result.testResults.passedCount} tests passed!`);
-      } else if (result.testResults) {
-        toast.error(`❌ ${result.testResults.summary}`);
+        setShowAiFeedback(false);
+        setAiFeedback(null);
+        toast.success(`✅ All ${result.testResults.passedCount} tests passed! Excellent work.`);
+      } else {
+        // Show AI feedback panel after submission (incorrect code)
+        const feedbackData = isStepMode
+          ? (dbStep?.metadata?.aiFeedback || dbStep?.metadata || {})
+          : (activeProblem?.aiFeedback || {});
+
+        const feedback = result.aiFeedback || {
+          score: feedbackData.score || 50,
+          metrics: feedbackData.metrics || { complexity: 'N/A', performance: 'Failed review', style: 'Needs review' },
+          suggestions: feedbackData.suggestions || ['Review test case assertions and edge cases.'],
+          optimalExplanation: feedbackData.optimalExplanation || 'Examine code logic and resolve failures.',
+          optimalCode: feedbackData.optimalCode || '// Review hints to solve.',
+        };
+        setAiFeedback(feedback);
+        setShowAiFeedback(true);
+
+        if (result.testResults) {
+          toast.error(`❌ ${result.testResults.summary}`);
+        } else {
+          toast.error(`❌ Submission failed. Check console error outputs.`);
+        }
       }
     }
   };
@@ -592,20 +603,7 @@ function CodingLabInner() {
                       ))}
                     </div>
 
-                    {/* AI Feedback preview */}
-                    {aiFeedback && (
-                      <div style={{ borderTop: '1px solid var(--border-primary)', paddingTop: '12px' }}>
-                        <p style={{ fontSize: 'var(--font-size-xs)', color: 'var(--text-tertiary)', marginBottom: '6px' }}>
-                          🤖 AI Optimization Score
-                        </p>
-                        <div style={{ fontSize: '1.5rem', fontWeight: 800, color: 'var(--success)' }}>
-                          {aiFeedback.score}/100
-                        </div>
-                        <p style={{ fontSize: 'var(--font-size-xs)', color: 'var(--text-secondary)', marginTop: '4px' }}>
-                          See full analysis in the right panel →
-                        </p>
-                      </div>
-                    )}
+
                   </div>
                 )}
               </div>
@@ -616,58 +614,41 @@ function CodingLabInner() {
 
       {/* Right Pane: AI Feedback */}
       {showAiFeedback && aiFeedback && (
-        <div className="card" style={{ display: 'flex', flexDirection: 'column', height: '100%', overflowY: 'auto', borderRadius: 0, borderTop: 'none', borderBottom: 'none', animation: 'slideInLeft 0.3s ease' }}>
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px' }}>
-            <h3 style={{ fontSize: 'var(--font-size-md)', fontWeight: 700 }}>🤖 AI Feedback</h3>
-            <button onClick={() => setShowAiFeedback(false)} style={{ background: 'transparent', color: 'var(--text-tertiary)', fontSize: '1.25rem', border: 'none', cursor: 'pointer' }}>×</button>
+        <div className="card" style={{ display: 'flex', flexDirection: 'column', height: '100%', overflowY: 'auto', borderRadius: 0, borderTop: 'none', borderBottom: 'none', animation: 'slideInLeft 0.3s ease', padding: '24px' }}>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px', borderBottom: '1px solid var(--border-primary)', paddingBottom: '12px' }}>
+            <h3 style={{ fontSize: 'var(--font-size-md)', fontWeight: 700, margin: 0, display: 'flex', alignItems: 'center', gap: '8px' }}>
+              <span>🤖</span> AI Tutor Hints
+            </h3>
+            <button onClick={() => setShowAiFeedback(false)} style={{ background: 'transparent', color: 'var(--text-tertiary)', fontSize: '1.25rem', border: 'none', cursor: 'pointer', padding: '4px' }}>×</button>
           </div>
 
-          <div style={{ display: 'flex', alignItems: 'center', gap: '12px', background: 'var(--bg-tertiary)', padding: '12px', borderRadius: 'var(--radius-md)', marginBottom: '16px' }}>
-            <span style={{ fontSize: '2rem' }}>🎯</span>
-            <div>
-              <div style={{ fontSize: 'var(--font-size-lg)', fontWeight: 800, color: 'var(--success)' }}>{aiFeedback.score}/100</div>
-              <div style={{ fontSize: 'var(--font-size-xs)', color: 'var(--text-secondary)' }}>Optimization Score</div>
-            </div>
+          <div style={{ fontSize: 'var(--font-size-sm)', color: 'var(--text-secondary)', lineHeight: 1.7, whiteSpace: 'pre-wrap' }}>
+            {aiFeedback.optimalExplanation}
           </div>
 
-          <div style={{ marginBottom: '16px' }}>
-            <h4 style={{ fontSize: 'var(--font-size-sm)', fontWeight: 600, marginBottom: '8px' }}>Metrics</h4>
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '6px', fontSize: 'var(--font-size-xs)' }}>
-              {Object.entries(aiFeedback.metrics).map(([k, v]) => (
-                <div key={k} style={{ display: 'flex', justifyContent: 'space-between' }}>
-                  <span style={{ color: 'var(--text-secondary)', textTransform: 'capitalize' }}>{k}:</span>
-                  <span style={{ fontWeight: 600, color: 'var(--accent-primary-hover)' }}>{v}</span>
+          {aiFeedback.secondaryHint && (
+            <>
+              {showSecondaryHint ? (
+                <div style={{ marginTop: '20px', padding: '16px', background: 'rgba(59, 130, 246, 0.04)', borderLeft: '3px solid #3b82f6', borderRadius: 'var(--radius-md)', animation: 'fadeIn 0.2s ease' }}>
+                  <h4 style={{ fontSize: '10px', fontWeight: 700, color: '#2563eb', margin: '0 0 6px 0', textTransform: 'uppercase', letterSpacing: '0.5px' }}>
+                    Follow-up Hint
+                  </h4>
+                  <div style={{ fontSize: 'var(--font-size-sm)', color: 'var(--text-secondary)', lineHeight: 1.6, whiteSpace: 'pre-wrap' }}>
+                    {aiFeedback.secondaryHint}
+                  </div>
                 </div>
-              ))}
-            </div>
-          </div>
-
-          <div style={{ marginBottom: '16px' }}>
-            <h4 style={{ fontSize: 'var(--font-size-sm)', fontWeight: 600, marginBottom: '8px' }}>Suggestions</h4>
-            <ul style={{ display: 'flex', flexDirection: 'column', gap: '8px', padding: 0, listStyle: 'none' }}>
-              {aiFeedback.suggestions.map((s, i) => (
-                <li key={i} style={{ fontSize: 'var(--font-size-xs)', color: 'var(--text-secondary)', padding: '8px', background: 'var(--bg-glass)', borderRadius: 'var(--radius-sm)', borderLeft: '3px solid var(--accent-primary)', lineHeight: 1.5 }}>
-                  {s}
-                </li>
-              ))}
-            </ul>
-          </div>
-
-          {aiFeedback.optimalExplanation && (
-            <div>
-              <h4 style={{ fontSize: 'var(--font-size-sm)', fontWeight: 600, marginBottom: '6px' }}>Optimal Approach</h4>
-              <p style={{ fontSize: 'var(--font-size-xs)', color: 'var(--text-secondary)', lineHeight: 1.6, marginBottom: '8px' }}>
-                {aiFeedback.optimalExplanation}
-              </p>
-              {aiFeedback.optimalCode && (
-                <div style={{ background: 'var(--bg-secondary)', border: '1px solid var(--border-primary)', borderRadius: 'var(--radius-md)', padding: '12px' }}>
-                  <div style={{ fontSize: 'var(--font-size-xs)', color: 'var(--text-tertiary)', marginBottom: '6px' }}>Optimal Implementation</div>
-                  <pre style={{ margin: 0, fontFamily: 'monospace', fontSize: '11px', color: '#0969da', overflowX: 'auto', whiteSpace: 'pre-wrap' }}>
-                    {aiFeedback.optimalCode}
-                  </pre>
+              ) : (
+                <div style={{ marginTop: '24px' }}>
+                  <button
+                    onClick={() => setShowSecondaryHint(true)}
+                    className="btn btn-outline btn-sm"
+                    style={{ width: '100%', textTransform: 'none', fontWeight: 600 }}
+                  >
+                    Need another hint?
+                  </button>
                 </div>
               )}
-            </div>
+            </>
           )}
         </div>
       )}

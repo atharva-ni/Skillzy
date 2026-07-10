@@ -1121,6 +1121,26 @@ except Exception as err:
     }
   ];
 
+  // 1. Standalone Coding Problems
+  const instructor = await prisma.user.findFirst({
+    where: { role: 'instructor' }
+  });
+  if (instructor) {
+    const courseId = 'coding-practice-lab';
+    await prisma.course.upsert({
+      where: { id: courseId },
+      update: {},
+      create: {
+        id: courseId,
+        title: 'Coding Labs Practice',
+        slug: 'coding-labs-practice',
+        description: 'Practice challenges for coding labs',
+        instructorId: instructor.id,
+        status: 'published',
+      }
+    });
+  }
+
   for (const prob of problems) {
     console.log(`Upserting coding problem: ${prob.title}...`);
     await prisma.codingProblem.upsert({
@@ -1132,7 +1152,7 @@ except Exception as err:
         description: prob.description,
         starterCode: prob.starterCode,
         testCode: prob.testCode,
-        aiFeedback: prob.aiFeedback,
+        aiFeedback: {},
         examples: prob.examples,
         sampleOutput: prob.sampleOutput,
         sortOrder: prob.sortOrder,
@@ -1145,12 +1165,31 @@ except Exception as err:
         description: prob.description,
         starterCode: prob.starterCode,
         testCode: prob.testCode,
-        aiFeedback: prob.aiFeedback,
+        aiFeedback: {},
         examples: prob.examples,
         sampleOutput: prob.sampleOutput,
         sortOrder: prob.sortOrder,
       }
     });
+
+    if (instructor) {
+      await prisma.assignment.upsert({
+        where: { id: prob.slug },
+        update: {
+          title: prob.title,
+          description: prob.description,
+        },
+        create: {
+          id: prob.slug,
+          courseId: 'coding-practice-lab',
+          title: prob.title,
+          description: prob.description,
+          assignmentType: 'coding',
+          status: 'active',
+          maxScore: 100,
+        }
+      });
+    }
   }
 
   // 2. Update LessonStep records with their test cases
