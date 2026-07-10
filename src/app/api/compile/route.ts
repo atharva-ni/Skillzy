@@ -258,11 +258,21 @@ export async function POST(req: NextRequest) {
               }
             }
           } else {
-            // Incorrect code -> Call Socratic Tutor
+            // Incorrect code -> Call live Socratic Tutor Agent for personalized analysis
             let calculatedScore = 50;
-            let suggestions: string[] = ['Review test case assertions and edge cases.'];
-            let optimalExplanation = 'Examine code logic and resolve failures.';
-            
+            let suggestions: string[] = [];
+            let optimalExplanation = '';
+            let secondaryHint = null;
+
+            // Fetch static data to have as backup or context
+            let backupData: any = {};
+            if (dbStep && dbStep.metadata) {
+              const meta = dbStep.metadata as any;
+              backupData = meta.aiFeedback || meta || {};
+            } else if (dbProblem && dbProblem.aiFeedback) {
+              backupData = dbProblem.aiFeedback as any;
+            }
+
             try {
               const challengeTitle = dbStep?.title || dbProblem?.title || 'Coding Challenge';
               const socratic = await analyzeBuggyCode(code, language, challengeTitle);
@@ -278,21 +288,22 @@ export async function POST(req: NextRequest) {
                 ...(socratic.nextSteps?.map(n => `Next Step: ${n.step} - Review ${n.concept}. Hint: ${n.hint}`) || [])
               ];
               if (suggestions.length === 0) {
-                suggestions = ['Verify test inputs and code structure.'];
+                suggestions = backupData.suggestions || ['Verify test inputs and code structure.'];
               }
 
-              optimalExplanation = socratic.primaryHint || socratic.educationalTips || 'Review the details below to improve your solution.';
+              optimalExplanation = socratic.primaryHint || socratic.educationalTips || backupData.optimalExplanation || 'Review your code logic and resolve failures.';
+              secondaryHint = socratic.secondaryHint || backupData.secondaryHint || null;
 
               aiFeedbackResponse = {
                 score: calculatedScore,
                 metrics: {
-                  complexity: socratic.inefficiencies?.map(i => i.area).join(', ') || 'Standard',
-                  performance: socratic.inefficiencies?.length > 0 ? 'Review inefficiencies' : 'Passed checks',
-                  style: socratic.syntaxErrors?.length > 0 ? 'Needs attention' : 'Good formatting'
+                  complexity: socratic.inefficiencies?.map(i => i.area).join(', ') || backupData.metrics?.complexity || 'Standard',
+                  performance: socratic.inefficiencies?.length > 0 ? 'Review inefficiencies' : backupData.metrics?.performance || 'Passed checks',
+                  style: socratic.syntaxErrors?.length > 0 ? 'Needs attention' : backupData.metrics?.style || 'Good formatting'
                 },
                 suggestions,
                 optimalExplanation,
-                secondaryHint: socratic.secondaryHint || 'Take another look at the logic structure and operators.',
+                secondaryHint,
                 optimalCode: '// Review the hints to write the optimal code!',
               };
 
@@ -302,11 +313,7 @@ export async function POST(req: NextRequest) {
                   overallScore: calculatedScore,
                   summary: socratic.codeIntent || 'Socratic Analysis Feedback',
                   strengths: socratic.positives || [],
-                  improvements: [
-                    ...(socratic.logicalErrors?.map(e => e.issue) || []),
-                    ...(socratic.syntaxErrors || []),
-                    ...(socratic.inefficiencies?.map(i => i.reason) || [])
-                  ],
+                  improvements: suggestions,
                   complexityAnalysis: socratic.inefficiencies?.map(i => i.area).join(', ') || null,
                   performanceTips: socratic.inefficiencies?.map(i => i.hint).join('\n') || null,
                   styleFeedback: socratic.educationalTips || null,
@@ -315,15 +322,34 @@ export async function POST(req: NextRequest) {
                 }
               });
             } catch (aiErr) {
-              console.error('Failed to run Socratic tutor or save AI review:', aiErr);
+              console.error('Failed to run live Socratic tutor, falling back to static database review:', aiErr);
               aiFeedbackResponse = {
-                score: 50,
-                metrics: { complexity: 'N/A', performance: 'Failed review', style: 'Needs review' },
-                suggestions: ['Socratic Reviewer temporarily unavailable. Check test output logs for details.'],
-                optimalExplanation: 'Review compile error log outputs.',
-                secondaryHint: 'Ensure your environment variables are configured correctly.',
-                optimalCode: '// Review standard documentation',
+                score: backupData.score || 50,
+                metrics: backupData.metrics || { complexity: 'N/A', performance: 'Failed review', style: 'Needs review' },
+                suggestions: backupData.suggestions || ['Review test case assertions and edge cases.'],
+                optimalExplanation: backupData.optimalExplanation || 'Examine code logic and resolve failures.',
+                secondaryHint: backupData.secondaryHint || null,
+                optimalCode: backupData.optimalCode || '// Review hints to solve.',
               };
+
+              try {
+                await prisma.aiReview.create({
+                  data: {
+                    submissionId: dbSubmission.id,
+                    overallScore: aiFeedbackResponse.score,
+                    summary: 'Static Database Review Fallback',
+                    strengths: [],
+                    improvements: aiFeedbackResponse.suggestions,
+                    complexityAnalysis: aiFeedbackResponse.metrics.complexity,
+                    performanceTips: aiFeedbackResponse.optimalExplanation,
+                    styleFeedback: aiFeedbackResponse.metrics.style,
+                    rawResponse: aiFeedbackResponse,
+                    modelUsed: 'Static Database Review Fallback'
+                  }
+                });
+              } catch (dbErr) {
+                console.error('Failed to save fallback AI review to DB:', dbErr);
+              }
             }
           }
         }

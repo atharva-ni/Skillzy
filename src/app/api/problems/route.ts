@@ -15,9 +15,11 @@ export async function GET() {
         description: true,
         starterCode: true,
         examples: true,
+        constraints: true,
         sampleOutput: true,
         testCode: true,
         aiFeedback: true,
+        sortOrder: true,
       }
     });
 

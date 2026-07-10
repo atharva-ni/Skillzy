@@ -1,16 +1,16 @@
 'use client';
 
-import React, { useEffect, useState, Suspense } from 'react';
+import React, { useEffect, useState, Suspense, useRef, useCallback } from 'react';
 import { useSearchParams } from 'next/navigation';
 import Editor from '@monaco-editor/react';
 import Button from '@/components/ui/Button';
-import Badge from '@/components/ui/Badge';
 import { toast } from 'sonner';
 
 interface AiFeedbackType {
   score: number;
   metrics: { complexity: string; performance: string; style: string };
   suggestions: string[];
+  positives?: string[];
   optimalCode?: string;
   optimalExplanation?: string;
   secondaryHint?: string;
@@ -46,7 +46,6 @@ function CodingLabInner() {
   const [language, setLanguage] = useState<Language>('javascript');
   const [selectedProblemId, setSelectedProblemId] = useState('');
   const [code, setCode] = useState('');
-  const [activeTab, setActiveTab] = useState<'console' | 'report'>('console');
   const [isRunning, setIsRunning] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [showAiFeedback, setShowAiFeedback] = useState(false);
@@ -63,6 +62,46 @@ function CodingLabInner() {
   // Dynamic problems loading (for standalone practice mode)
   const [problems, setProblems] = useState<any[]>([]);
   const [loadingProblems, setLoadingProblems] = useState(true);
+
+  // Resizable panels
+  const [leftWidth, setLeftWidth] = useState(280);     // px
+  const [rightWidth, setRightWidth] = useState(300);   // px
+  const [leftCollapsed, setLeftCollapsed] = useState(false);
+  const [rightCollapsed, setRightCollapsed] = useState(false);
+  const [outputCollapsed, setOutputCollapsed] = useState(false);
+  const containerRef = useRef<HTMLDivElement>(null);
+  const isDraggingLeft = useRef(false);
+  const isDraggingRight = useRef(false);
+
+  const startDrag = useCallback((side: 'left' | 'right') => (e: React.MouseEvent) => {
+    e.preventDefault();
+    if (side === 'left') isDraggingLeft.current = true;
+    else isDraggingRight.current = true;
+
+    const startX = e.clientX;
+    const startLeftW = leftWidth;
+    const startRightW = rightWidth;
+
+    const onMove = (ev: MouseEvent) => {
+      const totalW = containerRef.current?.offsetWidth || window.innerWidth;
+      const delta = ev.clientX - startX;
+      if (isDraggingLeft.current) {
+        const next = Math.max(180, Math.min(totalW * 0.4, startLeftW + delta));
+        setLeftWidth(next);
+      } else {
+        const next = Math.max(200, Math.min(totalW * 0.4, startRightW - delta));
+        setRightWidth(next);
+      }
+    };
+    const onUp = () => {
+      isDraggingLeft.current = false;
+      isDraggingRight.current = false;
+      window.removeEventListener('mousemove', onMove);
+      window.removeEventListener('mouseup', onUp);
+    };
+    window.addEventListener('mousemove', onMove);
+    window.addEventListener('mouseup', onUp);
+  }, [leftWidth, rightWidth]);
 
   const activeProblem = problems.find((p) => p.slug === selectedProblemId || p.id === selectedProblemId) ?? problems[0];
   const activeExamples = isStepMode && dbStep ? (dbStep.metadata?.examples || []) : (activeProblem?.examples || []);
@@ -125,7 +164,6 @@ function CodingLabInner() {
       setExecOutput(null);
       setAiFeedback(null);
       setShowAiFeedback(false);
-      setActiveTab('console');
       setSelectedCaseIdx(0);
     }
   }, [activeProblem, language, isStepMode]);
@@ -156,7 +194,6 @@ function CodingLabInner() {
 
   const handleRun = async () => {
     setIsRunning(true);
-    setActiveTab('console');
     setExecOutput(null);
     const result = await callCompileApi(false);
     setIsRunning(false);
@@ -165,7 +202,6 @@ function CodingLabInner() {
 
   const handleSubmit = async () => {
     setIsSubmitting(true);
-    setActiveTab('report');
     setExecOutput(null);
     setShowSecondaryHint(false);
     const result = await callCompileApi(true);
@@ -174,11 +210,22 @@ function CodingLabInner() {
       setExecOutput(result);
 
       if (result.testResults?.passed) {
-        setShowAiFeedback(false);
-        setAiFeedback(null);
+        const feedbackData = isStepMode
+          ? (dbStep?.metadata?.aiFeedback || dbStep?.metadata || {})
+          : (activeProblem?.aiFeedback || {});
+
+        const feedback = result.aiFeedback || {
+          score: 100,
+          metrics: { complexity: 'Optimal', performance: 'All tests passed', style: 'Excellent' },
+          suggestions: ['Congratulations! Your solution is fully correct and passed all verification checks.'],
+          optimalExplanation: feedbackData.optimalExplanation || 'Your solution has successfully met the correctness requirements.',
+          optimalCode: feedbackData.optimalCode || code,
+        };
+        setAiFeedback(feedback);
+        setShowAiFeedback(true);
         toast.success(`✅ All ${result.testResults.passedCount} tests passed! Excellent work.`);
       } else {
-        // Show AI feedback panel after submission (incorrect code)
+        // Show AI feedback inside the side panel
         const feedbackData = isStepMode
           ? (dbStep?.metadata?.aiFeedback || dbStep?.metadata || {})
           : (activeProblem?.aiFeedback || {});
@@ -214,22 +261,66 @@ function CodingLabInner() {
     );
   }
 
-  return (
-    <div style={{
-      display: 'grid',
-      gridTemplateColumns: showAiFeedback ? '3fr 5fr 3.5fr' : '1fr 2fr',
-      gap: 'var(--spacing-md)',
-      height: 'calc(100vh - var(--header-height) - 48px)',
-      margin: '-12px',
-      overflow: 'hidden'
-    }}>
-      {/* Left Pane: Problem Description */}
-      <div className="card" style={{ display: 'flex', flexDirection: 'column', height: '100%', overflowY: 'auto', borderRadius: 0, borderTop: 'none', borderBottom: 'none' }}>
-        <div style={{ display: 'flex', flexDirection: 'column', gap: '16px', padding: '16px 16px 0' }}>
+  const effectiveLeft = leftCollapsed ? 0 : leftWidth;
+  const effectiveRight = (rightCollapsed || !showAiFeedback) ? 0 : rightWidth;
 
+  return (
+    <div
+      ref={containerRef}
+      style={{
+        display: 'flex',
+        flexDirection: 'row',
+        height: 'calc(100vh - var(--header-height) - 48px)',
+        margin: '-12px',
+        overflow: 'hidden',
+        position: 'relative',
+        userSelect: 'none',
+      }}
+    >
+      {/* Collapsed left tab */}
+      {leftCollapsed && (
+        <div style={{
+          width: '28px',
+          background: 'var(--bg-secondary)',
+          borderRight: '1px solid var(--border-primary)',
+          display: 'flex',
+          flexDirection: 'column',
+          alignItems: 'center',
+          paddingTop: '12px',
+          cursor: 'pointer',
+          flexShrink: 0,
+        }} onClick={() => setLeftCollapsed(false)} title="Expand Problem">
+          <span style={{ fontSize: '10px', color: 'var(--text-tertiary)', writingMode: 'vertical-rl', transform: 'rotate(180deg)', letterSpacing: '1px', fontWeight: 700, textTransform: 'uppercase' }}>Problem</span>
+          <span style={{ marginTop: '8px', fontSize: '16px' }}>›</span>
+        </div>
+      )}
+      {/* Left Pane: Problem Description */}
+      {!leftCollapsed && (
+        <div className="card" style={{
+          width: `${leftWidth}px`,
+          minWidth: `${leftWidth}px`,
+          maxWidth: `${leftWidth}px`,
+          display: 'flex',
+          flexDirection: 'column',
+          height: '100%',
+          overflowY: 'auto',
+          borderRadius: 0,
+          borderTop: 'none',
+          borderBottom: 'none',
+          borderLeft: 'none',
+          padding: 0,
+          flexShrink: 0,
+          transition: 'width 0.05s',
+        }}>
+          {/* Left panel header with collapse button */}
+          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '8px 12px', borderBottom: '1px solid var(--border-primary)', background: 'var(--bg-tertiary)', flexShrink: 0 }}>
+            <span style={{ fontSize: '11px', fontWeight: 700, color: 'var(--text-tertiary)', textTransform: 'uppercase', letterSpacing: '0.05em' }}>Problem</span>
+            <button onClick={() => setLeftCollapsed(true)} title="Collapse panel" style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--text-tertiary)', fontSize: '16px', padding: '0 4px', lineHeight: 1, display: 'flex', alignItems: 'center' }}>‹</button>
+          </div>
           {/* Step mode: show step details from DB */}
+
           {isStepMode && dbStep ? (
-            <div>
+            <div style={{ padding: '20px' }}>
               <span className="badge badge-primary" style={{ marginBottom: '8px', display: 'inline-block' }}>
                 💻 LESSON LAB
               </span>
@@ -243,75 +334,245 @@ function CodingLabInner() {
               )}
             </div>
           ) : (
-            <>
+            <div style={{ display: 'flex', flexDirection: 'column', height: '100%' }}>
               {/* Problem selector dropdown */}
-              <div style={{ position: 'relative', width: '100%', marginBottom: '16px' }}>
-                <span style={{ position: 'absolute', left: '12px', top: '50%', transform: 'translateY(-50%)', opacity: 0.6, pointerEvents: 'none', fontSize: '0.85rem' }}>📚</span>
-                <select
-                  className="input select"
-                  value={selectedProblemId}
-                  onChange={(e) => setSelectedProblemId(e.target.value)}
-                  style={{
-                    paddingLeft: '2.5rem',
-                    backgroundColor: '#ffffff',
-                    borderColor: '#e5e5e5',
-                    borderRadius: 'var(--radius-md)',
-                    cursor: 'pointer',
-                    width: '100%',
-                    fontSize: 'var(--font-size-sm)',
-                    height: '42px',
-                    transition: 'all 0.2s ease'
-                  }}
-                >
-                  {problems.map((problem) => (
-                    <option 
-                      key={problem.id || problem.slug} 
-                      value={problem.slug || problem.id}
-                      style={{ background: 'var(--bg-secondary)', color: 'var(--text-primary)' }}
-                    >
-                      {problem.title} ({problem.difficulty})
-                    </option>
-                  ))}
-                </select>
-              </div>
-
-              {/* Title & Badges */}
-              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '16px', borderBottom: '1px solid #e5e5e5', paddingBottom: '16px', marginBottom: '8px' }}>
-                <h2 style={{ fontSize: 'var(--font-size-lg)', fontWeight: 700, margin: 0 }}>{activeProblem?.title}</h2>
-                <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap' }}>
-                  <Badge variant={activeProblem?.difficulty === 'Easy' ? 'success' : 'warning'}>{activeProblem?.difficulty}</Badge>
-                  {(activeProblem?.tags as string[] || []).map((tag) => (
-                    <Badge key={tag} variant="primary">{tag}</Badge>
-                  ))}
+              <div style={{ padding: '12px 16px', borderBottom: '1px solid var(--border-primary)' }}>
+                <div style={{ position: 'relative', width: '100%' }}>
+                  <span style={{ position: 'absolute', left: '12px', top: '50%', transform: 'translateY(-50%)', opacity: 0.6, pointerEvents: 'none', fontSize: '0.85rem' }}>📚</span>
+                  <select
+                    className="input select"
+                    value={selectedProblemId}
+                    onChange={(e) => setSelectedProblemId(e.target.value)}
+                    style={{
+                      paddingLeft: '2.5rem',
+                      backgroundColor: '#ffffff',
+                      borderColor: '#e5e5e5',
+                      borderRadius: 'var(--radius-md)',
+                      cursor: 'pointer',
+                      width: '100%',
+                      fontSize: 'var(--font-size-sm)',
+                      height: '42px',
+                      transition: 'all 0.2s ease'
+                    }}
+                  >
+                    {problems.map((problem) => (
+                      <option
+                        key={problem.id || problem.slug}
+                        value={problem.slug || problem.id}
+                        style={{ background: 'var(--bg-secondary)', color: 'var(--text-primary)' }}
+                      >
+                        {problem.title} ({problem.difficulty})
+                      </option>
+                    ))}
+                  </select>
                 </div>
               </div>
-            </>
+
+              {/* Scrollable problem content */}
+              {activeProblem && (
+                <div style={{ flex: 1, overflowY: 'auto', padding: '20px 24px 28px' }}>
+                  {/* Problem number + title */}
+                  <h2 style={{ fontSize: '1.25rem', fontWeight: 700, margin: '0 0 12px 0', color: 'var(--text-primary)', lineHeight: 1.3 }}>
+                    {activeProblem.sortOrder}. {activeProblem.title}
+                  </h2>
+
+                  {/* Difficulty badge + topic tags */}
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '8px', flexWrap: 'wrap', marginBottom: '20px' }}>
+                    <span style={{
+                      display: 'inline-flex',
+                      alignItems: 'center',
+                      padding: '2px 10px',
+                      borderRadius: 'var(--radius-full)',
+                      fontSize: '11px',
+                      fontWeight: 700,
+                      letterSpacing: '0.01em',
+                      background: activeProblem.difficulty === 'easy'
+                        ? 'rgba(0, 175, 155, 0.12)'
+                        : activeProblem.difficulty === 'medium'
+                          ? 'rgba(255, 176, 46, 0.12)'
+                          : 'rgba(255, 55, 95, 0.12)',
+                      color: activeProblem.difficulty === 'easy'
+                        ? '#00af9b'
+                        : activeProblem.difficulty === 'medium'
+                          ? '#ffb02e'
+                          : '#ff375f',
+                    }}>
+                      {activeProblem.difficulty === 'easy' ? 'Easy' : activeProblem.difficulty === 'medium' ? 'Medium' : 'Hard'}
+                    </span>
+
+                    <span style={{ color: 'var(--border-secondary)', fontSize: '14px', userSelect: 'none' }}>|</span>
+
+                    <span style={{
+                      fontSize: '11px',
+                      fontWeight: 600,
+                      color: 'var(--text-tertiary)',
+                      textTransform: 'uppercase',
+                      letterSpacing: '0.03em',
+                    }}>
+                      Topics
+                    </span>
+
+                    {(activeProblem.tags as string[] || []).map((tag: string) => (
+                      <span
+                        key={tag}
+                        style={{
+                          display: 'inline-flex',
+                          alignItems: 'center',
+                          padding: '2px 10px',
+                          borderRadius: 'var(--radius-full)',
+                          fontSize: '11px',
+                          fontWeight: 500,
+                          background: 'var(--bg-tertiary)',
+                          color: 'var(--text-secondary)',
+                          border: '1px solid var(--border-primary)',
+                          cursor: 'default',
+                        }}
+                      >
+                        {tag}
+                      </span>
+                    ))}
+                  </div>
+
+                  {/* Description */}
+                  <div style={{
+                    fontSize: 'var(--font-size-sm)',
+                    color: 'var(--text-primary)',
+                    lineHeight: 1.75,
+                    whiteSpace: 'pre-wrap',
+                    marginBottom: '24px',
+                  }}>
+                    {activeProblem.description}
+                  </div>
+
+                  {/* Horizontal separator */}
+                  <div style={{ height: '1px', background: 'var(--border-primary)', marginBottom: '20px' }} />
+
+                  {/* Examples */}
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: '20px', marginBottom: '24px' }}>
+                    {(activeProblem.examples as any[] || []).map((example: any, index: number) => (
+                      <div key={index}>
+                        <div style={{
+                          fontSize: 'var(--font-size-sm)',
+                          fontWeight: 700,
+                          color: 'var(--text-primary)',
+                          marginBottom: '8px',
+                        }}>
+                          Example {index + 1}:
+                        </div>
+                        <div style={{
+                          background: 'var(--bg-tertiary)',
+                          borderRadius: 'var(--radius-md)',
+                          padding: '14px 16px',
+                          borderLeft: '3px solid var(--border-secondary)',
+                          display: 'flex',
+                          flexDirection: 'column',
+                          gap: '4px',
+                        }}>
+                          <div style={{ display: 'flex', gap: '6px' }}>
+                            <span style={{ fontWeight: 700, fontSize: '13px', color: 'var(--text-primary)', flexShrink: 0 }}>Input:</span>
+                            <code style={{
+                              fontFamily: "'JetBrains Mono', 'Fira Code', Consolas, monospace",
+                              fontSize: '12.5px',
+                              color: 'var(--text-primary)',
+                              wordBreak: 'break-all',
+                            }}>
+                              {example.input}
+                            </code>
+                          </div>
+                          <div style={{ display: 'flex', gap: '6px' }}>
+                            <span style={{ fontWeight: 700, fontSize: '13px', color: 'var(--text-primary)', flexShrink: 0 }}>Output:</span>
+                            <code style={{
+                              fontFamily: "'JetBrains Mono', 'Fira Code', Consolas, monospace",
+                              fontSize: '12.5px',
+                              color: 'var(--text-primary)',
+                              wordBreak: 'break-all',
+                            }}>
+                              {example.output}
+                            </code>
+                          </div>
+                          {example.explanation && (
+                            <div style={{ display: 'flex', gap: '6px', marginTop: '2px' }}>
+                              <span style={{ fontWeight: 700, fontSize: '13px', color: 'var(--text-primary)', flexShrink: 0 }}>Explanation:</span>
+                              <span style={{
+                                fontSize: '13px',
+                                color: 'var(--text-secondary)',
+                                lineHeight: 1.5,
+                              }}>
+                                {example.explanation}
+                              </span>
+                            </div>
+                          )}
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+
+                  {/* Constraints */}
+                  {(activeProblem.constraints as string[] || []).length > 0 && (
+                    <div>
+                      <div style={{ height: '1px', background: 'var(--border-primary)', marginBottom: '20px' }} />
+                      <div style={{
+                        fontSize: 'var(--font-size-sm)',
+                        fontWeight: 700,
+                        color: 'var(--text-primary)',
+                        marginBottom: '10px',
+                      }}>
+                        Constraints:
+                      </div>
+                      <ul style={{
+                        listStyle: 'disc',
+                        paddingLeft: '20px',
+                        display: 'flex',
+                        flexDirection: 'column',
+                        gap: '6px',
+                      }}>
+                        {(activeProblem.constraints as string[]).map((constraint: string, idx: number) => (
+                          <li key={idx} style={{ fontSize: '13px', color: 'var(--text-secondary)', lineHeight: 1.5 }}>
+                            <code style={{
+                              fontFamily: "'JetBrains Mono', 'Fira Code', Consolas, monospace",
+                              fontSize: '12px',
+                              color: 'var(--text-primary)',
+                              background: 'var(--bg-tertiary)',
+                              padding: '1px 6px',
+                              borderRadius: '4px',
+                              border: '1px solid var(--border-primary)',
+                            }}>
+                              {constraint}
+                            </code>
+                          </li>
+                        ))}
+                      </ul>
+                    </div>
+                  )}
+                </div>
+              )}
+            </div>
           )}
         </div>
+      )} {/* end left panel */}
 
-        {/* Problem description & examples (free practice mode) */}
-        {!isStepMode && activeProblem && (
-          <div style={{ padding: '0 16px 16px', display: 'flex', flexDirection: 'column', gap: '12px' }}>
-            <p style={{ fontSize: 'var(--font-size-sm)', color: 'var(--text-secondary)', lineHeight: 1.6 }}>
-              {activeProblem.description}
-            </p>
-            {(activeProblem.examples as any[] || []).map((example, index) => (
-              <div key={index} style={{ background: 'var(--bg-tertiary)', padding: '12px', borderRadius: 'var(--radius-md)', border: '1px solid var(--border-primary)' }}>
-                <strong>Example {index + 1}:</strong>
-                <pre style={{ marginTop: '4px', color: 'var(--text-primary)', fontSize: '0.8rem' }}>
-                  Input: {example.input}{'\n'}
-                  Output: {example.output}
-                </pre>
-              </div>
-            ))}
-          </div>
-        )}
-      </div>
+      {/* Left drag handle */}
+      {!leftCollapsed && (
+        <div
+          onMouseDown={startDrag('left')}
+          style={{
+            width: '5px',
+            background: 'transparent',
+            cursor: 'col-resize',
+            flexShrink: 0,
+            position: 'relative',
+            zIndex: 10,
+          }}
+          onMouseOver={e => (e.currentTarget.style.background = 'var(--accent-primary)')}
+          onMouseOut={e => (e.currentTarget.style.background = 'transparent')}
+        />
+      )}
 
       {/* Middle Pane: Monaco Editor + Output */}
-      <div style={{ display: 'flex', flexDirection: 'column', height: '100%', gap: 'var(--spacing-md)', overflow: 'hidden' }}>
+      <div style={{ flex: 1, display: 'flex', flexDirection: 'column', height: '100%', gap: 0, overflow: 'hidden', minWidth: 0 }}>
         {/* Editor Toolbar */}
-        <div className="card" style={{ flex: '1 1 55%', display: 'flex', flexDirection: 'column', padding: 0, overflow: 'hidden', borderRadius: 0 }}>
+        <div className="card" style={{ flex: outputCollapsed ? '1' : '1 1 60%', display: 'flex', flexDirection: 'column', padding: 0, overflow: 'hidden', borderRadius: 0, borderLeft: 'none', borderRight: 'none', borderTop: 'none' }}>
+
           <div style={{
             display: 'flex', alignItems: 'center', justifyContent: 'space-between',
             padding: '8px 16px', background: 'var(--bg-tertiary)', borderBottom: '1px solid var(--border-primary)'
@@ -371,34 +632,28 @@ function CodingLabInner() {
           </div>
         </div>
 
-        {/* Output / Submission Report Pane */}
-        <div className="card" style={{ flex: '1 1 40%', display: 'flex', flexDirection: 'column', padding: 0, overflow: 'hidden', borderRadius: 0 }}>
-          {/* Tabs */}
-          <div style={{ display: 'flex', background: 'var(--bg-tertiary)', borderBottom: '1px solid var(--border-primary)', padding: '0 8px' }}>
-            {(['console', 'report'] as const).map((tab) => (
+        {/* Output / Console Output Pane */}
+        {!outputCollapsed && (
+          <div className="card" style={{ flex: '0 1 38%', display: 'flex', flexDirection: 'column', padding: 0, overflow: 'hidden', borderRadius: 0, borderLeft: 'none', borderRight: 'none', borderBottom: 'none' }}>
+            {/* Tabs */}
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', background: 'var(--bg-tertiary)', borderBottom: '1px solid var(--border-primary)', padding: '0 8px' }}>
               <button
-                key={tab}
-                onClick={() => setActiveTab(tab)}
                 style={{
+
                   padding: '10px 16px', fontSize: 'var(--font-size-xs)', fontWeight: 600,
-                  color: activeTab === tab ? 'var(--accent-primary-hover)' : 'var(--text-secondary)',
-                  borderBottom: activeTab === tab ? '2px solid var(--accent-primary)' : '2px solid transparent',
-                  cursor: 'pointer', background: 'transparent', display: 'flex', alignItems: 'center', gap: '6px',
+                  color: 'var(--accent-primary-hover)',
+                  borderBottom: '2px solid var(--accent-primary)',
+                  cursor: 'default', background: 'transparent', display: 'flex', alignItems: 'center', gap: '6px',
                 }}
               >
-                {tab === 'console' ? '📟 Console Output' : '📊 Submission Report'}
-                {tab === 'report' && execOutput?.testResults && (
-                  <span style={{
-                    width: '7px', height: '7px', borderRadius: '50%',
-                    background: execOutput.testResults.passed ? 'var(--success)' : 'var(--danger)',
-                  }} />
-                )}
+                📟 Console Output
               </button>
-            ))}
-          </div>
+              <button onClick={() => setOutputCollapsed(true)} title="Collapse console" style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--text-tertiary)', fontSize: '14px', padding: '4px 8px', marginLeft: 'auto', display: 'flex', alignItems: 'center', gap: '4px' }}>
+                <span style={{ fontSize: '10px' }}>▼</span> Hide
+              </button>
+            </div>
 
-          <div style={{ flex: 1, overflowY: 'auto', backgroundColor: 'var(--bg-tertiary)', padding: '16px' }}>
-            {activeTab === 'console' ? (
+            <div style={{ flex: 1, overflowY: 'auto', backgroundColor: 'var(--bg-tertiary)', padding: '16px' }}>
               <div style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
                 {/* Output log area */}
                 <div style={{
@@ -447,7 +702,7 @@ function CodingLabInner() {
                     <div style={{ fontSize: 'var(--font-size-xs)', color: 'var(--text-secondary)', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.05em' }}>
                       📋 Test Cases
                     </div>
-                    
+
                     <div style={{ display: 'flex', gap: '8px' }}>
                       {activeExamples.map((_: any, idx: number) => {
                         const tcResult = execOutput?.testCases?.find(tc => tc.index === idx);
@@ -548,108 +803,204 @@ function CodingLabInner() {
                   </div>
                 )}
               </div>
-            ) : (
-              <div>
-                {!execOutput && !isSubmitting && (
-                  <div style={{ textAlign: 'center', padding: '2rem 0', color: 'var(--text-secondary)' }}>
-                    <p style={{ fontSize: 'var(--font-size-sm)' }}>No submission yet.</p>
-                    <p style={{ fontSize: 'var(--font-size-xs)', color: 'var(--text-tertiary)', marginTop: '4px' }}>
-                      Click <strong>Submit</strong> to run tests and get your AI optimization report.
-                    </p>
-                  </div>
-                )}
-                {isSubmitting && (
-                  <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: '12px', padding: '2rem 0' }}>
-                    <span style={{ fontSize: '1.5rem', animation: 'float 2s infinite' }}>🤖</span>
-                    <span style={{ fontSize: 'var(--font-size-sm)', color: 'var(--text-secondary)' }}>
-                      Running test cases and generating AI review...
-                    </span>
-                  </div>
-                )}
-                {execOutput && !isSubmitting && (
-                  <div style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
-                    {/* Test Results Banner */}
-                    {execOutput.testResults && (
-                      <div style={{
-                        display: 'flex', alignItems: 'center', gap: '12px',
-                        padding: '12px 16px', borderRadius: 'var(--radius-md)',
-                        background: execOutput.testResults.passed ? 'rgba(16,185,129,0.1)' : 'rgba(239,68,68,0.1)',
-                        border: `1px solid ${execOutput.testResults.passed ? 'var(--success)' : 'var(--danger)'}`,
-                      }}>
-                        <span style={{ fontSize: '1.5rem' }}>{execOutput.testResults.passed ? '✅' : '❌'}</span>
-                        <div>
-                          <div style={{ fontSize: 'var(--font-size-md)', fontWeight: 800, color: execOutput.testResults.passed ? 'var(--success)' : 'var(--danger)' }}>
-                            {execOutput.testResults.passed ? 'Accepted' : 'Wrong Answer'}
-                          </div>
-                          <div style={{ fontSize: 'var(--font-size-xs)', color: 'var(--text-tertiary)' }}>
-                            {execOutput.testResults.summary}
-                          </div>
-                        </div>
-                      </div>
-                    )}
+            </div>
+          </div>
+        )} {/* end output pane */}
 
-                    {/* Performance Stats */}
-                    <div style={{ display: 'flex', gap: '24px' }}>
-                      {[
-                        { label: 'Runtime', value: `${execOutput.timeMs}ms` },
-                        { label: 'Memory', value: execOutput.memory ? `${(execOutput.memory / 1024).toFixed(0)} KB` : 'N/A' },
-                        { label: 'CPU Time', value: execOutput.cpuTime != null ? `${execOutput.cpuTime}ms` : 'N/A' },
-                        { label: 'Exit Code', value: String(execOutput.exitCode) },
-                      ].map(({ label, value }) => (
-                        <div key={label}>
-                          <div style={{ fontSize: 'var(--font-size-xs)', color: 'var(--text-tertiary)' }}>{label}</div>
-                          <div style={{ fontSize: 'var(--font-size-md)', fontWeight: 700, color: 'var(--text-primary)' }}>{value}</div>
-                        </div>
-                      ))}
-                    </div>
+        {/* Collapsed console bar */}
+        {outputCollapsed && (
+          <div onClick={() => setOutputCollapsed(false)} style={{
+            height: '32px',
+            background: 'var(--bg-tertiary)',
+            borderTop: '1px solid var(--border-primary)',
+            display: 'flex',
+            alignItems: 'center',
+            padding: '0 16px',
+            cursor: 'pointer',
+            gap: '8px',
+            flexShrink: 0,
+          }}>
+            <span style={{ fontSize: '10px' }}>▲</span>
+            <span style={{ fontSize: '11px', fontWeight: 600, color: 'var(--text-tertiary)' }}>Show Console Output</span>
+          </div>
+        )}
+      </div> {/* end middle pane */}
 
+      {/* Right drag handle */}
+      {showAiFeedback && aiFeedback && !rightCollapsed && (
+        <div
+          onMouseDown={startDrag('right')}
+          style={{
+            width: '5px',
+            background: 'transparent',
+            cursor: 'col-resize',
+            flexShrink: 0,
+            position: 'relative',
+            zIndex: 10,
+          }}
+          onMouseOver={e => (e.currentTarget.style.background = 'var(--accent-primary)')}
+          onMouseOut={e => (e.currentTarget.style.background = 'transparent')}
+        />
+      )}
 
+      {/* Collapsed right tab */}
+      {showAiFeedback && aiFeedback && rightCollapsed && (
+        <div style={{
+          width: '28px',
+          background: 'var(--bg-secondary)',
+          borderLeft: '1px solid var(--border-primary)',
+          display: 'flex',
+          flexDirection: 'column',
+          alignItems: 'center',
+          paddingTop: '12px',
+          cursor: 'pointer',
+          flexShrink: 0,
+        }} onClick={() => setRightCollapsed(false)} title="Expand AI Review">
+          <span style={{ fontSize: '10px', color: 'var(--text-tertiary)', writingMode: 'vertical-rl', letterSpacing: '1px', fontWeight: 700, textTransform: 'uppercase' }}>AI Review</span>
+          <span style={{ marginTop: '8px', fontSize: '16px' }}>‹</span>
+        </div>
+      )}
+
+      {/* Right Pane: AI Review */}
+      {showAiFeedback && aiFeedback && !rightCollapsed && (
+        <div className="card" style={{
+          width: `${rightWidth}px`,
+          minWidth: `${rightWidth}px`,
+          maxWidth: `${rightWidth}px`,
+          display: 'flex',
+          flexDirection: 'column',
+          height: '100%',
+          overflowY: 'auto',
+          borderRadius: 0,
+          borderTop: 'none',
+          borderBottom: 'none',
+          borderRight: 'none',
+          flexShrink: 0,
+
+          animation: 'slideInLeft 0.3s ease',
+          padding: '24px',
+          background: 'var(--bg-secondary)',
+          borderLeft: '1px solid var(--border-primary)'
+        }}>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px', borderBottom: '1px solid var(--border-primary)', paddingBottom: '12px' }}>
+            <h3 style={{ fontSize: 'var(--font-size-md)', fontWeight: 700, margin: 0, display: 'flex', alignItems: 'center', gap: '8px', color: 'var(--text-primary)' }}>
+              <span>🤖</span> AI Review
+            </h3>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
+              <button onClick={() => setRightCollapsed(true)} title="Collapse panel" style={{ background: 'transparent', color: 'var(--text-tertiary)', fontSize: '1rem', border: 'none', cursor: 'pointer', padding: '4px 6px', borderRadius: '4px' }}>›</button>
+              <button onClick={() => setShowAiFeedback(false)} style={{ background: 'transparent', color: 'var(--text-tertiary)', fontSize: '1.25rem', border: 'none', cursor: 'pointer', padding: '4px' }}>×</button>
+            </div>
+          </div>
+
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
+            {/* Test Results Banner */}
+            {execOutput?.testResults && (
+              <div style={{
+                display: 'flex', alignItems: 'center', gap: '12px',
+                padding: '12px 16px', borderRadius: 'var(--radius-md)',
+                background: execOutput.testResults.passed ? 'rgba(16,185,129,0.08)' : 'rgba(239,68,68,0.08)',
+                border: `1px solid ${execOutput.testResults.passed ? 'var(--success)' : 'var(--danger)'}`,
+              }}>
+                <span style={{ fontSize: '1.5rem' }}>{execOutput.testResults.passed ? '✅' : '❌'}</span>
+                <div>
+                  <div style={{ fontSize: 'var(--font-size-md)', fontWeight: 800, color: execOutput.testResults.passed ? 'var(--success)' : 'var(--danger)' }}>
+                    {execOutput.testResults.passed ? 'Accepted' : 'Wrong Answer'}
                   </div>
-                )}
+                  <div style={{ fontSize: 'var(--font-size-xs)', color: 'var(--text-tertiary)' }}>
+                    {execOutput.testResults.summary}
+                  </div>
+                </div>
               </div>
             )}
-          </div>
-        </div>
-      </div>
 
-      {/* Right Pane: AI Feedback */}
-      {showAiFeedback && aiFeedback && (
-        <div className="card" style={{ display: 'flex', flexDirection: 'column', height: '100%', overflowY: 'auto', borderRadius: 0, borderTop: 'none', borderBottom: 'none', animation: 'slideInLeft 0.3s ease', padding: '24px' }}>
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px', borderBottom: '1px solid var(--border-primary)', paddingBottom: '12px' }}>
-            <h3 style={{ fontSize: 'var(--font-size-md)', fontWeight: 700, margin: 0, display: 'flex', alignItems: 'center', gap: '8px' }}>
-              <span>🤖</span> AI Tutor Hints
-            </h3>
-            <button onClick={() => setShowAiFeedback(false)} style={{ background: 'transparent', color: 'var(--text-tertiary)', fontSize: '1.25rem', border: 'none', cursor: 'pointer', padding: '4px' }}>×</button>
-          </div>
-
-          <div style={{ fontSize: 'var(--font-size-sm)', color: 'var(--text-secondary)', lineHeight: 1.7, whiteSpace: 'pre-wrap' }}>
-            {aiFeedback.optimalExplanation}
-          </div>
-
-          {aiFeedback.secondaryHint && (
-            <>
-              {showSecondaryHint ? (
-                <div style={{ marginTop: '20px', padding: '16px', background: 'rgba(59, 130, 246, 0.04)', borderLeft: '3px solid #3b82f6', borderRadius: 'var(--radius-md)', animation: 'fadeIn 0.2s ease' }}>
-                  <h4 style={{ fontSize: '10px', fontWeight: 700, color: '#2563eb', margin: '0 0 6px 0', textTransform: 'uppercase', letterSpacing: '0.5px' }}>
-                    Follow-up Hint
-                  </h4>
-                  <div style={{ fontSize: 'var(--font-size-sm)', color: 'var(--text-secondary)', lineHeight: 1.6, whiteSpace: 'pre-wrap' }}>
-                    {aiFeedback.secondaryHint}
+            {/* Performance Stats */}
+            {execOutput && (
+              <div style={{
+                display: 'grid',
+                gridTemplateColumns: 'repeat(2, 1fr)',
+                gap: '12px',
+                background: 'var(--bg-tertiary)',
+                padding: '12px 16px',
+                borderRadius: 'var(--radius-md)',
+                border: '1px solid var(--border-primary)'
+              }}>
+                {[
+                  { label: 'Runtime', value: `${execOutput.timeMs}ms` },
+                  { label: 'Memory', value: execOutput.memory ? `${(execOutput.memory / 1024).toFixed(0)} KB` : 'N/A' },
+                  { label: 'CPU Time', value: execOutput.cpuTime != null ? `${execOutput.cpuTime}ms` : 'N/A' },
+                  { label: 'Exit Code', value: String(execOutput.exitCode) },
+                ].map(({ label, value }) => (
+                  <div key={label}>
+                    <div style={{ fontSize: '10px', color: 'var(--text-tertiary)', textTransform: 'uppercase', fontWeight: 600 }}>{label}</div>
+                    <div style={{ fontSize: 'var(--font-size-sm)', fontWeight: 700, color: 'var(--text-primary)' }}>{value}</div>
                   </div>
+                ))}
+              </div>
+            )}
+
+            {/* What you did well (positives from live AI) */}
+
+            {aiFeedback.positives && aiFeedback.positives.length > 0 && (
+              <div style={{
+                background: 'rgba(34, 197, 94, 0.06)',
+                border: '1px solid rgba(34, 197, 94, 0.2)',
+                borderRadius: 'var(--radius-md)',
+                padding: '12px 14px',
+                display: 'flex',
+                flexDirection: 'column',
+                gap: '6px'
+              }}>
+                <div style={{ fontSize: '10px', fontWeight: 700, color: '#16a34a', textTransform: 'uppercase', letterSpacing: '0.05em' }}>✓ What You Got Right</div>
+                {aiFeedback.positives.map((p: string, idx: number) => (
+                  <div key={idx} style={{ fontSize: '12px', color: 'var(--text-secondary)', lineHeight: 1.5, display: 'flex', gap: '6px' }}>
+                    <span style={{ color: '#22c55e' }}>✓</span>
+                    <span>{p}</span>
+                  </div>
+                ))}
+              </div>
+            )}
+
+            {/* Hints to Solve */}
+            {aiFeedback.suggestions && aiFeedback.suggestions.length > 0 && (
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+                <div style={{ fontSize: '11px', fontWeight: 700, color: 'var(--text-tertiary)', textTransform: 'uppercase', letterSpacing: '0.05em' }}>Hints to Solve</div>
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+                  {aiFeedback.suggestions.map((suggestion: string, idx: number) => (
+                    <div key={idx} style={{
+                      fontSize: '12px',
+                      color: 'var(--text-secondary)',
+                      lineHeight: 1.6,
+                      background: 'var(--bg-tertiary)',
+                      border: '1px solid var(--border-primary)',
+                      borderRadius: 'var(--radius-sm)',
+                      padding: '10px 12px',
+                      display: 'flex',
+                      gap: '10px',
+                      alignItems: 'flex-start'
+                    }}>
+                      <span style={{
+                        background: 'var(--accent-primary)',
+                        color: '#fff',
+                        borderRadius: '50%',
+                        width: '18px',
+                        height: '18px',
+                        minWidth: '18px',
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        fontSize: '9px',
+                        fontWeight: 700,
+                        marginTop: '1px'
+                      }}>{idx + 1}</span>
+                      <span>{suggestion}</span>
+                    </div>
+                  ))}
                 </div>
-              ) : (
-                <div style={{ marginTop: '24px' }}>
-                  <button
-                    onClick={() => setShowSecondaryHint(true)}
-                    className="btn btn-outline btn-sm"
-                    style={{ width: '100%', textTransform: 'none', fontWeight: 600 }}
-                  >
-                    Need another hint?
-                  </button>
-                </div>
-              )}
-            </>
-          )}
+              </div>
+            )}
+
+
+          </div>
         </div>
       )}
     </div>

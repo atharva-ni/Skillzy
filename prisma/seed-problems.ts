@@ -14,8 +14,12 @@ async function main() {
       tags: ['Algorithms'],
       description: 'Write a function reverseString(str) that takes a string as input and returns the string reversed.',
       examples: [
-        { input: '"hello"', output: '"olleh"' },
-        { input: '"Skillzy"', output: '"yzllikS"' }
+        { input: '"hello"', output: '"olleh"', explanation: 'The characters of "hello" reversed give "olleh".' },
+        { input: '"Skillzy"', output: '"yzllikS"', explanation: 'Case is preserved when reversing.' }
+      ],
+      constraints: [
+        '1 <= str.length <= 10^5',
+        'str consists of printable ASCII characters'
       ],
       sampleOutput: '"olleh"',
       sortOrder: 1,
@@ -85,9 +89,10 @@ except Exception as err:
         score: 94,
         metrics: { complexity: 'O(N) Time • O(N) Space', performance: 'Excellent Runtime', style: 'Highly Readable' },
         suggestions: [
+          'To reverse a sequence of elements without using built-in methods, you can swap elements from both ends moving towards the center.',
+          'For example, if you have an array [A, B, C, D], you swap A and D to get [D, B, C, A], then swap B and C to get [D, C, B, A]. This works similarly for characters in a string.',
           'Good use of native JavaScript methods (`split`, `reverse`, `join`) which execute rapidly.',
-          'Note: This creates an intermediate array of size N, resulting in O(N) auxiliary space complexity.',
-          'To optimize to O(1) auxiliary space, reverse the string in-place using a two-pointer swaps technique.'
+          'Note: This creates an intermediate array of size N, resulting O(N) auxiliary space complexity. To optimize to O(1) auxiliary space, reverse the string in-place using a two-pointer swaps technique.'
         ],
         optimalExplanation: 'An optimal solution reverses the string in-place using two pointers starting at the beginning and end of the string, swapping characters until they meet. This reduces space complexity from O(N) to O(1).',
         optimalCode: `function reverseStringInPlace(arr) {\n  let left = 0;\n  let right = arr.length - 1;\n  while (left < right) {\n    let temp = arr[left];\n    arr[left] = arr[right];\n    arr[right] = temp;\n    left++;\n    right--;\n  }\n  return arr;\n}`
@@ -100,8 +105,12 @@ except Exception as err:
       tags: ['Algorithms', 'Strings'],
       description: 'Write a function isPalindrome(str) that returns true if the string reads the same forwards and backwards. Ignore case and non-alphanumeric characters.',
       examples: [
-        { input: '"Racecar"', output: 'true' },
-        { input: '"A man, a plan, a canal: Panama"', output: 'true' }
+        { input: '"Racecar"', output: 'true', explanation: '"racecar" reads the same forward and backward.' },
+        { input: '"A man, a plan, a canal: Panama"', output: 'true', explanation: 'After removing non-alphanumeric characters and lowercasing: "amanaplanacanalpanama" is a palindrome.' }
+      ],
+      constraints: [
+        '1 <= str.length <= 2 * 10^5',
+        'str consists of printable ASCII characters'
       ],
       sampleOutput: 'true',
       sortOrder: 2,
@@ -171,9 +180,10 @@ except Exception as err:
         score: 91,
         metrics: { complexity: 'O(N) Time • O(1) Extra Space', performance: 'Very Good Runtime', style: 'Clear and Concise' },
         suggestions: [
+          'To check symmetry, you can use two pointers moving from opposite ends.',
+          'For example, in the word "radar", the first and last letters are both "r". The second and fourth are both "a". If they ever mismatch, it is not symmetric. This lets you determine palindrome status in one pass.',
           'Filtering non-alphanumeric characters before comparison keeps the logic robust against punctuation.',
-          'A two-pointer approach can avoid creating a reversed copy of the string and reduce memory usage.',
-          'Keep your character normalization separate from the comparison logic for easier testing.'
+          'A two-pointer approach can avoid creating a reversed copy of the string and reduce memory usage.'
         ],
         optimalExplanation: 'An optimal palindrome check uses two pointers to compare characters from both ends while skipping non-alphanumeric characters. This avoids full string reversal and keeps extra space constant.',
         optimalCode: `function isPalindrome(str) {\n  let left = 0;\n  let right = str.length - 1;\n  while (left < right) {\n    while (left < right && !/[a-z0-9]/i.test(str[left])) left++;\n    while (left < right && !/[a-z0-9]/i.test(str[right])) right--;\n    if (left < right && str[left].toLowerCase() !== str[right].toLowerCase()) return false;\n    left++;\n    right--;\n  }\n  return true;\n}`
@@ -186,8 +196,11 @@ except Exception as err:
       tags: ['Algorithms', 'Loops'],
       description: 'Write a function fizzBuzz(n) that returns an array of strings from 1 to n. For multiples of three use "Fizz", for multiples of five use "Buzz", and for multiples of both use "FizzBuzz".',
       examples: [
-        { input: '5', output: '["1","2","Fizz","4","Buzz"]' },
-        { input: '15', output: '["1","2","Fizz","4","Buzz","Fizz","7","8","Fizz","Buzz","11","Fizz","13","14","FizzBuzz"]' }
+        { input: 'n = 5', output: '["1","2","Fizz","4","Buzz"]', explanation: '3 is a multiple of 3 → "Fizz", 5 is a multiple of 5 → "Buzz".' },
+        { input: 'n = 15', output: '["1","2","Fizz","4","Buzz","Fizz","7","8","Fizz","Buzz","11","Fizz","13","14","FizzBuzz"]', explanation: '15 is divisible by both 3 and 5 → "FizzBuzz".' }
+      ],
+      constraints: [
+        '1 <= n <= 10^4'
       ],
       sampleOutput: '["1","2","Fizz","4","Buzz"]',
       sortOrder: 3,
@@ -253,7 +266,8 @@ except Exception as err:
         score: 89,
         metrics: { complexity: 'O(N) Time • O(1) Space', performance: 'Strong Runtime', style: 'Well-Structured' },
         suggestions: [
-          'Your loop logic correctly handles Fizz, Buzz, and FizzBuzz order with clear conditionals.',
+          'Order of checks is critical here. Think of a condition like checking if a number is divisible by 15.',
+          'Since 15 is divisible by both 3 and 5, checking for 15 first prevents a number like 15 from mistakenly outputting "Fizz" or "Buzz" instead of "FizzBuzz".',
           'Using modulo checks in decreasing specificity avoids incorrect output for numbers divisible by both 3 and 5.',
           'If you need to return values instead of printing, collect results in an array and return it for easier unit testing.'
         ],
@@ -266,10 +280,17 @@ except Exception as err:
       title: 'Two Sum',
       difficulty: ProblemDifficulty.easy,
       tags: ['Arrays', 'Hash Table'],
-      description: 'Given an array of integers and a target, return the indices of the two numbers that add up to the target.',
+      description: 'Given an array of integers nums and an integer target, return indices of the two numbers such that they add up to target.\n\nYou may assume that each input would have exactly one solution, and you may not use the same element twice.\n\nYou can return the answer in any order.',
       examples: [
-        { input: '[2,7,11,15], target=9', output: '[0,1]' },
-        { input: '[3,2,4], target=6', output: '[1,2]' }
+        { input: 'nums = [2,7,11,15], target = 9', output: '[0,1]', explanation: 'Because nums[0] + nums[1] == 9, we return [0, 1].' },
+        { input: 'nums = [3,2,4], target = 6', output: '[1,2]' },
+        { input: 'nums = [3,3], target = 6', output: '[0,1]' }
+      ],
+      constraints: [
+        '2 <= nums.length <= 10^4',
+        '-10^9 <= nums[i] <= 10^9',
+        '-10^9 <= target <= 10^9',
+        'Only one valid answer exists.'
       ],
       sampleOutput: '[0,1]',
       sortOrder: 4,
@@ -339,8 +360,9 @@ except Exception as err:
         score: 92,
         metrics: { complexity: 'O(N) Time • O(N) Space', performance: 'Excellent Runtime', style: 'Interview Ready' },
         suggestions: [
+          'Instead of searching every pair with nested loops, you can remember values you have seen.',
+          'For example, if target is 10 and you see 3, you know you need 7. By storing each visited number and its index in a dictionary/map as you go, you can check if the complement 7 was already seen in a single step.',
           'Using a hash table avoids the quadratic search of every pair.',
-          'Make sure to handle duplicate entries carefully when the complement is equal to the current number.',
           'Consider returning early as soon as the matching pair is found for best performance.'
         ],
         optimalExplanation: 'The best Two Sum solution uses one pass through the array while storing seen numbers in a hash map, so complements are found in constant time.',
@@ -352,10 +374,14 @@ except Exception as err:
       title: 'Anagram Check',
       difficulty: ProblemDifficulty.easy,
       tags: ['Strings', 'Hash Table'],
-      description: 'Given two strings, determine if one is an anagram of the other.',
+      description: 'Given two strings s and t, return true if t is an anagram of s, and false otherwise.\n\nAn Anagram is a word or phrase formed by rearranging the letters of a different word or phrase, typically using all the original letters exactly once.',
       examples: [
-        { input: '"listen", "silent"', output: 'true' },
-        { input: '"hello", "bello"', output: 'false' }
+        { input: 's = "listen", t = "silent"', output: 'true', explanation: '"silent" uses the exact same letters as "listen".' },
+        { input: 's = "hello", t = "bello"', output: 'false', explanation: '"bello" contains \'b\' which is not in "hello".' }
+      ],
+      constraints: [
+        '1 <= s.length, t.length <= 5 * 10^4',
+        's and t consist of lowercase English letters'
       ],
       sampleOutput: 'true',
       sortOrder: 5,
@@ -425,8 +451,9 @@ except Exception as err:
         score: 90,
         metrics: { complexity: 'O(N log N) Time • O(1) Extra Space', performance: 'Very Good Runtime', style: 'Straightforward' },
         suggestions: [
+          'An anagram check is like checking if two recipes have the exact same ingredients in the exact same amounts.',
+          'For example, for "listen" and "silent", count the frequency of each letter. Both contain one "l", one "i", one "s", one "t", one "e", one "n". A hash table/object is perfect for tracking these counts.',
           'Sorting both strings is a simple solution, but a character count is more efficient in practice.',
-          'Normalize case and ignore whitespace if the prompt allows it.',
           'Character frequency maps are the most memory-efficient for large alphabets.'
         ],
         optimalExplanation: 'An efficient anagram check counts character frequency for each string and compares the resulting maps, avoiding the cost of sorting.',
@@ -438,10 +465,15 @@ except Exception as err:
       title: 'Balanced Brackets',
       difficulty: ProblemDifficulty.medium,
       tags: ['Stacks', 'Strings'],
-      description: 'Check whether the sequence of brackets is balanced using (), [], and {}.',
+      description: 'Given a string s containing just the characters \'(\', \')\', \'{\', \'}\', \'[\' and \']\', determine if the input string is valid.\n\nAn input string is valid if:\n1. Open brackets must be closed by the same type of brackets.\n2. Open brackets must be closed in the correct order.\n3. Every close bracket has a corresponding open bracket of the same type.',
       examples: [
-        { input: '"()[]{}"', output: 'true' },
-        { input: '"([)]"', output: 'false' }
+        { input: 's = "()[]{}"', output: 'true' },
+        { input: 's = "([)]"', output: 'false', explanation: 'The bracket \'[\' is closed by \')\' instead of \']\'.' },
+        { input: 's = "{[]}"', output: 'true' }
+      ],
+      constraints: [
+        '1 <= s.length <= 10^4',
+        's consists of parentheses only: \'()[]{}\'' 
       ],
       sampleOutput: 'true',
       sortOrder: 6,
@@ -511,8 +543,9 @@ except Exception as err:
         score: 88,
         metrics: { complexity: 'O(N) Time • O(N) Space', performance: 'Solid Runtime', style: 'Robust' },
         suggestions: [
+          'Use a stack structure to track openings. Think of it like cafeteria trays: the last one put on is the first one taken off.',
+          'When you see a closing bracket like }, it must match the most recently opened bracket at the top of your stack (e.g. {). If it matches, pop it; if it doesn\'t or the stack is empty, it is unbalanced.',
           'A stack is the canonical approach for balanced bracket validation.',
-          'Always verify that the stack is empty at the end to avoid unclosed brackets.',
           'Use a mapping from closing to opening characters to make the compare logic concise.'
         ],
         optimalExplanation: 'The best balanced brackets solution pushes opening chars onto a stack and validates each closing char against the last open bracket.',
@@ -524,10 +557,15 @@ except Exception as err:
       title: 'Merge Sorted Arrays',
       difficulty: ProblemDifficulty.easy,
       tags: ['Arrays', 'Sorting'],
-      description: 'Merge two sorted arrays into a single sorted array.',
+      description: 'You are given two integer arrays nums1 and nums2, sorted in non-decreasing order. Merge nums1 and nums2 into a single array sorted in non-decreasing order and return it.',
       examples: [
-        { input: '[1,3,5], [2,4,6]', output: '[1,2,3,4,5,6]' },
-        { input: '[0], [0,1]', output: '[0,0,1]' }
+        { input: 'nums1 = [1,3,5], nums2 = [2,4,6]', output: '[1,2,3,4,5,6]', explanation: 'The arrays we are merging are [1,3,5] and [2,4,6]. The result of the merge is [1,2,3,4,5,6].' },
+        { input: 'nums1 = [0], nums2 = [0,1]', output: '[0,0,1]' }
+      ],
+      constraints: [
+        '0 <= nums1.length, nums2.length <= 200',
+        '-10^9 <= nums1[i], nums2[i] <= 10^9',
+        'nums1 and nums2 are sorted in non-decreasing order'
       ],
       sampleOutput: '[1,2,3,4,5,6]',
       sortOrder: 7,
@@ -597,9 +635,10 @@ except Exception as err:
         score: 90,
         metrics: { complexity: 'O(N + M) Time • O(N + M) Space', performance: 'Efficient Runtime', style: 'Clean' },
         suggestions: [
+          'Compare elements from both arrays using two markers.',
+          'For example, if comparing [1, 5] and [2, 6], compare 1 and 2 (pick 1), then compare 5 and 2 (pick 2), then 5 and 6 (pick 5). This builds a single sorted list efficiently without re-sorting.',
           'Two-pointer merging is the simplest and fastest way to combine sorted arrays.',
-          'Avoid extra sorting by preserving the order while copying the remaining elements.',
-          'This algorithm is stable and works well for large sorted inputs.'
+          'Avoid extra sorting by preserving the order while copying the remaining elements.'
         ],
         optimalExplanation: 'Merge sorted arrays by advancing two pointers and selecting the smaller current element until both arrays are exhausted.',
         optimalCode: `function mergeSorted(a, b) {\n  const result = [];\n  let i = 0, j = 0;\n  while (i < a.length && j < b.length) {\n    if (a[i] < b[j]) result.push(a[i++]);\n    else result.push(b[j++]);\n  }\n  return result.concat(a.slice(i)).concat(b.slice(j));\n}`
@@ -610,10 +649,14 @@ except Exception as err:
       title: 'Fibonacci Number',
       difficulty: ProblemDifficulty.easy,
       tags: ['Recursion', 'Dynamic Programming'],
-      description: 'Compute the n-th Fibonacci number, where Fibonacci(0)=0 and Fibonacci(1)=1.',
+      description: 'The Fibonacci numbers, commonly denoted F(n) form a sequence, called the Fibonacci sequence, such that each number is the sum of the two preceding ones, starting from 0 and 1. That is:\n\nF(0) = 0, F(1) = 1\nF(n) = F(n - 1) + F(n - 2), for n > 1\n\nGiven n, calculate F(n).',
       examples: [
-        { input: '5', output: '5' },
-        { input: '10', output: '55' }
+        { input: 'n = 2', output: '1', explanation: 'F(2) = F(1) + F(0) = 1 + 0 = 1.' },
+        { input: 'n = 5', output: '5', explanation: 'F(5) = F(4) + F(3) = 3 + 2 = 5.' },
+        { input: 'n = 10', output: '55' }
+      ],
+      constraints: [
+        '0 <= n <= 30'
       ],
       sampleOutput: '5',
       sortOrder: 8,
@@ -682,9 +725,10 @@ except Exception as err:
         score: 87,
         metrics: { complexity: 'O(N) Time • O(1) Space', performance: 'Good Runtime', style: 'Iterative' },
         suggestions: [
+          'Instead of repeatedly recalculating values, you can build up from the bottom.',
+          'For example, F(2) = F(1) + F(0) = 1 + 0 = 1. F(3) = F(2) + F(1) = 1 + 1 = 2. F(4) = F(3) + F(2) = 2 + 1 = 3. By keeping track of just the last two calculated numbers in variables, you avoid duplicate recursion.',
           'An iterative approach avoids recursion depth issues for larger n.',
-          'Use constant memory by tracking only the last two Fibonacci numbers.',
-          'Memoization can also help if the prompt asks for repeated calls.'
+          'Use constant memory by tracking only the last two Fibonacci numbers.'
         ],
         optimalExplanation: 'The optimal Fibonacci implementation uses a loop and two variables to compute the n-th value in linear time with constant space.',
         optimalCode: `function fibonacci(n) {\n  if (n < 2) return n;\n  let a = 0, b = 1;\n  for (let i = 2; i <= n; i++) {\n    [a, b] = [b, a + b];\n  }\n  return b;\n}`
@@ -695,10 +739,14 @@ except Exception as err:
       title: 'Factorial Calculation',
       difficulty: ProblemDifficulty.easy,
       tags: ['Recursion', 'Math'],
-      description: 'Write a function to compute the factorial of a non-negative integer n.',
+      description: 'Given a non-negative integer n, compute and return n! (n factorial).\n\nThe factorial of n is the product of all positive integers less than or equal to n. By convention, 0! = 1.',
       examples: [
-        { input: '5', output: '120' },
-        { input: '0', output: '1' }
+        { input: 'n = 5', output: '120', explanation: '5! = 5 × 4 × 3 × 2 × 1 = 120.' },
+        { input: 'n = 0', output: '1', explanation: 'By convention, 0! is defined as 1.' }
+      ],
+      constraints: [
+        '0 <= n <= 20',
+        'The answer is guaranteed to fit in a 64-bit integer'
       ],
       sampleOutput: '120',
       sortOrder: 9,
@@ -767,9 +815,10 @@ except Exception as err:
         score: 85,
         metrics: { complexity: 'O(N) Time • O(N) Space', performance: 'Good Runtime', style: 'Recursive' },
         suggestions: [
+          'A factorial calculates the product of decreasing numbers.',
+          'For example, 4! = 4 * 3 * 2 * 1 = 24. You can calculate this by running a loop that multiplies a running product starting from 1 up to n.',
           'Recursive factorial is concise, but iterative solution avoids call-stack limits for large n.',
-          'Validate the base case for n=0 explicitly.',
-          'For languages without tail-call optimization, iterative loops are safer.'
+          'Validate the base case for n=0 explicitly.'
         ],
         optimalExplanation: 'A factorial can be computed recursively with a simple base case, but iterative accumulation is more stack-safe for larger inputs.',
         optimalCode: `function factorial(n) {\n  let result = 1;\n  for (let i = 2; i <= n; i++) result *= i;\n  return result;\n}`
@@ -780,10 +829,14 @@ except Exception as err:
       title: 'Highest Frequency',
       difficulty: ProblemDifficulty.easy,
       tags: ['Hash Table', 'Strings'],
-      description: 'Find the most frequent character in a string and return it.',
+      description: 'Given a string s, return the character that appears most frequently. If there are multiple characters with the same highest frequency, return the one that appears first.',
       examples: [
-        { input: '"aabbbcc"', output: '"b"' },
-        { input: '"level"', output: '"l"' }
+        { input: 's = "aabbbcc"', output: '"b"', explanation: '\'b\' appears 3 times, which is more than any other character.' },
+        { input: 's = "level"', output: '"l"', explanation: '\'l\' and \'e\' both appear 2 times, but \'l\' appears first.' }
+      ],
+      constraints: [
+        '1 <= s.length <= 10^5',
+        's consists of lowercase English letters'
       ],
       sampleOutput: '"b"',
       sortOrder: 10,
@@ -853,9 +906,10 @@ except Exception as err:
         score: 89,
         metrics: { complexity: 'O(N) Time • O(K) Space', performance: 'Strong Runtime', style: 'Practical' },
         suggestions: [
+          'Use a frequency table to count occurrences.',
+          'For example, in "success", "s" appears 3 times, "u" 1 time, "c" 2 times, and "e" 1 time. Walk through the string, update your counts in a hash map, and keep track of which character has reached the highest count so far.',
           'A frequency map is the canonical solution for highest-frequency character.',
-          'Keep track of the current maximum as you build counts to avoid a second pass if desired.',
-          'Decide how to break ties when multiple characters are equally frequent.'
+          'Keep track of the current maximum as you build counts to avoid a second pass if desired.'
         ],
         optimalExplanation: 'Track character counts in a hash map while iterating, then return the character with the highest count.',
         optimalCode: `function highestFrequency(str) {\n  const counts = {};\n  let maxChar = str[0];\n  for (const char of str) {\n    counts[char] = (counts[char] || 0) + 1;\n    if (counts[char] > counts[maxChar]) maxChar = char;\n  }\n  return maxChar;\n}`
@@ -866,10 +920,14 @@ except Exception as err:
       title: 'Unique Characters',
       difficulty: ProblemDifficulty.easy,
       tags: ['Strings', 'Hash Table'],
-      description: 'Check whether a string has all unique characters.',
+      description: 'Implement a function that determines if a string has all unique characters. Return true if all characters are distinct, false otherwise.',
       examples: [
-        { input: '"abc"', output: 'true' },
-        { input: '"hello"', output: 'false' }
+        { input: 's = "abc"', output: 'true', explanation: 'All characters a, b, c are unique.' },
+        { input: 's = "hello"', output: 'false', explanation: 'The character \'l\' appears more than once.' }
+      ],
+      constraints: [
+        '0 <= s.length <= 10^5',
+        's consists of printable ASCII characters'
       ],
       sampleOutput: 'true',
       sortOrder: 11,
@@ -939,9 +997,10 @@ except Exception as err:
         score: 90,
         metrics: { complexity: 'O(N) Time • O(N) Space', performance: 'Fast Runtime', style: 'Simple' },
         suggestions: [
+          'A Set is a collection that stores unique items.',
+          'If you add characters from "hello" one by one to a set: "h", "e", "l" are added. When you try to add the second "l", you find it is already in the set, proving the string has duplicate characters.',
           'A set-based approach is ideal for verifying uniqueness in a single pass.',
-          'Return false immediately when a duplicate is found.',
-          'Consider whether the problem should ignore case or spaces in your implementation.'
+          'Return false immediately when a duplicate is found.'
         ],
         optimalExplanation: 'Use a set to record characters as you traverse the string; duplicates can be detected instantly.',
         optimalCode: `function hasUniqueChars(str) {\n  const seen = new Set();\n  for (const char of str) {\n    if (seen.has(char)) return false;\n    seen.add(char);\n  }\n  return true;\n}`
@@ -952,10 +1011,14 @@ except Exception as err:
       title: 'Count Vowels',
       difficulty: ProblemDifficulty.easy,
       tags: ['Strings'],
-      description: 'Count the number of vowels in a string.',
+      description: 'Given a string s, count and return the total number of vowels (a, e, i, o, u) in the string. Both uppercase and lowercase vowels should be counted.',
       examples: [
-        { input: '"hello"', output: '2' },
-        { input: '"Skillzy"', output: '1' }
+        { input: 's = "hello"', output: '2', explanation: 'The vowels are \'e\' and \'o\', totaling 2.' },
+        { input: 's = "Skillzy"', output: '1', explanation: 'The only vowel is \'i\'.' }
+      ],
+      constraints: [
+        '0 <= s.length <= 10^5',
+        's consists of English letters (both upper and lowercase)'
       ],
       sampleOutput: '2',
       sortOrder: 12,
@@ -1025,9 +1088,10 @@ except Exception as err:
         score: 88,
         metrics: { complexity: 'O(N) Time • O(1) Space', performance: 'Excellent Runtime', style: 'Concise' },
         suggestions: [
+          'Loop through each character and check if it belongs to the set of vowels (a, e, i, o, u, A, E, I, O, U).',
+          'You can do this with an array lookup or a string index check for each letter, incrementing a count whenever a match is found.',
           'Regular expressions make vowel counting compact and readable.',
-          'Lowercasing once before counting reduces repeated conversions.',
-          'Consider supporting both uppercase and lowercase vowels for robust input handling.'
+          'Lowercasing once before counting reduces repeated conversions.'
         ],
         optimalExplanation: 'Count vowels by scanning the string once and incrementing for each character in the vowel set.',
         optimalCode: `function countVowels(str) {\n  return (str.match(/[aeiou]/gi) || []).length;\n}`
@@ -1038,10 +1102,15 @@ except Exception as err:
       title: 'Second Largest Number',
       difficulty: ProblemDifficulty.easy,
       tags: ['Arrays', 'Math'],
-      description: 'Return the second largest number from an unsorted array.',
+      description: 'Given an integer array nums, return the second largest distinct number in the array. You may assume the array always contains at least two distinct values.',
       examples: [
-        { input: '[2,7,11,15]', output: '11' },
-        { input: '[5,5,4,3]', output: '4' }
+        { input: 'nums = [2,7,11,15]', output: '11', explanation: 'The largest is 15 and the second largest is 11.' },
+        { input: 'nums = [5,5,4,3]', output: '4', explanation: 'The largest distinct value is 5, the second largest distinct value is 4.' }
+      ],
+      constraints: [
+        '2 <= nums.length <= 10^4',
+        '-10^9 <= nums[i] <= 10^9',
+        'The array contains at least two distinct values'
       ],
       sampleOutput: '11',
       sortOrder: 13,
@@ -1111,9 +1180,10 @@ except Exception as err:
         score: 86,
         metrics: { complexity: 'O(N) Time • O(1) Space', performance: 'Efficient Runtime', style: 'Robust' },
         suggestions: [
-          'Track both the largest and second-largest values in one pass.',
-          'Handle duplicate maximum values carefully so the second largest is not the same as the maximum.',
-          'Watch out for arrays with fewer than two distinct values depending on the prompt.'
+          'Keep track of two variables: largest and secondLargest.',
+          'As you look at each number, if it is larger than largest, then the previous largest becomes the new secondLargest, and the current number becomes the new largest.',
+          'If it is only larger than secondLargest (but smaller than largest), update only secondLargest.',
+          'Track both the largest and second-largest values in one pass.'
         ],
         optimalExplanation: 'Keep the two highest distinct values while iterating the array once to find the second largest efficiently.',
         optimalCode: `function secondLargest(nums) {\n  let largest = -Infinity;\n  let second = -Infinity;\n  for (const num of nums) {\n    if (num > largest) {\n      second = largest;\n      largest = num;\n    } else if (num > second && num < largest) {\n      second = num;\n    }\n  }\n  return second;\n}`
@@ -1152,8 +1222,9 @@ except Exception as err:
         description: prob.description,
         starterCode: prob.starterCode,
         testCode: prob.testCode,
-        aiFeedback: {},
+        aiFeedback: prob.aiFeedback || {},
         examples: prob.examples,
+        constraints: prob.constraints || [],
         sampleOutput: prob.sampleOutput,
         sortOrder: prob.sortOrder,
       },
@@ -1165,8 +1236,9 @@ except Exception as err:
         description: prob.description,
         starterCode: prob.starterCode,
         testCode: prob.testCode,
-        aiFeedback: {},
+        aiFeedback: prob.aiFeedback || {},
         examples: prob.examples,
+        constraints: prob.constraints || [],
         sampleOutput: prob.sampleOutput,
         sortOrder: prob.sortOrder,
       }

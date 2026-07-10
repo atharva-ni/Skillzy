@@ -630,6 +630,7 @@ model CodingProblem {
   testCode     Json              @map("test_code")
   aiFeedback   Json              @default("{}") @map("ai_feedback")
   examples     Json              @default("[]")
+  constraints  Json              @default("[]")
   sampleOutput String?           @map("sample_output")
   sortOrder    Int               @default(0) @map("sort_order")
   isActive     Boolean           @default(true) @map("is_active")
