@@ -156,6 +156,20 @@ function CodingLabInner() {
     }
   }, [stepId]);
 
+  // Reset language if current language is not supported by activeProblem
+  useEffect(() => {
+    if (!isStepMode && activeProblem) {
+      const tests = activeProblem.testCode as Record<string, string> | undefined;
+      const isSupported = !!(tests && tests[language] && tests[language].trim() !== '');
+      if (!isSupported) {
+        const supported = ['javascript', 'python', 'cpp', 'java'].find(lang => 
+          tests && tests[lang] && tests[lang].trim() !== ''
+        ) as Language || 'javascript';
+        setLanguage(supported);
+      }
+    }
+  }, [activeProblem, isStepMode, language]);
+
   // Update code when problem or language changes (free-practice mode only)
   useEffect(() => {
     if (!isStepMode && activeProblem) {
@@ -585,10 +599,21 @@ function CodingLabInner() {
                 style={{ width: '150px', padding: '4px 8px' }}
                 disabled={isStepMode}
               >
-                <option value="javascript">JavaScript</option>
-                <option value="python">Python</option>
-                <option value="cpp">C++</option>
-                <option value="java">Java</option>
+                {[
+                  { value: 'javascript', label: 'JavaScript' },
+                  { value: 'python', label: 'Python' },
+                  { value: 'cpp', label: 'C++' },
+                  { value: 'java', label: 'Java' },
+                ].map(lang => {
+                  const tests = activeProblem?.testCode as Record<string, string> | undefined;
+                  const isSupported = isStepMode || !!(tests && tests[lang.value] && tests[lang.value].trim() !== '');
+                  if (!isSupported) return null;
+                  return (
+                    <option key={lang.value} value={lang.value}>
+                      {lang.label}
+                    </option>
+                  );
+                })}
               </select>
               {isStepMode && (
                 <span style={{ fontSize: 'var(--font-size-xs)', color: 'var(--text-tertiary)', background: 'var(--bg-glass)', padding: '2px 8px', borderRadius: '99px', border: '1px solid var(--border-primary)' }}>

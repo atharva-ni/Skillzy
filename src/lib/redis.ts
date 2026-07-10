@@ -54,14 +54,30 @@ interface CacheClient {
 let cache: CacheClient;
 
 const redisUrl = process.env.REDIS_URL;
+const redisHost = process.env.REDIS_HOST;
+const redisPort = process.env.REDIS_PORT;
+const redisPassword = process.env.REDIS_PASSWORD;
 
-if (redisUrl) {
+const hasRedisConfig = redisUrl || redisHost;
+
+if (hasRedisConfig) {
   try {
     console.log('Initializing Redis client connection...');
-    const redis = new Redis(redisUrl, {
+    const redisOptions: any = {
       maxRetriesPerRequest: 1,
       connectTimeout: 3000,
-    });
+    };
+    if (redisPassword) {
+      redisOptions.password = redisPassword;
+    }
+    
+    const redis = redisUrl
+      ? new Redis(redisUrl, redisOptions)
+      : new Redis({
+          host: redisHost,
+          port: redisPort ? parseInt(redisPort, 10) : 6379,
+          ...redisOptions,
+        });
 
     redis.on('error', (err) => {
       console.warn('Redis Connection Error, bypassing to memory cache:', err.message);
@@ -107,7 +123,7 @@ if (redisUrl) {
     cache = createInMemoryClient();
   }
 } else {
-  console.log('No REDIS_URL configured. Starting in-memory high performance cache.');
+  console.log('No REDIS_URL or REDIS_HOST configured. Starting in-memory high performance cache.');
   cache = createInMemoryClient();
 }
 
