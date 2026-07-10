@@ -56,6 +56,13 @@ export async function POST(req: NextRequest) {
     }
 
     if (assertionCode) {
+      if (language === 'cpp') {
+        // Rename student's main function to avoid duplication with test runner main
+        codeToExecute = code.replace(/(int|void)\s+main\s*\(/, '$1 student_main(');
+      } else if (language === 'java') {
+        // Rename student's Main class to avoid duplication with test runner Main class
+        codeToExecute = code.replace(/(public\s+)?class\s+Main\b/, 'class StudentSolution');
+      }
       codeToExecute += '\n' + assertionCode;
       isTestRun = true;
     }

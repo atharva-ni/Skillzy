@@ -82,8 +82,8 @@ except Exception as err:
     print(f"TEST_FAILURE: {err}", file=sys.stderr)
     sys.exit(1)
 `,
-        cpp: '',
-        java: ''
+        cpp: `int main() {\n    struct TestCase { std::string input; std::string expected; };\n    std::vector<TestCase> cases = {\n        { "hello", "olleh" },\n        { "Skillzy", "yzllikS" }\n    };\n    int passedCount = 0;\n    for (int i = 0; i < cases.size(); i++) {\n        std::string act = reverseString(cases[i].input);\n        bool passed = act == cases[i].expected;\n        if (passed) passedCount++;\n        std::cout << "[TEST_CASE] " << i << " | " << (passed ? "PASS" : "FAIL") << " | Actual: \"" << act << "\"\n";\n    }\n    if (passedCount == cases.size()) std::cout << "TEST_RESULTS: " << passedCount << "/" << cases.size() << " passed\n";\n    else std::cout << "TEST_FAILURE: " << (cases.size() - passedCount) << " test cases failed\n";\n    return 0;\n}`,
+        java: `public class Main {\n    public static void main(String[] args) {\n        String[] inputs = { "hello", "Skillzy" };\n        String[] expecteds = { "olleh", "yzllikS" };\n        int passedCount = 0;\n        for (int i = 0; i < inputs.length; i++) {\n            try {\n                String act = StudentSolution.reverseString(inputs[i]);\n                boolean passed = act != null && act.equals(expecteds[i]);\n                if (passed) passedCount++;\n                System.out.println("[TEST_CASE] " + i + " | " + (passed ? "PASS" : "FAIL") + " | Actual: \"" + act + "\"");\n            } catch (Exception e) {\n                System.out.println("[TEST_CASE] " + i + " | FAIL | Actual: Error: " + e.getMessage());\n            }\n        }\n        if (passedCount == inputs.length) System.out.println("TEST_RESULTS: " + passedCount + "/" + inputs.length + " passed");\n        else System.out.println("TEST_FAILURE: " + (inputs.length - passedCount) + " test cases failed");\n    }\n}`
       },
       aiFeedback: {
         score: 94,
@@ -173,8 +173,8 @@ except Exception as err:
     print(f"TEST_FAILURE: {err}", file=sys.stderr)
     sys.exit(1)
 `,
-        cpp: '',
-        java: ''
+        cpp: `int main() {\n    struct TestCase { std::string input; bool expected; };\n    std::vector<TestCase> cases = {\n        { "racecar", true },\n        { "hello", false }\n    };\n    int passedCount = 0;\n    for (int i = 0; i < cases.size(); i++) {\n        bool act = isPalindrome(cases[i].input);\n        bool passed = act == cases[i].expected;\n        if (passed) passedCount++;\n        std::cout << "[TEST_CASE] " << i << " | " << (passed ? "PASS" : "FAIL") << " | Actual: " << (act ? "true" : "false") << "\n";\n    }\n    if (passedCount == cases.size()) std::cout << "TEST_RESULTS: " << passedCount << "/" << cases.size() << " passed\n";\n    else std::cout << "TEST_FAILURE: " << (cases.size() - passedCount) << " test cases failed\n";\n    return 0;\n}`,
+        java: `public class Main {\n    public static void main(String[] args) {\n        String[] inputs = { "racecar", "hello" };\n        boolean[] expecteds = { true, false };\n        int passedCount = 0;\n        for (int i = 0; i < inputs.length; i++) {\n            try {\n                boolean act = StudentSolution.isPalindrome(inputs[i]);\n                boolean passed = act == expecteds[i];\n                if (passed) passedCount++;\n                System.out.println("[TEST_CASE] " + i + " | " + (passed ? "PASS" : "FAIL") + " | Actual: " + act);\n            } catch (Exception e) {\n                System.out.println("[TEST_CASE] " + i + " | FAIL | Actual: Error: " + e.getMessage());\n            }\n        }\n        if (passedCount == inputs.length) System.out.println("TEST_RESULTS: " + passedCount + "/" + inputs.length + " passed");\n        else System.out.println("TEST_FAILURE: " + (inputs.length - passedCount) + " test cases failed");\n    }\n}`
       },
       aiFeedback: {
         score: 91,
@@ -259,8 +259,8 @@ except Exception as err:
     print(f"TEST_FAILURE: {err}", file=sys.stderr)
     sys.exit(1)
 `,
-        cpp: '',
-        java: ''
+        cpp: `int main() {\n    std::vector<std::string> expected1 = { "1", "2", "Fizz", "4", "Buzz" };\n    std::vector<std::string> act1 = fizzBuzz(5);\n    bool p1 = act1 == expected1;\n    std::cout << "[TEST_CASE] 0 | " << (p1 ? "PASS" : "FAIL") << " | Actual: size=" << act1.size() << "\n";\n    \n    std::vector<std::string> act2 = fizzBuzz(15);\n    bool p2 = act2.size() >= 15 && act2[14] == "FizzBuzz";\n    std::cout << "[TEST_CASE] 1 | " << (p2 ? "PASS" : "FAIL") << " | Actual: 15th=" << (act2.size() >= 15 ? act2[14] : "N/A") << "\n";\n    \n    int passed = (p1 ? 1 : 0) + (p2 ? 1 : 0);\n    if (passed == 2) std::cout << "TEST_RESULTS: 2/2 passed\n";\n    else std::cout << "TEST_FAILURE: " << (2 - passed) << " test cases failed\n";\n    return 0;\n}`,
+        java: `public class Main {\n    public static void main(String[] args) {\n        int passed = 0;\n        try {\n            java.util.List<String> act1 = StudentSolution.fizzBuzz(5);\n            boolean p1 = act1 != null && act1.size() == 5 && act1.get(2).equals("Fizz") && act1.get(4).equals("Buzz");\n            if (p1) passed++;\n            System.out.println("[TEST_CASE] 0 | " + (p1 ? "PASS" : "FAIL") + " | Actual: size=" + (act1 != null ? act1.size() : "null"));\n        } catch (Exception e) {\n            System.out.println("[TEST_CASE] 0 | FAIL | Actual: Error: " + e.getMessage());\n        }\n        try {\n            java.util.List<String> act2 = StudentSolution.fizzBuzz(15);\n            boolean p2 = act2 != null && act2.size() == 15 && act2.get(14).equals("FizzBuzz");\n            if (p2) passed++;\n            System.out.println("[TEST_CASE] 1 | " + (p2 ? "PASS" : "FAIL") + " | Actual: 15th=" + (act2 != null && act2.size() >= 15 ? act2.get(14) : "N/A"));\n        } catch (Exception e) {\n            System.out.println("[TEST_CASE] 1 | FAIL | Actual: Error: " + e.getMessage());\n        }\n        if (passed == 2) System.out.println("TEST_RESULTS: 2/2 passed");\n        else System.out.println("TEST_FAILURE: " + (2 - passed) + " test cases failed");\n    }\n}`
       },
       aiFeedback: {
         score: 89,
@@ -353,8 +353,8 @@ except Exception as err:
     print(f"TEST_FAILURE: {err}", file=sys.stderr)
     sys.exit(1)
 `,
-        cpp: '',
-        java: ''
+        cpp: `int main() {\n    std::vector<int> nums1 = {2, 7, 11, 15};\n    std::vector<int> act1 = twoSum(nums1, 9);\n    std::sort(act1.begin(), act1.end());\n    bool p1 = act1.size() == 2 && act1[0] == 0 && act1[1] == 1;\n    std::cout << "[TEST_CASE] 0 | " << (p1 ? "PASS" : "FAIL") << " | Actual: size=" << act1.size() << "\n";\n\n    std::vector<int> nums2 = {3, 2, 4};\n    std::vector<int> act2 = twoSum(nums2, 6);\n    std::sort(act2.begin(), act2.end());\n    bool p2 = act2.size() == 2 && act2[0] == 1 && act2[1] == 2;\n    std::cout << "[TEST_CASE] 1 | " << (p2 ? "PASS" : "FAIL") << " | Actual: size=" << act2.size() << "\n";\n\n    int passed = (p1 ? 1 : 0) + (p2 ? 1 : 0);\n    if (passed == 2) std::cout << "TEST_RESULTS: 2/2 passed\n";\n    else std::cout << "TEST_FAILURE: " << (2 - passed) << " test cases failed\n";\n    return 0;\n}`,
+        java: `public class Main {\n    public static void main(String[] args) {\n        int passed = 0;\n        try {\n            int[] nums1 = {2, 7, 11, 15};\n            int[] act1 = StudentSolution.twoSum(nums1, 9);\n            java.util.Arrays.sort(act1);\n            boolean p1 = act1 != null && act1.length == 2 && act1[0] == 0 && act1[1] == 1;\n            if (p1) passed++;\n            System.out.println("[TEST_CASE] 0 | " + (p1 ? "PASS" : "FAIL") + " | Actual: length=" + (act1 != null ? act1.length : "null"));\n        } catch (Exception e) {\n            System.out.println("[TEST_CASE] 0 | FAIL | Actual: Error: " + e.getMessage());\n        }\n        try {\n            int[] nums2 = {3, 2, 4};\n            int[] act2 = StudentSolution.twoSum(nums2, 6);\n            java.util.Arrays.sort(act2);\n            boolean p2 = act2 != null && act2.length == 2 && act2[0] == 1 && act2[1] == 2;\n            if (p2) passed++;\n            System.out.println("[TEST_CASE] 1 | " + (p2 ? "PASS" : "FAIL") + " | Actual: length=" + (act2 != null ? act2.length : "null"));\n        } catch (Exception e) {\n            System.out.println("[TEST_CASE] 1 | FAIL | Actual: Error: " + e.getMessage());\n        }\n        if (passed == 2) System.out.println("TEST_RESULTS: 2/2 passed");\n        else System.out.println("TEST_FAILURE: " + (2 - passed) + " test cases failed");\n    }\n}`
       },
       aiFeedback: {
         score: 92,
@@ -444,8 +444,8 @@ except Exception as err:
     print(f"TEST_FAILURE: {err}", file=sys.stderr)
     sys.exit(1)
 `,
-        cpp: '',
-        java: ''
+        cpp: `int main() {\n    bool act1 = isAnagram("listen", "silent");\n    bool act2 = isAnagram("hello", "billion");\n    bool p1 = act1 == true;\n    bool p2 = act2 == false;\n    std::cout << "[TEST_CASE] 0 | " << (p1 ? "PASS" : "FAIL") << " | Actual: " << (act1 ? "true" : "false") << "\n";\n    std::cout << "[TEST_CASE] 1 | " << (p2 ? "PASS" : "FAIL") << " | Actual: " << (act2 ? "true" : "false") << "\n";\n    int passed = (p1 ? 1 : 0) + (p2 ? 1 : 0);\n    if (passed == 2) std::cout << "TEST_RESULTS: 2/2 passed\n";\n    else std::cout << "TEST_FAILURE: " << (2 - passed) << " test cases failed\n";\n    return 0;\n}`,
+        java: `public class Main {\n    public static void main(String[] args) {\n        int passed = 0;\n        try {\n            boolean act1 = StudentSolution.isAnagram("listen", "silent");\n            boolean p1 = act1 == true;\n            if (p1) passed++;\n            System.out.println("[TEST_CASE] 0 | " + (p1 ? "PASS" : "FAIL") + " | Actual: " + act1);\n        } catch (Exception e) {\n            System.out.println("[TEST_CASE] 0 | FAIL | Actual: Error: " + e.getMessage());\n        }\n        try {\n            boolean act2 = StudentSolution.isAnagram("hello", "billion");\n            boolean p2 = act2 == false;\n            if (p2) passed++;\n            System.out.println("[TEST_CASE] 1 | " + (p2 ? "PASS" : "FAIL") + " | Actual: " + act2);\n        } catch (Exception e) {\n            System.out.println("[TEST_CASE] 1 | FAIL | Actual: Error: " + e.getMessage());\n        }\n        if (passed == 2) System.out.println("TEST_RESULTS: 2/2 passed");\n        else System.out.println("TEST_FAILURE: " + (2 - passed) + " test cases failed");\n    }\n}`
       },
       aiFeedback: {
         score: 90,
@@ -536,8 +536,8 @@ except Exception as err:
     print(f"TEST_FAILURE: {err}", file=sys.stderr)
     sys.exit(1)
 `,
-        cpp: '',
-        java: ''
+        cpp: `int main() {\n    bool act1 = isBalanced("{[()]}");\n    bool act2 = isBalanced("{[(])}");\n    bool p1 = act1 == true;\n    bool p2 = act2 == false;\n    std::cout << "[TEST_CASE] 0 | " << (p1 ? "PASS" : "FAIL") << " | Actual: " << (act1 ? "true" : "false") << "\n";\n    std::cout << "[TEST_CASE] 1 | " << (p2 ? "PASS" : "FAIL") << " | Actual: " << (act2 ? "true" : "false") << "\n";\n    int passed = (p1 ? 1 : 0) + (p2 ? 1 : 0);\n    if (passed == 2) std::cout << "TEST_RESULTS: 2/2 passed\n";\n    else std::cout << "TEST_FAILURE: " << (2 - passed) << " test cases failed\n";\n    return 0;\n}`,
+        java: `public class Main {\n    public static void main(String[] args) {\n        int passed = 0;\n        try {\n            boolean act1 = StudentSolution.isBalanced("{[()]}");\n            boolean p1 = act1 == true;\n            if (p1) passed++;\n            System.out.println("[TEST_CASE] 0 | " + (p1 ? "PASS" : "FAIL") + " | Actual: " + act1);\n        } catch (Exception e) {\n            System.out.println("[TEST_CASE] 0 | FAIL | Actual: Error: " + e.getMessage());\n        }\n        try {\n            boolean act2 = StudentSolution.isBalanced("{[(])}");\n            boolean p2 = act2 == false;\n            if (p2) passed++;\n            System.out.println("[TEST_CASE] 1 | " + (p2 ? "PASS" : "FAIL") + " | Actual: " + act2);\n        } catch (Exception e) {\n            System.out.println("[TEST_CASE] 1 | FAIL | Actual: Error: " + e.getMessage());\n        }\n        if (passed == 2) System.out.println("TEST_RESULTS: 2/2 passed");\n        else System.out.println("TEST_FAILURE: " + (2 - passed) + " test cases failed");\n    }\n}`
       },
       aiFeedback: {
         score: 88,
@@ -628,8 +628,8 @@ except Exception as err:
     print(f"TEST_FAILURE: {err}", file=sys.stderr)
     sys.exit(1)
 `,
-        cpp: '',
-        java: ''
+        cpp: `int main() {\n    std::vector<int> a = {1, 3, 5};\n    std::vector<int> b = {2, 4, 6};\n    std::vector<int> expected = {1, 2, 3, 4, 5, 6};\n    std::vector<int> act = mergeSorted(a, b);\n    bool p1 = act == expected;\n    std::cout << "[TEST_CASE] 0 | " << (p1 ? "PASS" : "FAIL") << " | Actual: size=" << act.size() << "\n";\n    if (p1) std::cout << "TEST_RESULTS: 1/1 passed\n";\n    else std::cout << "TEST_FAILURE: 1 test case failed\n";\n    return 0;\n}`,
+        java: `public class Main {\n    public static void main(String[] args) {\n        int passed = 0;\n        try {\n            int[] a = {1, 3, 5};\n            int[] b = {2, 4, 6};\n            int[] expected = {1, 2, 3, 4, 5, 6};\n            int[] act = StudentSolution.mergeSorted(a, b);\n            boolean p1 = java.util.Arrays.equals(act, expected);\n            if (p1) passed++;\n            System.out.println("[TEST_CASE] 0 | " + (p1 ? "PASS" : "FAIL") + " | Actual: size=" + (act != null ? act.length : "null"));\n        } catch (Exception e) {\n            System.out.println("[TEST_CASE] 0 | FAIL | Actual: Error: " + e.getMessage());\n        }\n        if (passed == 1) System.out.println("TEST_RESULTS: 1/1 passed");\n        else System.out.println("TEST_FAILURE: 1 test case failed");\n    }\n}`
       },
       aiFeedback: {
         score: 90,
@@ -718,8 +718,8 @@ except Exception as err:
     print(f"TEST_FAILURE: {err}", file=sys.stderr)
     sys.exit(1)
 `,
-        cpp: '',
-        java: ''
+        cpp: `int main() {\n    int act1 = fibonacci(5);\n    int act2 = fibonacci(10);\n    bool p1 = act1 == 5;\n    bool p2 = act2 == 55;\n    std::cout << "[TEST_CASE] 0 | " << (p1 ? "PASS" : "FAIL") << " | Actual: " << act1 << "\n";\n    std::cout << "[TEST_CASE] 1 | " << (p2 ? "PASS" : "FAIL") << " | Actual: " << act2 << "\n";\n    int passed = (p1 ? 1 : 0) + (p2 ? 1 : 0);\n    if (passed == 2) std::cout << "TEST_RESULTS: 2/2 passed\n";\n    else std::cout << "TEST_FAILURE: " << (2 - passed) << " test cases failed\n";\n    return 0;\n}`,
+        java: `public class Main {\n    public static void main(String[] args) {\n        int passed = 0;\n        try {\n            int act1 = StudentSolution.fibonacci(5);\n            boolean p1 = act1 == 5;\n            if (p1) passed++;\n            System.out.println("[TEST_CASE] 0 | " + (p1 ? "PASS" : "FAIL") + " | Actual: " + act1);\n        } catch (Exception e) {\n            System.out.println("[TEST_CASE] 0 | FAIL | Actual: Error: " + e.getMessage());\n        }\n        try {\n            int act2 = StudentSolution.fibonacci(10);\n            boolean p2 = act2 == 55;\n            if (p2) passed++;\n            System.out.println("[TEST_CASE] 1 | " + (p2 ? "PASS" : "FAIL") + " | Actual: " + act2);\n        } catch (Exception e) {\n            System.out.println("[TEST_CASE] 1 | FAIL | Actual: Error: " + e.getMessage());\n        }\n        if (passed == 2) System.out.println("TEST_RESULTS: 2/2 passed");\n        else System.out.println("TEST_FAILURE: " + (2 - passed) + " test cases failed");\n    }\n}`
       },
       aiFeedback: {
         score: 87,
@@ -808,8 +808,8 @@ except Exception as err:
     print(f"TEST_FAILURE: {err}", file=sys.stderr)
     sys.exit(1)
 `,
-        cpp: '',
-        java: ''
+        cpp: `int main() {\n    int act1 = factorial(5);\n    int act2 = factorial(0);\n    bool p1 = act1 == 120;\n    bool p2 = act2 == 1;\n    std::cout << "[TEST_CASE] 0 | " << (p1 ? "PASS" : "FAIL") << " | Actual: " << act1 << "\n";\n    std::cout << "[TEST_CASE] 1 | " << (p2 ? "PASS" : "FAIL") << " | Actual: " << act2 << "\n";\n    int passed = (p1 ? 1 : 0) + (p2 ? 1 : 0);\n    if (passed == 2) std::cout << "TEST_RESULTS: 2/2 passed\n";\n    else std::cout << "TEST_FAILURE: " << (2 - passed) << " test cases failed\n";\n    return 0;\n}`,
+        java: `public class Main {\n    public static void main(String[] args) {\n        int passed = 0;\n        try {\n            int act1 = StudentSolution.factorial(5);\n            boolean p1 = act1 == 120;\n            if (p1) passed++;\n            System.out.println("[TEST_CASE] 0 | " + (p1 ? "PASS" : "FAIL") + " | Actual: " + act1);\n        } catch (Exception e) {\n            System.out.println("[TEST_CASE] 0 | FAIL | Actual: Error: " + e.getMessage());\n        }\n        try {\n            int act2 = StudentSolution.factorial(0);\n            boolean p2 = act2 == 1;\n            if (p2) passed++;\n            System.out.println("[TEST_CASE] 1 | " + (p2 ? "PASS" : "FAIL") + " | Actual: " + act2);\n        } catch (Exception e) {\n            System.out.println("[TEST_CASE] 1 | FAIL | Actual: Error: " + e.getMessage());\n        }\n        if (passed == 2) System.out.println("TEST_RESULTS: 2/2 passed");\n        else System.out.println("TEST_FAILURE: " + (2 - passed) + " test cases failed");\n    }\n}`
       },
       aiFeedback: {
         score: 85,
@@ -899,8 +899,8 @@ except Exception as err:
     print(f"TEST_FAILURE: {err}", file=sys.stderr)
     sys.exit(1)
 `,
-        cpp: '',
-        java: ''
+        cpp: `int main() {\n    char act1 = highestFrequency("aabbbcc");\n    char act2 = highestFrequency("level");\n    bool p1 = act1 == 'b';\n    bool p2 = act2 == 'l' || act2 == 'e';\n    std::cout << "[TEST_CASE] 0 | " << (p1 ? "PASS" : "FAIL") << " | Actual: \"" << act1 << "\"\n";\n    std::cout << "[TEST_CASE] 1 | " << (p2 ? "PASS" : "FAIL") << " | Actual: \"" << act2 << "\"\n";\n    int passed = (p1 ? 1 : 0) + (p2 ? 1 : 0);\n    if (passed == 2) std::cout << "TEST_RESULTS: 2/2 passed\n";\n    else std::cout << "TEST_FAILURE: " << (2 - passed) << " test cases failed\n";\n    return 0;\n}`,
+        java: `public class Main {\n    public static void main(String[] args) {\n        int passed = 0;\n        try {\n            char act1 = StudentSolution.highestFrequency("aabbbcc");\n            boolean p1 = act1 == 'b';\n            if (p1) passed++;\n            System.out.println("[TEST_CASE] 0 | " + (p1 ? "PASS" : "FAIL") + " | Actual: \"" + act1 + "\"");\n        } catch (Exception e) {\n            System.out.println("[TEST_CASE] 0 | FAIL | Actual: Error: " + e.getMessage());\n        }\n        try {\n            char act2 = StudentSolution.highestFrequency("level");\n            boolean p2 = act2 == 'l' || act2 == 'e';\n            if (p2) passed++;\n            System.out.println("[TEST_CASE] 1 | " + (p2 ? "PASS" : "FAIL") + " | Actual: \"" + act2 + "\"");\n        } catch (Exception e) {\n            System.out.println("[TEST_CASE] 1 | FAIL | Actual: Error: " + e.getMessage());\n        }\n        if (passed == 2) System.out.println("TEST_RESULTS: 2/2 passed");\n        else System.out.println("TEST_FAILURE: " + (2 - passed) + " test cases failed");\n    }\n}`
       },
       aiFeedback: {
         score: 89,
@@ -990,8 +990,8 @@ except Exception as err:
     print(f"TEST_FAILURE: {err}", file=sys.stderr)
     sys.exit(1)
 `,
-        cpp: '',
-        java: ''
+        cpp: `int main() {\n    bool act1 = hasUniqueChars("abcdef");\n    bool act2 = hasUniqueChars("abcdea");\n    bool p1 = act1 == true;\n    bool p2 = act2 == false;\n    std::cout << "[TEST_CASE] 0 | " << (p1 ? "PASS" : "FAIL") << " | Actual: " << (act1 ? "true" : "false") << "\n";\n    std::cout << "[TEST_CASE] 1 | " << (p2 ? "PASS" : "FAIL") << " | Actual: " << (act2 ? "true" : "false") << "\n";\n    int passed = (p1 ? 1 : 0) + (p2 ? 1 : 0);\n    if (passed == 2) std::cout << "TEST_RESULTS: 2/2 passed\n";\n    else std::cout << "TEST_FAILURE: " << (2 - passed) << " test cases failed\n";\n    return 0;\n}`,
+        java: `public class Main {\n    public static void main(String[] args) {\n        int passed = 0;\n        try {\n            boolean act1 = StudentSolution.hasUniqueChars("abcdef");\n            boolean p1 = act1 == true;\n            if (p1) passed++;\n            System.out.println("[TEST_CASE] 0 | " + (p1 ? "PASS" : "FAIL") + " | Actual: " + act1);\n        } catch (Exception e) {\n            System.out.println("[TEST_CASE] 0 | FAIL | Actual: Error: " + e.getMessage());\n        }\n        try {\n            boolean act2 = StudentSolution.hasUniqueChars("abcdea");\n            boolean p2 = act2 == false;\n            if (p2) passed++;\n            System.out.println("[TEST_CASE] 1 | " + (p2 ? "PASS" : "FAIL") + " | Actual: " + act2);\n        } catch (Exception e) {\n            System.out.println("[TEST_CASE] 1 | FAIL | Actual: Error: " + e.getMessage());\n        }\n        if (passed == 2) System.out.println("TEST_RESULTS: 2/2 passed");\n        else System.out.println("TEST_FAILURE: " + (2 - passed) + " test cases failed");\n    }\n}`
       },
       aiFeedback: {
         score: 90,
@@ -1081,8 +1081,8 @@ except Exception as err:
     print(f"TEST_FAILURE: {err}", file=sys.stderr)
     sys.exit(1)
 `,
-        cpp: '',
-        java: ''
+        cpp: `int main() {\n    int act1 = countVowels("hello");\n    int act2 = countVowels("xyz");\n    bool p1 = act1 == 2;\n    bool p2 = act2 == 0;\n    std::cout << "[TEST_CASE] 0 | " << (p1 ? "PASS" : "FAIL") << " | Actual: " << act1 << "\n";\n    std::cout << "[TEST_CASE] 1 | " << (p2 ? "PASS" : "FAIL") << " | Actual: " << act2 << "\n";\n    int passed = (p1 ? 1 : 0) + (p2 ? 1 : 0);\n    if (passed == 2) std::cout << "TEST_RESULTS: 2/2 passed\n";\n    else std::cout << "TEST_FAILURE: " << (2 - passed) << " test cases failed\n";\n    return 0;\n}`,
+        java: `public class Main {\n    public static void main(String[] args) {\n        int passed = 0;\n        try {\n            int act1 = StudentSolution.countVowels("hello");\n            boolean p1 = act1 == 2;\n            if (p1) passed++;\n            System.out.println("[TEST_CASE] 0 | " + (p1 ? "PASS" : "FAIL") + " | Actual: " + act1);\n        } catch (Exception e) {\n            System.out.println("[TEST_CASE] 0 | FAIL | Actual: Error: " + e.getMessage());\n        }\n        try {\n            int act2 = StudentSolution.countVowels("xyz");\n            boolean p2 = act2 == 0;\n            if (p2) passed++;\n            System.out.println("[TEST_CASE] 1 | " + (p2 ? "PASS" : "FAIL") + " | Actual: " + act2);\n        } catch (Exception e) {\n            System.out.println("[TEST_CASE] 1 | FAIL | Actual: Error: " + e.getMessage());\n        }\n        if (passed == 2) System.out.println("TEST_RESULTS: 2/2 passed");\n        else System.out.println("TEST_FAILURE: " + (2 - passed) + " test cases failed");\n    }\n}`
       },
       aiFeedback: {
         score: 88,
@@ -1173,8 +1173,8 @@ except Exception as err:
     print(f"TEST_FAILURE: {err}", file=sys.stderr)
     sys.exit(1)
 `,
-        cpp: '',
-        java: ''
+        cpp: `int main() {\n    std::vector<int> nums1 = {10, 5, 20, 20, 15};\n    std::vector<int> nums2 = {1, 2, 3};\n    int act1 = secondLargest(nums1);\n    int act2 = secondLargest(nums2);\n    bool p1 = act1 == 15;\n    bool p2 = act2 == 2;\n    std::cout << "[TEST_CASE] 0 | " << (p1 ? "PASS" : "FAIL") << " | Actual: " << act1 << "\n";\n    std::cout << "[TEST_CASE] 1 | " << (p2 ? "PASS" : "FAIL") << " | Actual: " << act2 << "\n";\n    int passed = (p1 ? 1 : 0) + (p2 ? 1 : 0);\n    if (passed == 2) std::cout << "TEST_RESULTS: 2/2 passed\n";\n    else std::cout << "TEST_FAILURE: " << (2 - passed) << " test cases failed\n";\n    return 0;\n}`,
+        java: `public class Main {\n    public static void main(String[] args) {\n        int passed = 0;\n        try {\n            int[] nums1 = {10, 5, 20, 20, 15};\n            int act1 = StudentSolution.secondLargest(nums1);\n            boolean p1 = act1 == 15;\n            if (p1) passed++;\n            System.out.println("[TEST_CASE] 0 | " + (p1 ? "PASS" : "FAIL") + " | Actual: " + act1);\n        } catch (Exception e) {\n            System.out.println("[TEST_CASE] 0 | FAIL | Actual: Error: " + e.getMessage());\n        }\n        try {\n            int[] nums2 = {1, 2, 3};\n            int act2 = StudentSolution.secondLargest(nums2);\n            boolean p2 = act2 == 2;\n            if (p2) passed++;\n            System.out.println("[TEST_CASE] 1 | " + (p2 ? "PASS" : "FAIL") + " | Actual: " + act2);\n        } catch (Exception e) {\n            System.out.println("[TEST_CASE] 1 | FAIL | Actual: Error: " + e.getMessage());\n        }\n        if (passed == 2) System.out.println("TEST_RESULTS: 2/2 passed");\n        else System.out.println("TEST_FAILURE: " + (2 - passed) + " test cases failed");\n    }\n}`
       },
       aiFeedback: {
         score: 86,
