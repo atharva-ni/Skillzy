@@ -1,10 +1,14 @@
 'use client';
 
-import React, { use, useState, useEffect } from 'react';
+import React, { use, useState, useEffect, useRef } from 'react';
 import Link from 'next/link';
 import { useAuth } from '@/context/AuthContext';
 import ProgressBar from '@/components/ui/ProgressBar';
 import { toast } from 'sonner';
+import { 
+  BookOpen, FileText, Play, Code, Lock, CheckCircle2, ChevronRight, ChevronDown, 
+  ArrowLeft, ArrowRight, Folder, Terminal, Sparkles, ChevronLeft
+} from 'lucide-react';
 
 interface PageProps {
   params: Promise<{ id: string }>;
@@ -22,6 +26,47 @@ export default function StepWiseLearningPage({ params }: PageProps) {
   // Navigation states
   const [activeStepId, setActiveStepId] = useState<string | null>(null);
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
+
+  // Paginated text content page state
+  const [currentTextPage, setCurrentTextPage] = useState(0);
+
+  // Main scroll viewport ref
+  const mainContentRef = useRef<HTMLDivElement>(null);
+
+  const handleScrollToTop = () => {
+    if (typeof window !== 'undefined') {
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    }
+    if (typeof document !== 'undefined') {
+      document.documentElement.scrollTo({ top: 0, behavior: 'smooth' });
+      document.body.scrollTo({ top: 0, behavior: 'smooth' });
+    }
+    if (mainContentRef.current) {
+      mainContentRef.current.scrollTo({ top: 0, behavior: 'smooth' });
+    }
+  };
+
+  // Collapsible tree state for student progress navigation
+  const [expandedModules, setExpandedModules] = useState<Set<string>>(new Set());
+  const [expandedLessons, setExpandedLessons] = useState<Set<string>>(new Set());
+
+  const toggleModule = (modId: string) => {
+    setExpandedModules(prev => {
+      const next = new Set(prev);
+      if (next.has(modId)) next.delete(modId);
+      else next.add(modId);
+      return next;
+    });
+  };
+
+  const toggleLesson = (lesId: string) => {
+    setExpandedLessons(prev => {
+      const next = new Set(prev);
+      if (next.has(lesId)) next.delete(lesId);
+      else next.add(lesId);
+      return next;
+    });
+  };
 
   // Flattened steps list for next/prev calculations
   const [flatSteps, setFlatSteps] = useState<any[]>([]);
@@ -64,7 +109,12 @@ export default function StepWiseLearningPage({ params }: PageProps) {
       // 3. Set default active step (first uncompleted step, or first step)
       if (stepsList.length > 0) {
         const firstUncompleted = stepsList.find(s => !data.completedSteps?.includes(s.id));
-        setActiveStepId(firstUncompleted ? firstUncompleted.id : stepsList[0].id);
+        const activeStep = firstUncompleted ? firstUncompleted : stepsList[0];
+        setActiveStepId(activeStep.id);
+        
+        // Auto-expand current active module and lesson on load
+        setExpandedModules(new Set([activeStep.moduleId]));
+        setExpandedLessons(new Set([activeStep.lessonId]));
       }
     } catch (err: any) {
       console.error(err);
@@ -73,6 +123,38 @@ export default function StepWiseLearningPage({ params }: PageProps) {
       setLoading(false);
     }
   };
+
+  // Keep active step's module and lesson expanded during navigation
+  useEffect(() => {
+    if (activeStepId && flatSteps.length > 0) {
+      const activeStep = flatSteps.find(s => s.id === activeStepId);
+      if (activeStep) {
+        setExpandedModules(prev => {
+          if (prev.has(activeStep.moduleId)) return prev;
+          const next = new Set(prev);
+          next.add(activeStep.moduleId);
+          return next;
+        });
+        setExpandedLessons(prev => {
+          if (prev.has(activeStep.lessonId)) return prev;
+          const next = new Set(prev);
+          next.add(activeStep.lessonId);
+          return next;
+        });
+      }
+    }
+  }, [activeStepId, flatSteps]);
+
+  // Reset text page index and scroll to top when changing active steps
+  useEffect(() => {
+    setCurrentTextPage(0);
+    handleScrollToTop();
+  }, [activeStepId]);
+
+  // Scroll to top when changing text pages
+  useEffect(() => {
+    handleScrollToTop();
+  }, [currentTextPage]);
 
   useEffect(() => {
     loadData();
@@ -164,119 +246,236 @@ export default function StepWiseLearningPage({ params }: PageProps) {
     }}>
       {/* Left Sidebar Curriculum Navigation */}
       <aside style={{
-        background: 'var(--bg-secondary)',
+        background: '#f9fafb',
         borderRight: '1px solid var(--border-primary)',
         overflowY: 'auto',
         display: 'flex',
         flexDirection: 'column',
+        boxShadow: 'inset -2px 0 8px rgba(0,0,0,0.01)',
       }}>
         <div style={{
-          padding: '16px',
+          padding: '20px 16px',
           borderBottom: '1px solid var(--border-primary)',
           display: 'flex',
           alignItems: 'center',
           justifyContent: 'space-between',
+          background: '#ffffff',
         }}>
-          {!sidebarCollapsed && <span style={{ fontWeight: 700, fontSize: '0.875rem', textTransform: 'uppercase', color: 'var(--text-secondary)' }}>Curriculum</span>}
+          {!sidebarCollapsed && (
+            <span style={{ fontWeight: 800, fontSize: '0.75rem', textTransform: 'uppercase', color: 'var(--text-secondary)', letterSpacing: '0.75px' }}>
+              Curriculum Outline
+            </span>
+          )}
           <button
             onClick={() => setSidebarCollapsed(!sidebarCollapsed)}
             style={{
               padding: '6px',
               borderRadius: '6px',
-              background: 'var(--bg-glass)',
-              border: '1px solid var(--border-primary)',
+              background: '#ffffff',
+              border: '1px solid var(--border-secondary)',
               color: 'var(--text-secondary)',
               cursor: 'pointer',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              boxShadow: 'var(--shadow-xs)',
+              transition: 'all 0.2s ease',
             }}
           >
-            {sidebarCollapsed ? '→' : '←'}
+            {sidebarCollapsed ? <ChevronRight size={16} /> : <ChevronLeft size={16} />}
           </button>
         </div>
 
         {/* Sidebar Navigation Links */}
-        <div style={{ flex: 1, padding: sidebarCollapsed ? '8px' : '16px', display: 'flex', flexDirection: 'column', gap: '16px' }}>
-          {course.modules?.map((mod: any, mIdx: number) => (
-            <div key={mod.id} style={{ display: sidebarCollapsed ? 'none' : 'block' }}>
-              <div style={{ fontSize: '0.75rem', fontWeight: 800, color: 'var(--text-tertiary)', textTransform: 'uppercase', marginBottom: '8px' }}>
-                Module {mIdx + 1}
-              </div>
-              <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
-                {mod.lessons?.map((lesson: any, lIdx: number) => (
-                  <div key={lesson.id} style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
-                    <div style={{ fontSize: 'var(--font-size-xs)', fontWeight: 600, color: 'var(--text-primary)' }}>
-                      {mIdx + 1}.{lIdx + 1} {lesson.title}
-                    </div>
-                    {/* Lesson Steps */}
-                    <div style={{ paddingLeft: '8px', borderLeft: '1px solid var(--border-primary)', display: 'flex', flexDirection: 'column', gap: '4px', marginTop: '4px' }}>
-                      {lesson.steps?.map((step: any) => {
-                        const stepIndex = flatSteps.findIndex((s) => s.id === step.id);
-                        const isLocked = isStepLocked(stepIndex);
-                        const isCompleted = completedSteps.includes(step.id);
-                        const isActive = step.id === activeStepId;
-
-                        return (
-                          <button
-                            key={step.id}
-                            disabled={isLocked}
-                            onClick={() => setActiveStepId(step.id)}
-                            style={{
-                              textAlign: 'left',
-                              padding: '6px 8px',
-                              borderRadius: 'var(--radius-sm)',
-                              background: isActive ? 'rgba(99,102,241,0.12)' : 'transparent',
-                              border: 'none',
-                              fontSize: 'var(--font-size-xs)',
-                              color: isActive
-                                ? 'var(--accent-primary-hover)'
-                                : isLocked
-                                ? 'var(--text-muted)'
-                                : 'var(--text-secondary)',
-                              cursor: isLocked ? 'not-allowed' : 'pointer',
-                              display: 'flex',
-                              alignItems: 'center',
-                              justifyContent: 'space-between',
-                              width: '100%',
-                              transition: 'all var(--transition-fast)',
-                            }}
-                          >
-                            <span style={{ textOverflow: 'ellipsis', overflow: 'hidden', whiteSpace: 'nowrap', maxWidth: '180px' }}>
-                              {step.stepType === 'intro' ? '📝' : step.stepType === 'text' ? '📖' : step.stepType === 'video' ? '▶️' : '💻'} {step.title}
-                            </span>
-                            <span>{isCompleted ? '✅' : isLocked ? '🔒' : ''}</span>
-                          </button>
-                        );
-                      })}
-                    </div>
+        <div style={{ flex: 1, padding: sidebarCollapsed ? '12px 8px' : '16px 12px', display: 'flex', flexDirection: 'column', gap: '8px' }}>
+          {!sidebarCollapsed && course.modules?.map((mod: any, mIdx: number) => {
+            const isModuleExpanded = expandedModules.has(mod.id);
+            return (
+              <div key={mod.id} style={{ display: 'flex', flexDirection: 'column' }}>
+                {/* Module Header clickable trigger */}
+                <div 
+                  onClick={() => toggleModule(mod.id)}
+                  style={{
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'space-between',
+                    padding: '8px 10px',
+                    borderRadius: '8px',
+                    cursor: 'pointer',
+                    background: isModuleExpanded ? '#f3f4f6' : 'transparent',
+                    marginBottom: '4px',
+                    transition: 'all 0.15s ease',
+                    border: '1px solid',
+                    borderColor: isModuleExpanded ? '#e5e7eb' : 'transparent',
+                  }}
+                >
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '8px', overflow: 'hidden' }}>
+                    <Folder size={14} style={{ color: 'var(--accent-primary)', flexShrink: 0 }} />
+                    <span style={{ fontSize: '0.725rem', fontWeight: 800, textTransform: 'uppercase', color: 'var(--text-primary)', letterSpacing: '0.5px', textOverflow: 'ellipsis', overflow: 'hidden', whiteSpace: 'nowrap' }}>
+                      {mod.title}
+                    </span>
                   </div>
-                ))}
-              </div>
-            </div>
-          ))}
+                  {isModuleExpanded ? <ChevronDown size={14} style={{ color: 'var(--text-secondary)' }} /> : <ChevronRight size={14} style={{ color: 'var(--text-secondary)' }} />}
+                </div>
 
-          {/* Simple icons display for collapsed sidebar */}
+                {/* Lessons list under Module */}
+                {isModuleExpanded && (
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: '4px', paddingLeft: '8px', marginBottom: '8px' }}>
+                    {mod.lessons?.length === 0 ? (
+                      <span style={{ fontSize: '10px', color: 'var(--text-muted)', padding: '4px 12px', fontStyle: 'italic' }}>
+                        No lessons inside this module
+                      </span>
+                    ) : (
+                      mod.lessons?.map((les: any) => {
+                        const isLessonActive = flatSteps.find(s => s.id === activeStepId)?.lessonId === les.id;
+                        const isLessonExpanded = expandedLessons.has(les.id);
+                        return (
+                          <div key={les.id} style={{ display: 'flex', flexDirection: 'column' }}>
+                            <div 
+                              onClick={() => toggleLesson(les.id)}
+                              style={{
+                                display: 'flex',
+                                alignItems: 'center',
+                                justifyContent: 'space-between',
+                                padding: '6px 10px',
+                                borderRadius: '6px',
+                                cursor: 'pointer',
+                                background: isLessonActive ? '#eff6ff' : 'transparent',
+                                color: isLessonActive ? 'var(--accent-primary-hover)' : 'var(--text-secondary)',
+                                fontWeight: isLessonActive ? 600 : 500,
+                                transition: 'all 0.15s ease',
+                              }}
+                            >
+                              <div style={{ display: 'flex', alignItems: 'center', gap: '6px', overflow: 'hidden' }}>
+                                <BookOpen size={12} style={{ color: isLessonActive ? 'var(--accent-primary)' : 'var(--text-muted)', flexShrink: 0 }} />
+                                <span style={{ fontSize: 'var(--font-size-xs)', textOverflow: 'ellipsis', overflow: 'hidden', whiteSpace: 'nowrap' }}>
+                                  {les.title}
+                                </span>
+                              </div>
+                              {isLessonExpanded ? <ChevronDown size={12} style={{ color: 'var(--text-muted)' }} /> : <ChevronRight size={12} style={{ color: 'var(--text-muted)' }} />}
+                            </div>
+
+                            {/* Steps (collapsible under Lesson) */}
+                            {isLessonExpanded && (
+                              <div style={{ paddingLeft: '14px', borderLeft: '1px solid #e5e7eb', display: 'flex', flexDirection: 'column', gap: '3px', marginTop: '2px', marginLeft: '14px' }}>
+                                {les.steps?.length === 0 ? (
+                                  <span style={{ fontSize: '10px', color: 'var(--text-muted)', padding: '2px 8px', fontStyle: 'italic' }}>
+                                    No steps available
+                                  </span>
+                                ) : (
+                                  les.steps?.map((stp: any) => {
+                                    const isCompleted = completedSteps.includes(stp.id);
+                                    const isActive = activeStepId === stp.id;
+                                    const idxInFlat = flatSteps.findIndex(s => s.id === stp.id);
+                                    const isLocked = isStepLocked(idxInFlat);
+
+                                    // Render custom step type icons
+                                    const getStepIcon = () => {
+                                      if (isLocked) return <Lock size={12} style={{ color: 'var(--text-muted)' }} />;
+                                      if (isCompleted) return <CheckCircle2 size={12} style={{ color: '#10b981' }} />;
+                                      switch (stp.stepType) {
+                                        case 'intro': return <Sparkles size={12} style={{ color: 'var(--accent-primary)' }} />;
+                                        case 'text': return <FileText size={12} style={{ color: 'var(--text-secondary)' }} />;
+                                        case 'video': return <Play size={12} style={{ fill: 'currentColor', color: 'var(--text-secondary)' }} />;
+                                        case 'lab': return <Code size={12} style={{ color: 'var(--text-secondary)' }} />;
+                                        default: return <FileText size={12} />;
+                                      }
+                                    };
+
+                                    return (
+                                      <button
+                                        key={stp.id}
+                                        disabled={isLocked}
+                                        onClick={() => setActiveStepId(stp.id)}
+                                        style={{
+                                          textAlign: 'left',
+                                          padding: '6px 8px',
+                                          borderRadius: '6px',
+                                          background: isActive 
+                                            ? '#ffffff' 
+                                            : 'transparent',
+                                          border: '1px solid',
+                                          borderColor: isActive ? '#e5e7eb' : 'transparent',
+                                          fontSize: '11px',
+                                          color: isActive
+                                            ? 'var(--text-primary)'
+                                            : isLocked
+                                            ? 'var(--text-muted)'
+                                            : 'var(--text-secondary)',
+                                          cursor: isLocked ? 'not-allowed' : 'pointer',
+                                          display: 'flex',
+                                          alignItems: 'center',
+                                          gap: '8px',
+                                          width: '100%',
+                                          transition: 'all 0.15s ease',
+                                          fontWeight: isActive ? 600 : 400,
+                                          boxShadow: isActive ? 'var(--shadow-sm)' : 'none',
+                                        }}
+                                      >
+                                        <span style={{ display: 'flex', alignItems: 'center', flexShrink: 0 }}>
+                                          {getStepIcon()}
+                                        </span>
+                                        <span style={{ textOverflow: 'ellipsis', overflow: 'hidden', whiteSpace: 'nowrap', flex: 1 }}>
+                                          {stp.title}
+                                        </span>
+                                      </button>
+                                    );
+                                  })
+                                )}
+                              </div>
+                            )}
+                          </div>
+                        );
+                      })
+                    )}
+                  </div>
+                )}
+              </div>
+            );
+          })}
+
+          {/* Collapsed Sidebar Simple List of Icons */}
           {sidebarCollapsed && (
-            <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '16px' }}>
+            <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '12px' }}>
               {flatSteps.map((step, idx) => {
                 const isActive = step.id === activeStepId;
                 const isCompleted = completedSteps.includes(step.id);
                 const isLocked = isStepLocked(idx);
 
+                const getStepIcon = () => {
+                  if (isLocked) return <Lock size={14} />;
+                  if (isCompleted) return <CheckCircle2 size={14} style={{ color: '#10b981' }} />;
+                  switch (step.stepType) {
+                    case 'intro': return <Sparkles size={14} style={{ color: 'var(--accent-primary)' }} />;
+                    case 'text': return <FileText size={14} />;
+                    case 'video': return <Play size={14} style={{ fill: 'currentColor' }} />;
+                    case 'lab': return <Code size={14} />;
+                    default: return <FileText size={14} />;
+                  }
+                };
+
                 return (
                   <button
                     key={step.id}
                     disabled={isLocked}
-                    onClick={() => setActiveStepId(step.id)}
+                    onClick={() => {
+                      setActiveStepId(step.id);
+                      setExpandedModules(prev => new Set([...prev, step.moduleId]));
+                      setExpandedLessons(prev => new Set([...prev, step.lessonId]));
+                    }}
                     title={step.title}
                     style={{
-                      width: '36px', height: '36px', borderRadius: '8px',
-                      background: isActive ? 'rgba(99,102,241,0.15)' : 'var(--bg-glass)',
-                      border: isActive ? '1px solid var(--accent-primary)' : '1px solid var(--border-primary)',
-                      color: isCompleted ? 'var(--success)' : isLocked ? 'var(--text-muted)' : 'var(--text-primary)',
+                      width: '38px', height: '38px', borderRadius: '8px',
+                      background: isActive ? '#eff6ff' : '#ffffff',
+                      border: isActive ? '1px solid var(--accent-primary)' : '1px solid var(--border-secondary)',
+                      color: isActive ? 'var(--accent-primary-hover)' : isCompleted ? '#10b981' : isLocked ? 'var(--text-muted)' : 'var(--text-secondary)',
                       cursor: isLocked ? 'not-allowed' : 'pointer',
                       display: 'flex', alignItems: 'center', justifyContent: 'center',
+                      transition: 'all 0.15s ease',
+                      boxShadow: isActive ? 'var(--shadow-sm)' : 'none',
                     }}
                   >
-                    {isCompleted ? '✓' : isLocked ? '🔒' : (step.stepType === 'video' ? '▶' : '•')}
+                    {getStepIcon()}
                   </button>
                 );
               })}
@@ -286,147 +485,328 @@ export default function StepWiseLearningPage({ params }: PageProps) {
       </aside>
 
       {/* Main Content Workspace */}
-      <main style={{ padding: '24px 32px', overflowY: 'auto', display: 'flex', flexDirection: 'column' }}>
+      <main ref={mainContentRef} style={{ padding: '32px 40px', overflowY: 'auto', display: 'flex', flexDirection: 'column', background: '#fcfcfd' }}>
         {/* Course Progress header bar */}
         <div style={{
           display: 'flex', alignItems: 'center', justifyContent: 'space-between',
-          borderBottom: '1px solid var(--border-primary)', paddingBottom: '16px', marginBottom: '24px'
+          borderBottom: '1px solid var(--border-primary)', paddingBottom: '20px', marginBottom: '32px',
+          background: 'transparent',
         }}>
           <div>
-            <Link href={`/dashboard/courses/${courseId}`} style={{ color: 'var(--accent-primary-hover)', fontSize: 'var(--font-size-xs)', display: 'block', marginBottom: '4px' }}>
-              ← Return to course dashboard
+            <Link 
+              href={`/dashboard/courses/${courseId}`} 
+              style={{ 
+                color: 'var(--text-secondary)', 
+                fontSize: '11px', 
+                fontWeight: 600,
+                display: 'inline-flex', 
+                alignItems: 'center', 
+                gap: '6px',
+                marginBottom: '8px',
+                textDecoration: 'none',
+                transition: 'color 0.15s ease',
+              }}
+              onMouseEnter={(e) => (e.currentTarget.style.color = 'var(--accent-primary)')}
+              onMouseLeave={(e) => (e.currentTarget.style.color = 'var(--text-secondary)')}
+            >
+              <ArrowLeft size={12} /> Return to Course Dashboard
             </Link>
-            <h2 style={{ fontSize: 'var(--font-size-lg)', fontWeight: 800 }}>{course.title}</h2>
+            <h2 style={{ fontSize: '1.25rem', fontWeight: 800, color: 'var(--text-primary)', letterSpacing: '-0.3px' }}>
+              {course.title}
+            </h2>
           </div>
-          <div style={{ width: '220px' }}>
-            <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 'var(--font-size-xs)', color: 'var(--text-secondary)', marginBottom: '4px' }}>
+          <div style={{ width: '240px', background: '#ffffff', padding: '12px 16px', borderRadius: '10px', border: '1px solid var(--border-primary)', boxShadow: 'var(--shadow-sm)' }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '11px', fontWeight: 600, color: 'var(--text-secondary)', marginBottom: '6px' }}>
               <span>Course Progress</span>
-              <span>{progressPct}%</span>
+              <span style={{ color: 'var(--accent-primary-hover)' }}>{progressPct}%</span>
             </div>
             <ProgressBar progress={progressPct} />
           </div>
         </div>
 
         {/* Step Content Area */}
-        {activeStep ? (
-          <div style={{ flex: 1, display: 'flex', flexDirection: 'column', gap: '24px' }}>
-            {/* Header info */}
-            <div>
-              <span className="badge badge-primary" style={{ marginBottom: '8px' }}>
-                {activeStep.stepType.toUpperCase()} STEP
-              </span>
-              <h1 style={{ fontSize: '1.75rem', fontWeight: 800, color: 'var(--text-primary)' }}>
-                {activeStep.title}
-              </h1>
-              <p style={{ fontSize: 'var(--font-size-xs)', color: 'var(--text-tertiary)', marginTop: '4px' }}>
-                Lesson: {activeStep.lessonTitle}
-              </p>
-            </div>
+        {activeStep ? (() => {
+          const textPages = activeStep && (activeStep.stepType === 'intro' || activeStep.stepType === 'text')
+            ? splitTextIntoPages(activeStep.textContent || '')
+            : [];
 
-            {/* Step Body rendering based on StepType */}
-            <div style={{
-              flex: 1,
-              background: 'var(--bg-card)',
-              border: '1px solid var(--border-primary)',
-              borderRadius: 'var(--radius-lg)',
-              padding: '32px',
-              color: 'var(--text-primary)',
-              lineHeight: '1.7',
-            }}>
-              {/* Render Intro/Text content */}
-              {(activeStep.stepType === 'intro' || activeStep.stepType === 'text') && (
-                <div style={{ whiteSpace: 'pre-wrap', fontSize: 'var(--font-size-base)' }}>
-                  {activeStep.textContent}
-                </div>
-              )}
+          return (
+            <div style={{ flex: 1, display: 'flex', flexDirection: 'column', gap: '32px' }}>
+              {/* Header info */}
+              <div>
+                {/* Premium color-coded badges based on step type */}
+                {activeStep.stepType === 'intro' && (
+                  <span style={{ display: 'inline-flex', alignItems: 'center', gap: '5px', padding: '4px 10px', borderRadius: '20px', fontSize: '10px', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.5px', background: 'rgba(59,130,246,0.08)', color: '#2563eb', border: '1px solid rgba(59,130,246,0.15)' }}>
+                    <Sparkles size={10} /> Intro Step
+                  </span>
+                )}
+                {activeStep.stepType === 'text' && (
+                  <span style={{ display: 'inline-flex', alignItems: 'center', gap: '5px', padding: '4px 10px', borderRadius: '20px', fontSize: '10px', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.5px', background: 'rgba(16,185,129,0.08)', color: '#059669', border: '1px solid rgba(16,185,129,0.15)' }}>
+                    <FileText size={10} /> Reading Step
+                  </span>
+                )}
+                {activeStep.stepType === 'video' && (
+                  <span style={{ display: 'inline-flex', alignItems: 'center', gap: '5px', padding: '4px 10px', borderRadius: '20px', fontSize: '10px', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.5px', background: 'rgba(245,158,11,0.08)', color: '#d97706', border: '1px solid rgba(245,158,11,0.15)' }}>
+                    <Play size={10} style={{ fill: 'currentColor' }} /> Video Step
+                  </span>
+                )}
+                {activeStep.stepType === 'lab' && (
+                  <span style={{ display: 'inline-flex', alignItems: 'center', gap: '5px', padding: '4px 10px', borderRadius: '20px', fontSize: '10px', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.5px', background: 'rgba(139,92,246,0.08)', color: '#7c3aed', border: '1px solid rgba(139,92,246,0.15)' }}>
+                    <Code size={10} /> Lab Step
+                  </span>
+                )}
+                
+                <h1 style={{ fontSize: '1.875rem', fontWeight: 800, color: 'var(--text-primary)', marginTop: '12px', letterSpacing: '-0.5px', lineHeight: 1.2 }}>
+                  {activeStep.title}
+                </h1>
+                <p style={{ fontSize: 'var(--font-size-xs)', color: 'var(--text-tertiary)', marginTop: '6px', fontWeight: 500 }}>
+                  Lesson: <span style={{ color: 'var(--text-secondary)' }}>{activeStep.lessonTitle}</span>
+                </p>
+              </div>
 
-              {/* Render Video content */}
-              {activeStep.stepType === 'video' && (
-                <div style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
-                  <div style={{
-                    position: 'relative',
-                    width: '100%',
-                    paddingBottom: '56.25%', // 16:9 Aspect Ratio
-                    borderRadius: 'var(--radius-md)',
-                    overflow: 'hidden',
-                    border: '1px solid var(--border-secondary)',
+              {/* Step Body rendering based on StepType */}
+              <div style={{
+                flex: 1,
+                background: '#ffffff',
+                border: '1px solid var(--border-primary)',
+                borderRadius: 'var(--radius-xl)',
+                padding: '40px',
+                color: 'var(--text-primary)',
+                lineHeight: '1.8',
+                boxShadow: 'var(--shadow-premium)',
+              }}>
+                {/* Render Intro/Text content with local page selector */}
+                {(activeStep.stepType === 'intro' || activeStep.stepType === 'text') && (
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: '24px' }}>
+                    <div style={{ 
+                      minHeight: '220px',
+                    }}>
+                      <MarkdownRenderer text={textPages[currentTextPage]} />
+                    </div>                     {textPages.length > 1 && (
+                      <div style={{
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'space-between',
+                        borderTop: '1px solid var(--border-secondary)',
+                        paddingTop: '16px',
+                        marginTop: '8px',
+                      }}>
+                        <button
+                          disabled={currentTextPage === 0}
+                          onClick={() => {
+                            setCurrentTextPage(prev => Math.max(0, prev - 1));
+                            handleScrollToTop();
+                          }}
+                          className="btn btn-secondary"
+                          style={{
+                            padding: '6px 12px',
+                            fontSize: '11px',
+                            fontWeight: 600,
+                            cursor: currentTextPage === 0 ? 'not-allowed' : 'pointer',
+                          }}
+                        >
+                          ← Previous Page
+                        </button>
+                        <span style={{ fontSize: '11px', color: 'var(--text-secondary)', fontWeight: 600 }}>
+                          Page {currentTextPage + 1} of {textPages.length}
+                        </span>
+                        <button
+                          disabled={currentTextPage === textPages.length - 1}
+                          onClick={() => {
+                            setCurrentTextPage(prev => Math.min(textPages.length - 1, prev + 1));
+                            handleScrollToTop();
+                          }}
+                          className="btn btn-secondary"
+                          style={{
+                            padding: '6px 12px',
+                            fontSize: '11px',
+                            fontWeight: 600,
+                            cursor: currentTextPage === textPages.length - 1 ? 'not-allowed' : 'pointer',
+                          }}
+                        >
+                          Next Page →
+                        </button>
+                      </div>
+                    )}
+                  </div>
+                )}
+
+                {/* Render Video content */}
+                {activeStep.stepType === 'video' && (
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: '24px' }}>
+                    <div style={{
+                      position: 'relative',
+                      width: '100%',
+                      paddingBottom: '56.25%', // 16:9 Aspect Ratio
+                      borderRadius: 'var(--radius-lg)',
+                      overflow: 'hidden',
+                      border: '1px solid var(--border-secondary)',
+                      boxShadow: 'var(--shadow-md)',
+                    }}>
+                      <iframe
+                        src={activeStep.videoUrl?.replace('watch?v=', 'embed/')}
+                        title={activeStep.title}
+                        allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                        allowFullScreen
+                        style={{
+                          position: 'absolute',
+                          top: 0, left: 0, width: '100%', height: '100%',
+                          border: 'none',
+                        }}
+                      />
+                    </div>
+                    {activeStep.textContent && (
+                      <div style={{ 
+                        color: 'var(--text-secondary)', 
+                        fontSize: 'var(--font-size-sm)',
+                        background: '#f9fafb',
+                        padding: '16px 20px',
+                        borderRadius: '8px',
+                        borderLeft: '4px solid var(--accent-primary)',
+                      }}>
+                        {activeStep.textContent}
+                      </div>
+                    )}
+                  </div>
+                )}
+
+                {/* Render Lab content */}
+                {activeStep.stepType === 'lab' && (
+                  <div style={{ 
+                    textAlign: 'center', 
+                    padding: '48px 16px', 
+                    display: 'flex', 
+                    flexDirection: 'column', 
+                    alignItems: 'center', 
+                    gap: '24px',
+                    background: 'linear-gradient(to bottom, #faf5ff, #ffffff)',
+                    borderRadius: '12px',
+                    border: '1px solid #f3e8ff',
                   }}>
-                    <iframe
-                      src={activeStep.videoUrl?.replace('watch?v=', 'embed/')}
-                      title={activeStep.title}
-                      allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
-                      allowFullScreen
-                      style={{
-                        position: 'absolute',
-                        top: 0, left: 0, width: '100%', height: '100%',
-                        border: 'none',
+                    <div style={{
+                      width: '64px', height: '64px', borderRadius: '50%',
+                      background: 'rgba(139,92,246,0.1)', display: 'flex',
+                      alignItems: 'center', justifyContent: 'center',
+                      color: '#7c3aed',
+                    }}>
+                      <Terminal size={32} />
+                    </div>
+                    <div>
+                      <h3 style={{ fontSize: '1.2rem', fontWeight: 800, color: '#5b21b6' }}>Interactive Coding Lab</h3>
+                      <p style={{ color: 'var(--text-secondary)', marginTop: '8px', maxWidth: '480px', fontSize: 'var(--font-size-sm)', lineHeight: '1.5' }}>
+                        Put your skills to the test! Write code directly in the browser and receive real-time execution feedback and AI-guided hints.
+                      </p>
+                    </div>
+                    <Link
+                      href={`/dashboard/coding-lab?stepId=${activeStep.id}`}
+                      className="btn btn-primary"
+                      style={{ 
+                        padding: '12px 28px', 
+                        fontSize: 'var(--font-size-sm)', 
+                        borderRadius: '8px',
+                        background: '#7c3aed',
+                        borderColor: '#7c3aed',
+                        boxShadow: '0 4px 12px rgba(124, 58, 237, 0.25)',
+                        display: 'inline-flex',
+                        alignItems: 'center',
+                        gap: '8px',
                       }}
-                    />
+                    >
+                      Launch Coding Lab <ArrowRight size={16} />
+                    </Link>
                   </div>
-                  {activeStep.textContent && (
-                    <p style={{ color: 'var(--text-secondary)', fontSize: 'var(--font-size-sm)' }}>
-                      {activeStep.textContent}
-                    </p>
-                  )}
-                </div>
-              )}
+                )}
+              </div>
 
-              {/* Render Lab content */}
-              {activeStep.stepType === 'lab' && (
-                <div style={{ textAlign: 'center', padding: '40px 0', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '16px' }}>
-                  <span style={{ fontSize: '4rem' }}>💻</span>
-                  <div>
-                    <h3 style={{ fontSize: 'var(--font-size-lg)', fontWeight: 700 }}>In-Browser Coding Practice</h3>
-                    <p style={{ color: 'var(--text-secondary)', marginTop: '8px', maxWidth: '440px', fontSize: 'var(--font-size-sm)' }}>
-                      Apply what you learned in an interactive code sandbox lab with instant evaluation and AI review.
-                    </p>
-                  </div>
-                  <Link
-                    href={`/dashboard/coding-lab?stepId=${activeStep.id}`}
-                    className="btn btn-primary"
-                    style={{ padding: '12px 24px', fontSize: 'var(--font-size-base)' }}
+              {/* Stepper navigation footer */}
+              <div style={{
+                display: 'flex', alignItems: 'center', justifyContent: 'space-between',
+                borderTop: '1px solid var(--border-primary)', paddingTop: '24px', marginTop: '12px'
+              }}>
+                <button
+                  disabled={activeStepIndex === 0}
+                  onClick={() => {
+                    setActiveStepId(flatSteps[activeStepIndex - 1].id);
+                    handleScrollToTop();
+                  }}
+                  style={{
+                    padding: '10px 20px',
+                    borderRadius: '8px',
+                    border: '1px solid var(--border-secondary)',
+                    background: '#ffffff',
+                    color: activeStepIndex === 0 ? 'var(--text-muted)' : 'var(--text-primary)',
+                    fontSize: 'var(--font-size-xs)',
+                    fontWeight: 600,
+                    cursor: activeStepIndex === 0 ? 'not-allowed' : 'pointer',
+                    display: 'inline-flex',
+                    alignItems: 'center',
+                    gap: '6px',
+                    boxShadow: 'var(--shadow-xs)',
+                    transition: 'all 0.15s ease',
+                  }}
+                >
+                  <ChevronLeft size={16} /> Previous Step
+                </button>
+
+                {completedSteps.includes(activeStep.id) ? (
+                  <button
+                    disabled={activeStepIndex === flatSteps.length - 1}
+                    onClick={() => {
+                      setActiveStepId(flatSteps[activeStepIndex + 1].id);
+                      handleScrollToTop();
+                    }}
+                    style={{
+                      padding: '10px 24px',
+                      borderRadius: '8px',
+                      border: '1px solid var(--accent-primary)',
+                      background: 'var(--accent-primary)',
+                      color: '#ffffff',
+                      fontSize: 'var(--font-size-xs)',
+                      fontWeight: 600,
+                      cursor: activeStepIndex === flatSteps.length - 1 ? 'not-allowed' : 'pointer',
+                      display: 'inline-flex',
+                      alignItems: 'center',
+                      gap: '6px',
+                      boxShadow: '0 4px 12px rgba(99, 102, 241, 0.15)',
+                      transition: 'all 0.15s ease',
+                    }}
                   >
-                    Launch Interactive Lab ➔
-                  </Link>
-                </div>
-              )}
+                    Next Step <ChevronRight size={16} />
+                  </button>
+                ) : (
+                  <button
+                    onClick={async () => {
+                      await handleMarkComplete();
+                      handleScrollToTop();
+                    }}
+                    disabled={textPages.length > 1 && currentTextPage !== textPages.length - 1}
+                    className="btn btn-primary"
+                    style={{ 
+                      background: (textPages.length > 1 && currentTextPage !== textPages.length - 1) ? 'var(--bg-primary)' : '#10b981', 
+                      borderColor: (textPages.length > 1 && currentTextPage !== textPages.length - 1) ? 'var(--border-primary)' : '#10b981', 
+                      color: (textPages.length > 1 && currentTextPage !== textPages.length - 1) ? 'var(--text-muted)' : '#fff', 
+                      boxShadow: (textPages.length > 1 && currentTextPage !== textPages.length - 1) ? 'none' : '0 4px 12px rgba(16, 185, 129, 0.2)',
+                      padding: '10px 24px',
+                      borderRadius: '8px',
+                      fontSize: 'var(--font-size-xs)',
+                      fontWeight: 600,
+                      display: 'inline-flex',
+                      alignItems: 'center',
+                      gap: '6px',
+                      cursor: (textPages.length > 1 && currentTextPage !== textPages.length - 1) ? 'not-allowed' : 'pointer',
+                    }}
+                  >
+                    <CheckCircle2 size={16} /> 
+                    {textPages.length > 1 && currentTextPage !== textPages.length - 1 
+                      ? `Read all pages to complete (${currentTextPage + 1}/${textPages.length})` 
+                      : 'Mark Complete & Next'
+                    }
+                  </button>
+                )}
+              </div>
             </div>
-
-            {/* Stepper navigation footer */}
-            <div style={{
-              display: 'flex', alignItems: 'center', justifyContent: 'space-between',
-              borderTop: '1px solid var(--border-primary)', paddingTop: '20px', marginTop: '24px'
-            }}>
-              <button
-                disabled={activeStepIndex === 0}
-                onClick={() => setActiveStepId(flatSteps[activeStepIndex - 1].id)}
-                className="btn btn-secondary"
-                style={{ cursor: activeStepIndex === 0 ? 'not-allowed' : 'pointer' }}
-              >
-                ← Previous Step
-              </button>
-
-              {completedSteps.includes(activeStep.id) ? (
-                <button
-                  disabled={activeStepIndex === flatSteps.length - 1}
-                  onClick={() => setActiveStepId(flatSteps[activeStepIndex + 1].id)}
-                  className="btn btn-primary"
-                  style={{ cursor: activeStepIndex === flatSteps.length - 1 ? 'not-allowed' : 'pointer' }}
-                >
-                  Next Step →
-                </button>
-              ) : (
-                <button
-                  onClick={handleMarkComplete}
-                  className="btn btn-primary"
-                  style={{ background: 'var(--success)', color: '#fff', boxShadow: 'none' }}
-                >
-                  ✓ Mark Complete & Next
-                </button>
-              )}
-            </div>
-          </div>
-        ) : (
+          );
+        })() : (
           <div style={{
             flex: 1,
             display: 'flex',
@@ -435,15 +815,16 @@ export default function StepWiseLearningPage({ params }: PageProps) {
             justifyContent: 'center',
             textAlign: 'center',
             padding: '80px 16px',
-            background: 'var(--bg-glass)',
-            border: '1px dashed var(--border-primary)',
-            borderRadius: 'var(--radius-lg)',
+            background: '#ffffff',
+            border: '1px dashed var(--border-secondary)',
+            borderRadius: 'var(--radius-xl)',
             gap: '16px',
+            boxShadow: 'var(--shadow-sm)',
           }}>
             <span style={{ fontSize: '3.5rem' }}>📖</span>
             <div>
-              <h3 style={{ fontSize: 'var(--font-size-lg)', fontWeight: 700, color: 'var(--text-primary)' }}>No learning steps created yet</h3>
-              <p style={{ color: 'var(--text-secondary)', marginTop: '8px', maxWidth: '440px', fontSize: 'var(--font-size-sm)' }}>
+              <h3 style={{ fontSize: '1.15rem', fontWeight: 800, color: 'var(--text-primary)' }}>No learning steps created yet</h3>
+              <p style={{ color: 'var(--text-secondary)', marginTop: '8px', maxWidth: '440px', fontSize: 'var(--font-size-sm)', lineHeight: 1.5 }}>
                 This course has lessons configured, but no learning steps (text content, videos, or coding exercises) have been added by the instructor yet.
               </p>
             </div>
@@ -452,4 +833,276 @@ export default function StepWiseLearningPage({ params }: PageProps) {
       </main>
     </div>
   );
+}
+
+// Robust helper function to split text into pages based on manual pagebreaks or automatic paragraph grouping
+export function splitTextIntoPages(text: string): string[] {
+  if (!text) return [''];
+  
+  // 1. Split by explicit custom pagebreak tag if present
+  if (text.includes('<!-- pagebreak -->')) {
+    return text.split('<!-- pagebreak -->').map(p => p.trim()).filter(Boolean);
+  }
+  
+  // 2. Auto-paginate very long text step content (over 1800 characters)
+  if (text.length > 1800) {
+    const paragraphs = text.split(/\n\s*\n/);
+    const pages: string[] = [];
+    let currentPage = '';
+    
+    for (const para of paragraphs) {
+      if ((currentPage + para).length > 1200 && currentPage.length > 0) {
+        pages.push(currentPage.trim());
+        currentPage = para;
+      } else {
+        if (currentPage.length > 0) {
+          currentPage += '\n\n' + para;
+        } else {
+          currentPage = para;
+        }
+      }
+    }
+    if (currentPage.trim()) {
+      pages.push(currentPage.trim());
+    }
+    return pages;
+  }
+  
+  return [text];
+}
+
+// Custom parser component to render formatted Markdown, code snippets, auto-bullet points and subheadings
+export function MarkdownRenderer({ text }: { text: string }) {
+  if (!text) return null;
+
+  // Split by code blocks first if explicit backticks are present
+  const parts = text.split(/(```[\s\S]*?```)/g);
+
+  return (
+    <div style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
+      {parts.map((part, index) => {
+        if (part.startsWith('```') && part.endsWith('```')) {
+          // Explicit code block
+          const lines = part.slice(3, -3).trim().split('\n');
+          let language = 'text';
+          let codeLines = lines;
+          if (lines[0] && !lines[0].includes(' ') && lines[0].length < 15 && lines[0] === lines[0].toLowerCase()) {
+            language = lines[0];
+            codeLines = lines.slice(1);
+          }
+          return (
+            <div 
+              key={index}
+              style={{
+                background: '#0f172a',
+                color: '#e2e8f0',
+                borderRadius: '8px',
+                padding: '16px 20px',
+                fontFamily: 'SFMono-Regular, Consolas, "Liberation Mono", Menlo, monospace',
+                fontSize: '0.875rem',
+                overflowX: 'auto',
+                border: '1px solid #1e293b',
+                margin: '12px 0',
+                boxShadow: 'inset 0 1px 3px rgba(0,0,0,0.1)',
+              }}
+            >
+              {language !== 'text' && (
+                <div style={{ fontSize: '10px', textTransform: 'uppercase', color: '#64748b', marginBottom: '8px', borderBottom: '1px solid #1e293b', paddingBottom: '4px', fontWeight: 700, letterSpacing: '0.5px' }}>
+                  {language}
+                </div>
+              )}
+              <pre style={{ margin: 0, whiteSpace: 'pre' }}><code>{codeLines.join('\n')}</code></pre>
+            </div>
+          );
+        } else {
+          // Parse paragraph blocks
+          const blocks = part.split(/\n\s*\n/);
+          return blocks.map((block, bIdx) => {
+            const trimmed = block.trim();
+            if (!trimmed) return null;
+
+            // Check if it is an explicit Markdown Heading
+            if (trimmed.startsWith('# ')) {
+              return <h1 key={bIdx} style={{ fontSize: '1.6rem', fontWeight: 800, color: 'var(--text-primary)', marginTop: '24px', marginBottom: '8px', letterSpacing: '-0.4px' }}>{parseInlineMarkdown(trimmed.slice(2))}</h1>;
+            }
+            if (trimmed.startsWith('## ')) {
+              return <h2 key={bIdx} style={{ fontSize: '1.35rem', fontWeight: 700, color: 'var(--text-primary)', marginTop: '20px', marginBottom: '8px', letterSpacing: '-0.3px' }}>{parseInlineMarkdown(trimmed.slice(3))}</h2>;
+            }
+            if (trimmed.startsWith('### ')) {
+              return <h3 key={bIdx} style={{ fontSize: '1.15rem', fontWeight: 700, color: 'var(--text-primary)', marginTop: '16px', marginBottom: '6px' }}>{parseInlineMarkdown(trimmed.slice(4))}</h3>;
+            }
+
+            // Check if it is an explicit Blockquote
+            if (trimmed.startsWith('> ')) {
+              return (
+                <blockquote 
+                  key={bIdx}
+                  style={{
+                    borderLeft: '4px solid var(--accent-primary)',
+                    background: '#f9fafb',
+                    padding: '12px 18px',
+                    margin: '12px 0',
+                    borderRadius: '0 8px 8px 0',
+                    color: 'var(--text-secondary)',
+                    fontStyle: 'italic',
+                  }}
+                >
+                  {parseInlineMarkdown(trimmed.slice(2))}
+                </blockquote>
+              );
+            }
+
+            // Check if it is a block of code (e.g. print(...), >>> ..., etc.)
+            const lines = trimmed.split('\n');
+            const isCodeBlock = lines.some(line => 
+              line.trim().startsWith('>>>') || 
+              line.trim().startsWith('print(') || 
+              line.trim().includes('def ') || 
+              line.trim().includes('class ') ||
+              line.trim() === '15' // output line
+            );
+            
+            // If it starts with >>> or looks like code block lines and doesn't contain normal conversational punctuation
+            if (isCodeBlock && lines.length > 0 && !trimmed.includes('Interpreter is') && !trimmed.includes('compiled languages')) {
+              return (
+                <div 
+                  key={bIdx}
+                  style={{
+                    background: '#0f172a',
+                    color: '#e2e8f0',
+                    borderRadius: '8px',
+                    padding: '14px 18px',
+                    fontFamily: 'SFMono-Regular, Consolas, monospace',
+                    fontSize: '0.875rem',
+                    overflowX: 'auto',
+                    border: '1px solid #1e293b',
+                    margin: '10px 0',
+                    boxShadow: 'inset 0 1px 3px rgba(0,0,0,0.1)',
+                  }}
+                >
+                  <pre style={{ margin: 0, whiteSpace: 'pre-wrap' }}><code>{trimmed}</code></pre>
+                </div>
+              );
+            }
+
+            // Check if it is a list block
+            const isUnordered = lines.every(line => line.trim().startsWith('* ') || line.trim().startsWith('- '));
+            const isOrdered = lines.every(line => /^\d+\.\s/.test(line.trim()));
+
+            if (isUnordered) {
+              return (
+                <ul key={bIdx} style={{ paddingLeft: '20px', margin: '12px 0', display: 'flex', flexDirection: 'column', gap: '8px' }}>
+                  {lines.map((line, lIdx) => (
+                    <li key={lIdx} style={{ listStyleType: 'disc', color: 'var(--text-secondary)', fontSize: '1.025rem', paddingLeft: '4px' }}>
+                      {parseInlineMarkdown(line.trim().slice(2))}
+                    </li>
+                  ))}
+                </ul>
+              );
+            }
+
+            if (isOrdered) {
+              return (
+                <ol key={bIdx} style={{ paddingLeft: '20px', margin: '12px 0', display: 'flex', flexDirection: 'column', gap: '8px' }}>
+                  {lines.map((line, lIdx) => {
+                    const content = line.trim().replace(/^\d+\.\s/, '');
+                    return (
+                      <li key={lIdx} style={{ listStyleType: 'decimal', color: 'var(--text-secondary)', fontSize: '1.025rem', paddingLeft: '4px' }}>
+                        {parseInlineMarkdown(content)}
+                      </li>
+                    );
+                  })}
+                </ol>
+              );
+            }
+
+            // Intelligent list formatting for plain text paragraphs (e.g. Advantages list)
+            // If the preceding paragraph ended with a colon, and this block is split into multiple short lines:
+            if (lines.length > 1 && lines.every(line => line.length < 50 && !line.includes('.'))) {
+              return (
+                <ul key={bIdx} style={{ paddingLeft: '20px', margin: '12px 0', display: 'flex', flexDirection: 'column', gap: '8px' }}>
+                  {lines.map((line, lIdx) => (
+                    <li key={lIdx} style={{ listStyleType: 'disc', color: 'var(--text-secondary)', fontSize: '1.025rem', paddingLeft: '4px' }}>
+                      {parseInlineMarkdown(line.trim())}
+                    </li>
+                  ))}
+                </ul>
+              );
+            }
+
+            // Check if it's a short line ending in colon (e.g., "Types of Execution:" or "Example:")
+            if (trimmed.endsWith(':') && trimmed.length < 40) {
+              return (
+                <h4 
+                  key={bIdx} 
+                  style={{ 
+                    fontSize: '1.05rem', 
+                    fontWeight: 700, 
+                    color: 'var(--text-primary)', 
+                    marginTop: '24px', 
+                    marginBottom: '8px',
+                    borderBottom: '1px solid var(--border-secondary)',
+                    paddingBottom: '6px',
+                  }}
+                >
+                  {parseInlineMarkdown(trimmed)}
+                </h4>
+              );
+            }
+
+            // Standard paragraph
+            return (
+              <p 
+                key={bIdx}
+                style={{
+                  margin: '14px 0',
+                  color: 'var(--text-secondary)',
+                  fontSize: '1.025rem',
+                  lineHeight: '1.8',
+                }}
+              >
+                {parseInlineMarkdown(trimmed)}
+              </p>
+            );
+          });
+        }
+      })}
+    </div>
+  );
+}
+
+// Inline Markdown parser for Bold, Italic, and Inline Code
+function parseInlineMarkdown(text: string): React.ReactNode[] {
+  // Regex to match **bold**, *italic*, `code`, and plain text
+  const regex = /(\*\*.*?\*\*|\*.*?\*|`.*?`)/g;
+  const parts = text.split(regex);
+
+  return parts.map((part, index) => {
+    if (part.startsWith('**') && part.endsWith('**')) {
+      return <strong key={index} style={{ fontWeight: 700, color: 'var(--text-primary)' }}>{part.slice(2, -2)}</strong>;
+    }
+    if (part.startsWith('*') && part.endsWith('*')) {
+      return <em key={index} style={{ fontStyle: 'italic' }}>{part.slice(1, -1)}</em>;
+    }
+    if (part.startsWith('`') && part.endsWith('`')) {
+      return (
+        <code 
+          key={index} 
+          style={{
+            background: '#f1f5f9',
+            color: '#0f172a',
+            padding: '2px 6px',
+            borderRadius: '4px',
+            fontFamily: 'SFMono-Regular, Consolas, monospace',
+            fontSize: '0.85em',
+            border: '1px solid #e2e8f0',
+            fontWeight: 600,
+          }}
+        >
+          {part.slice(1, -1)}
+        </code>
+      );
+    }
+    return part;
+  });
 }

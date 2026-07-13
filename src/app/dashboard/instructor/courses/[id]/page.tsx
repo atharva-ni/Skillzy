@@ -110,6 +110,10 @@ export default function CourseEditor() {
   const [draggedModuleId, setDraggedModuleId] = useState<string | null>(null);
   const [dragOverModuleId, setDragOverModuleId] = useState<string | null>(null);
 
+  // Drag and drop states for lessons
+  const [draggedLessonId, setDraggedLessonId] = useState<string | null>(null);
+  const [dragOverLessonId, setDragOverLessonId] = useState<string | null>(null);
+
   // Refs for inline form auto-focus
   const moduleInputRef = useRef<HTMLInputElement>(null);
   const lessonInputRef = useRef<HTMLInputElement>(null);
@@ -519,6 +523,52 @@ export default function CourseEditor() {
       await fetchData();
     } catch (err) {
       toast.error('Failed to reorder modules');
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  // Drag and Drop lessons order swap (within the same module)
+  const handleDropLesson = async (draggedId: string, targetId: string) => {
+    if (draggedId === targetId) return;
+
+    let draggedLes: any = null;
+    let targetLes: any = null;
+
+    for (const mod of modules) {
+      const d = mod.lessons?.find((l: any) => l.id === draggedId);
+      const t = mod.lessons?.find((l: any) => l.id === targetId);
+      if (d) draggedLes = d;
+      if (t) targetLes = t;
+    }
+
+    if (!draggedLes || !targetLes) return;
+
+    if (draggedLes.moduleId !== targetLes.moduleId) {
+      toast.error('Lessons can only be reordered within the same module');
+      return;
+    }
+
+    try {
+      setSaving(true);
+
+      const update1 = fetch(`/api/lessons/${draggedId}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ sortOrder: targetLes.sortOrder })
+      });
+
+      const update2 = fetch(`/api/lessons/${targetId}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ sortOrder: draggedLes.sortOrder })
+      });
+
+      await Promise.all([update1, update2]);
+      toast.success('Lessons reordered successfully');
+      await fetchData();
+    } catch (err) {
+      toast.error('Failed to reorder lessons');
     } finally {
       setSaving(false);
     }
@@ -1006,6 +1056,25 @@ export default function CourseEditor() {
                                 setSelectedNode({ type: 'lesson', id: les.id });
                                 toggleLesson(les.id);
                               }}
+                              onDragOver={(e) => {
+                                e.preventDefault();
+                                if (draggedLessonId && draggedLessonId !== les.id) {
+                                  const draggedLes = modules.flatMap(m => m.lessons || []).find(l => l.id === draggedLessonId);
+                                  if (draggedLes && draggedLes.moduleId === les.moduleId) {
+                                    setDragOverLessonId(les.id);
+                                  }
+                                }
+                              }}
+                              onDragLeave={() => {
+                                setDragOverLessonId(null);
+                              }}
+                              onDrop={(e) => {
+                                e.preventDefault();
+                                setDragOverLessonId(null);
+                                if (draggedLessonId) {
+                                  handleDropLesson(draggedLessonId, les.id);
+                                }
+                              }}
                               style={{
                                 display: 'flex',
                                 alignItems: 'center',
@@ -1014,8 +1083,18 @@ export default function CourseEditor() {
                                 borderRadius: '6px',
                                 cursor: 'pointer',
                                 border: '1px solid',
-                                borderColor: isLesSelected ? 'var(--border-secondary)' : 'transparent',
-                                background: isLesSelected ? 'var(--bg-primary)' : 'transparent',
+                                borderColor: dragOverLessonId === les.id
+                                  ? 'var(--accent-primary)'
+                                  : isLesSelected
+                                  ? 'var(--border-secondary)'
+                                  : 'transparent',
+                                background: dragOverLessonId === les.id
+                                  ? 'rgba(99,102,241,0.08)'
+                                  : isLesSelected
+                                  ? 'var(--bg-primary)'
+                                  : 'transparent',
+                                transform: dragOverLessonId === les.id ? 'scale(1.01)' : 'none',
+                                opacity: draggedLessonId === les.id ? 0.4 : 1,
                                 transition: 'all 0.15s ease',
                               }}
                             >
@@ -1034,6 +1113,34 @@ export default function CourseEditor() {
                               </div>
 
                               <div style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
+                                <div
+                                  draggable
+                                  onDragStart={(e) => {
+                                    e.stopPropagation();
+                                    setDraggedLessonId(les.id);
+                                  }}
+                                  onDragEnd={() => {
+                                    setDraggedLessonId(null);
+                                  }}
+                                  style={{
+                                    display: 'flex',
+                                    alignItems: 'center',
+                                    padding: '4px',
+                                    cursor: 'grab',
+                                    color: 'var(--text-tertiary)',
+                                    borderRadius: '4px',
+                                    transition: 'background 0.15s ease',
+                                  }}
+                                  title="Drag to reorder lesson"
+                                  onMouseEnter={(e) => {
+                                    (e.currentTarget as HTMLDivElement).style.background = 'var(--bg-primary)';
+                                  }}
+                                  onMouseLeave={(e) => {
+                                    (e.currentTarget as HTMLDivElement).style.background = 'transparent';
+                                  }}
+                                >
+                                  <Menu size={10} />
+                                </div>
                                 <button 
                                   className="btn btn-ghost" 
                                   style={{ padding: '2px', color: 'var(--error)' }} 
@@ -1408,18 +1515,34 @@ export default function CourseEditor() {
               </div>
 
               {/* A. TEXT CONTENT TYPE */}
-              {editStep.stepType === 'text' && (
-                <div style={{ display: 'flex', flexDirection: 'column', gap: '6px', flex: 1 }}>
-                  <label className="label">Step Text Content (Markdown supported)</label>
-                  <textarea 
-                    className="input" 
-                    rows={12}
-                    style={{ height: 'auto', flex: 1, resize: 'vertical', fontFamily: 'monospace' }}
-                    value={editStep.textContent || ''} 
-                    onChange={(e) => setEditStep({ ...editStep, textContent: e.target.value })}
-                  />
-                </div>
-              )}
+              {editStep.stepType === 'text' && (() => {
+                const pages = splitTextIntoPages(editStep.textContent || '');
+                return (
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: '8px', flex: 1 }}>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                      <label className="label">Step Text Content (Markdown supported)</label>
+                      {pages.length > 1 && (
+                        <span style={{ fontSize: '11px', color: 'var(--accent-primary-hover)', fontWeight: 600, background: 'rgba(99,102,241,0.08)', padding: '2px 8px', borderRadius: '12px' }}>
+                          📄 Split into {pages.length} pages
+                        </span>
+                      )}
+                    </div>
+                    <textarea 
+                      className="input" 
+                      rows={12}
+                      style={{ height: 'auto', flex: 1, resize: 'vertical', fontFamily: 'monospace' }}
+                      value={editStep.textContent || ''} 
+                      onChange={(e) => setEditStep({ ...editStep, textContent: e.target.value })}
+                    />
+                    <div style={{ fontSize: '10px', color: 'var(--text-tertiary)', lineHeight: '1.4', background: 'var(--bg-primary)', padding: '8px 12px', borderRadius: '6px', border: '1px solid var(--border-primary)' }}>
+                      <strong>Paging Tip:</strong> Type <code>&lt;!-- pagebreak --&gt;</code> on a new line to explicitly split content into pages. 
+                      {editStep.textContent && editStep.textContent.length > 1800 && !editStep.textContent.includes('<!-- pagebreak -->') && (
+                        <span> This step will be automatically split into <strong>{pages.length} pages</strong> (max ~1200 chars per page) because of its length.</span>
+                      )}
+                    </div>
+                  </div>
+                );
+              })()}
 
               {/* B. VIDEO CONTENT TYPE */}
               {editStep.stepType === 'video' && (
@@ -1612,4 +1735,40 @@ export default function CourseEditor() {
       </div>
     </div>
   );
+}
+
+// Robust helper function to split text into pages based on manual pagebreaks or automatic paragraph grouping
+export function splitTextIntoPages(text: string): string[] {
+  if (!text) return [''];
+  
+  // 1. Split by explicit custom pagebreak tag if present
+  if (text.includes('<!-- pagebreak -->')) {
+    return text.split('<!-- pagebreak -->').map(p => p.trim()).filter(Boolean);
+  }
+  
+  // 2. Auto-paginate very long text step content (over 1800 characters)
+  if (text.length > 1800) {
+    const paragraphs = text.split(/\n\s*\n/);
+    const pages: string[] = [];
+    let currentPage = '';
+    
+    for (const para of paragraphs) {
+      if ((currentPage + para).length > 1200 && currentPage.length > 0) {
+        pages.push(currentPage.trim());
+        currentPage = para;
+      } else {
+        if (currentPage.length > 0) {
+          currentPage += '\n\n' + para;
+        } else {
+          currentPage = para;
+        }
+      }
+    }
+    if (currentPage.trim()) {
+      pages.push(currentPage.trim());
+    }
+    return pages;
+  }
+  
+  return [text];
 }
