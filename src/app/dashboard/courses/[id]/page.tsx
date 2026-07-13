@@ -126,9 +126,14 @@ export default function CourseDetail({ params }: PageProps) {
             display: 'flex',
             alignItems: 'center',
             justifyContent: 'center',
-            fontSize: '1.5rem'
+            fontSize: '1.5rem',
+            overflow: 'hidden'
           }}>
-            {course.instructor?.avatar || '👩‍🏫'}
+            {course.instructor?.avatar && (course.instructor.avatar.startsWith('http') || course.instructor.avatar.startsWith('/')) ? (
+              <img src={course.instructor.avatar} alt={course.instructor.name} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+            ) : (
+              course.instructor?.avatar || '👩‍🏫'
+            )}
           </div>
           <div>
             <h4 style={{ fontWeight: 600 }}>{course.instructor?.name || 'Instructor'}</h4>

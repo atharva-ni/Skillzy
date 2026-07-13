@@ -7,12 +7,12 @@ import { useAuth } from '@/context/AuthContext';
 import { UserRole } from '@/data/mock';
 import styles from './Sidebar.module.css';
 import { motion, AnimatePresence } from 'framer-motion';
-import { 
-  LayoutDashboard, 
-  BookOpen, 
-  Milestone, 
-  Terminal, 
-  Briefcase, 
+import {
+  LayoutDashboard,
+  BookOpen,
+  Milestone,
+  Terminal,
+  Briefcase,
   MessageSquare,
   FileSpreadsheet,
   Users,
@@ -56,6 +56,9 @@ const navConfig: Record<UserRole, (collapsed: boolean) => NavItem[]> = {
   ],
 };
 
+const SIDEBAR_WIDTH = 260;
+const SIDEBAR_COLLAPSED = 72;
+
 export default function Sidebar() {
   const pathname = usePathname();
   const { user } = useAuth();
@@ -69,78 +72,75 @@ export default function Sidebar() {
   const dashboardHome = user.role === 'admin' || user.role === ('super_admin' as UserRole)
     ? '/dashboard/admin'
     : user.role === 'instructor'
-    ? '/dashboard/instructor'
-    : user.role === 'recruiter'
-    ? '/dashboard/recruiter'
-    : '/dashboard';
-
+      ? '/dashboard/instructor'
+      : user.role === 'recruiter'
+        ? '/dashboard/recruiter'
+        : '/dashboard';
 
   return (
-    <motion.aside 
-      className={`${styles.sidebar} ${collapsed ? styles.collapsed : ''}`}
-      animate={{ width: collapsed ? 'var(--sidebar-collapsed)' : 'var(--sidebar-width)' }}
-      transition={{ duration: 0.4, ease: [0.16, 1, 0.3, 1] }}
+    <motion.aside
+      className={styles.sidebar}
+      animate={{ width: collapsed ? SIDEBAR_COLLAPSED : SIDEBAR_WIDTH }}
+      transition={{ duration: 0.3, ease: [0.16, 1, 0.3, 1] }}
       style={{
         background: '#ffffff',
         borderRight: '1px solid #e5e5e5',
+        overflow: 'hidden',
       }}
     >
-      <div className={styles.brand} style={{ borderBottom: '1px solid #e5e5e5' }}>
-        <Link href={dashboardHome} className={styles.logo}>
-          <motion.span 
-            className={styles.logoIcon}
-            animate={{ rotate: [0, 10, -10, 0] }}
-            transition={{ repeat: Infinity, duration: 4, ease: "easeInOut" }}
-            style={{
-              fontWeight: 800,
-              fontSize: '1.25rem'
-            }}
-          >
-            ⚡
-          </motion.span>
-          <AnimatePresence>
-            {!collapsed && (
-              <motion.span 
-                className={styles.logoText}
-                initial={{ opacity: 0, x: -10 }}
-                animate={{ opacity: 1, x: 0 }}
-                exit={{ opacity: 0, x: -10 }}
-                transition={{ duration: 0.2 }}
+      {/* Brand header — logo only */}
+      <div className={styles.brand} style={{
+        borderBottom: '1px solid #e5e5e5',
+        justifyContent: collapsed ? 'center' : 'flex-start',
+      }}>
+        <Link href={dashboardHome} className={styles.logo} style={{
+          overflow: 'hidden',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: collapsed ? 'center' : 'flex-start',
+          width: '100%',
+        }}>
+          <AnimatePresence mode="wait" initial={false}>
+            {collapsed ? (
+              <motion.img
+                key="icon"
+                src="/apple-touch-icon.png"
+                alt="Skilotech"
+                initial={{ opacity: 0, scale: 0.8 }}
+                animate={{ opacity: 1, scale: 1 }}
+                exit={{ opacity: 0, scale: 0.8 }}
+                transition={{ duration: 0.15 }}
                 style={{
-                  fontWeight: 700,
-                  fontSize: '1.05rem',
-                  letterSpacing: '-0.3px',
-                  color: '#171717',
+                  width: '36px',
+                  height: '36px',
+                  objectFit: 'contain',
+                  display: 'block',
                 }}
-              >
-                Skilotech
-              </motion.span>
+              />
+            ) : (
+              <motion.img
+                key="full-logo"
+                src="/logo.png"
+                alt="Skilotech"
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                exit={{ opacity: 0 }}
+                transition={{ duration: 0.15 }}
+                style={{
+                  width: '180px',
+                  height: '180px',
+                  marginTop: '-70px',
+                  marginBottom: '-70px',
+                  objectFit: 'contain',
+                  display: 'block',
+                }}
+              />
             )}
           </AnimatePresence>
         </Link>
-        <motion.button
-          className={styles.collapseBtn}
-          onClick={() => setCollapsed(!collapsed)}
-          aria-label={collapsed ? 'Expand sidebar' : 'Collapse sidebar'}
-          whileHover={{ scale: 1.1, background: '#f4f4f5' }}
-          whileTap={{ scale: 0.95 }}
-          style={{
-            borderRadius: '50%',
-            width: '24px',
-            height: '24px',
-            background: '#fafafa',
-            border: '1px solid #e5e5e5',
-            color: 'var(--text-secondary)',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            cursor: 'pointer'
-          }}
-        >
-          {collapsed ? <ChevronRight size={14} /> : <ChevronLeft size={14} />}
-        </motion.button>
       </div>
 
+      {/* Navigation */}
       <nav className={styles.nav}>
         {items.map((item) => {
           const isActive = pathname === item.href ||
@@ -176,31 +176,37 @@ export default function Sidebar() {
                   transition={{ type: 'spring', stiffness: 380, damping: 30 }}
                 />
               )}
-              <span className={styles.navIcon} style={{ 
+              <span className={styles.navIcon} style={{
                 marginRight: collapsed ? '0' : '12px',
                 color: isActive ? 'var(--accent-primary-hover)' : 'inherit',
                 display: 'flex',
-                alignItems: 'center'
+                alignItems: 'center',
+                flexShrink: 0,
               }}>
                 {item.icon}
               </span>
               <AnimatePresence>
                 {!collapsed && (
-                  <motion.span 
+                  <motion.span
                     className={styles.navLabel}
-                    initial={{ opacity: 0, x: -5 }}
-                    animate={{ opacity: 1, x: 0 }}
-                    exit={{ opacity: 0, x: -5 }}
+                    initial={{ opacity: 0, width: 0 }}
+                    animate={{ opacity: 1, width: 'auto' }}
+                    exit={{ opacity: 0, width: 0 }}
                     transition={{ duration: 0.15 }}
-                    style={{ fontSize: 'var(--font-size-sm)', fontWeight: isActive ? 600 : 500 }}
+                    style={{
+                      fontSize: 'var(--font-size-sm)',
+                      fontWeight: isActive ? 600 : 500,
+                      whiteSpace: 'nowrap',
+                      overflow: 'hidden',
+                    }}
                   >
                     {item.label}
                   </motion.span>
                 )}
               </AnimatePresence>
               {isActive && !collapsed && (
-                <motion.span 
-                  className={styles.activeIndicator} 
+                <motion.span
+                  className={styles.activeIndicator}
                   layoutId="sidebar-indicator"
                   style={{
                     width: '3px',
@@ -217,8 +223,41 @@ export default function Sidebar() {
         })}
       </nav>
 
+      {/* Collapse toggle */}
+      <div style={{
+        padding: '8px',
+        display: 'flex',
+        justifyContent: 'center',
+        borderTop: '1px solid #e5e5e5',
+      }}>
+        <motion.button
+          onClick={() => setCollapsed(!collapsed)}
+          aria-label={collapsed ? 'Expand sidebar' : 'Collapse sidebar'}
+          whileHover={{ scale: 1.05, background: '#f4f4f5' }}
+          whileTap={{ scale: 0.95 }}
+          style={{
+            borderRadius: '8px',
+            width: collapsed ? '36px' : '100%',
+            height: '32px',
+            background: '#fafafa',
+            border: '1px solid #e5e5e5',
+            color: 'var(--text-secondary)',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            gap: '6px',
+            cursor: 'pointer',
+            fontSize: '0.75rem',
+            fontWeight: 500,
+          }}
+        >
+          {collapsed ? <ChevronRight size={14} /> : <><ChevronLeft size={14} /> <span>Collapse</span></>}
+        </motion.button>
+      </div>
+
+      {/* User section */}
       <div className={styles.userSection} style={{ borderTop: '1px solid #e5e5e5' }}>
-        <motion.div 
+        <motion.div
           className={styles.userAvatar}
           whileHover={{ scale: 1.05 }}
           style={{
@@ -231,20 +270,26 @@ export default function Sidebar() {
             alignItems: 'center',
             justifyContent: 'center',
             fontSize: '0.875rem',
-            fontWeight: 600
+            fontWeight: 600,
+            flexShrink: 0,
+            overflow: 'hidden'
           }}
         >
-          {user.avatar || user.name[0]}
+          {user.avatar && (user.avatar.startsWith('http') || user.avatar.startsWith('/')) ? (
+            <img src={user.avatar} alt={user.name} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+          ) : (
+            user.avatar || user.name[0]
+          )}
         </motion.div>
         <AnimatePresence>
           {!collapsed && (
-            <motion.div 
+            <motion.div
               className={styles.userInfo}
-              initial={{ opacity: 0, x: -10 }}
-              animate={{ opacity: 1, x: 0 }}
-              exit={{ opacity: 0, x: -10 }}
-              transition={{ duration: 0.2 }}
-              style={{ display: 'flex', flexDirection: 'column', marginLeft: '12px' }}
+              initial={{ opacity: 0, width: 0 }}
+              animate={{ opacity: 1, width: 'auto' }}
+              exit={{ opacity: 0, width: 0 }}
+              transition={{ duration: 0.15 }}
+              style={{ display: 'flex', flexDirection: 'column', marginLeft: '12px', overflow: 'hidden', whiteSpace: 'nowrap' }}
             >
               <span className={styles.userName} style={{ fontSize: '0.85rem', fontWeight: 600, color: 'var(--text-primary)' }}>{user.name}</span>
               <span className={styles.userRole} style={{ fontSize: '0.75rem', color: 'var(--text-tertiary)', textTransform: 'capitalize' }}>{user.role}</span>

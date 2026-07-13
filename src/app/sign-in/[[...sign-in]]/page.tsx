@@ -15,9 +15,8 @@ export default function SignInPage() {
 
       <div className="auth-container">
         {/* Branding */}
-        <div className="auth-brand">
-          <div className="auth-brand-icon">⚡</div>
-          <span className="auth-brand-text">Skilotech</span>
+        <div className="auth-brand" style={{ overflow: 'hidden', height: '50px', display: 'flex', alignItems: 'center', justifyContent: 'center', width: '200px', margin: '0 auto 24px auto' }}>
+          <img src="/logo.png" alt="Skilotech Logo" style={{ width: '200px', height: '200px', marginTop: '-75px', marginBottom: '-75px', objectFit: 'contain', display: 'block' }} />
         </div>
 
         <p className="auth-tagline">Welcome back — pick up where you left off.</p>

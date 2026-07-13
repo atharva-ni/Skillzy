@@ -116,9 +116,8 @@ export default function LandingPage() {
       {/* Navigation */}
       <nav className={styles.nav} style={{ borderBottom: '1px solid #e5e5e5', zIndex: 10, background: '#ffffff' }}>
         <div className={styles.navInner}>
-          <Link href="/" className={styles.brand}>
-            <span className={styles.brandIcon} style={{ fontWeight: 800 }}>⚡</span>
-            <span className={styles.brandText} style={{ fontWeight: 800, color: '#171717' }}>Skilotech</span>
+          <Link href="/" className={styles.brand} style={{ overflow: 'hidden', height: '40px', display: 'flex', alignItems: 'center' }}>
+            <img src="/logo.png" alt="Skilotech Logo" style={{ width: '150px', height: '150px', marginTop: '-55px', marginBottom: '-55px', objectFit: 'contain', display: 'block' }} />
           </Link>
           <div className={styles.navLinks}>
             <a href="#features" className={styles.navLink}>Features</a>
@@ -286,9 +285,8 @@ export default function LandingPage() {
       {/* Footer */}
       <footer className={styles.footer} style={{ borderTop: '1px solid #e5e5e5', padding: '40px 0', background: '#ffffff' }}>
         <div className={styles.footerInner}>
-          <div className={styles.footerBrand}>
-            <span className={styles.brandIcon} style={{ fontWeight: 800 }}>⚡</span>
-            <span className={styles.brandText} style={{ fontWeight: 800, color: '#171717' }}>Skilotech</span>
+          <div className={styles.footerBrand} style={{ overflow: 'hidden', height: '40px', display: 'flex', alignItems: 'center' }}>
+            <img src="/logo.png" alt="Skilotech Logo" style={{ width: '130px', height: '130px', marginTop: '-45px', marginBottom: '-45px', objectFit: 'contain', display: 'block' }} />
           </div>
           <p className={styles.footerText} style={{ color: 'var(--text-tertiary)', fontSize: '0.75rem' }}>
             © 2026 Skilotech. All rights reserved. Built for learners, by learners.
