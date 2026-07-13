@@ -2,6 +2,8 @@ import { requireAuth, apiError, apiSuccess } from '@/lib/auth';
 import prisma from '@/lib/prisma';
 import { razorpay, generateReceipt } from '@/lib/razorpay';
 import { createOrderSchema } from '@/lib/validations';
+import { EnrollmentStatus } from '@prisma/client';
+import { cache } from '@/lib/redis';
 
 export async function POST(req: Request) {
   try {
@@ -39,6 +41,49 @@ export async function POST(req: Request) {
 
     // 3. Handle free courses (price is 0)
     if (course.price === 0 || course.isFree) {
+      await prisma.$transaction(async (tx) => {
+        // Create active enrollment record
+        await tx.enrollment.upsert({
+          where: {
+            userId_courseId: {
+              userId: dbUser.id,
+              courseId,
+            },
+          },
+          update: {
+            status: EnrollmentStatus.active,
+            lastAccessed: new Date(),
+          },
+          create: {
+            userId: dbUser.id,
+            courseId,
+            status: EnrollmentStatus.active,
+          },
+        });
+
+        // Increment student enrolled count
+        await tx.course.update({
+          where: { id: courseId },
+          data: {
+            studentsEnrolled: { increment: 1 },
+          },
+        });
+
+        // Create notification
+        await tx.notification.create({
+          data: {
+            userId: dbUser.id,
+            type: 'enrollment',
+            title: 'Enrollment Confirmed! 🎉',
+            message: `You have successfully enrolled in "${course.title}". Start learning now!`,
+            link: `/dashboard/courses/${course.id}`,
+          },
+        });
+      });
+
+      // Clear course cache to update student enrolled count
+      await cache.del(`course:detail:${courseId}`);
+
       return apiSuccess({
         isFree: true,
         message: 'Course is free. Direct enrollment allowed.',

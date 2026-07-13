@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import "./globals.css";
 import { AuthProvider } from "@/context/AuthContext";
 import { ClerkProvider } from "@clerk/nextjs";
+import { Toaster } from 'sonner';
 
 export const metadata: Metadata = {
   title: "Skillzy — Career-Focused Learning & Placement Platform",
@@ -106,6 +107,7 @@ export default function RootLayout({
         </head>
         <body>
           <AuthProvider>{children}</AuthProvider>
+          <Toaster richColors position="top-right" />
         </body>
       </html>
     </ClerkProvider>

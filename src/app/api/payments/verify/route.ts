@@ -3,6 +3,7 @@ import prisma from '@/lib/prisma';
 import { verifyPaymentSignature } from '@/lib/razorpay';
 import { verifyPaymentSchema } from '@/lib/validations';
 import { PaymentStatus, EnrollmentStatus } from '@prisma/client';
+import { cache } from '@/lib/redis';
 
 export async function POST(req: Request) {
   try {
@@ -134,6 +135,9 @@ export async function POST(req: Request) {
     });
 
     console.log(`Payment successfully verified for order: ${razorpayOrderId}. User enrolled in course ${courseId}`);
+
+    // Clear course cache to update student enrolled count
+    await cache.del(`course:detail:${courseId}`);
 
     return apiSuccess({
       success: true,

@@ -37,6 +37,7 @@ export default function StudentDashboard() {
     completedCount: 0,
     certificatesCount: 0,
     applicationsCount: 0,
+    activeApplicationsCount: 0,
   });
 
   // Redirect non-student roles to their dedicated dashboards
@@ -85,13 +86,28 @@ export default function StudentDashboard() {
 
         setEnrolledCourses(coursesWithProgress);
         
-        // Calculate statistics
+        // Fetch actual job applications to show real stats
+        const appsRes = await fetch('/api/jobs/applications');
+        let applicationsCount = 0;
+        let activeAppsCount = 0;
+
+        if (appsRes.ok) {
+          const appsData = await appsRes.json();
+          if (Array.isArray(appsData)) {
+            applicationsCount = appsData.length;
+            activeAppsCount = appsData.filter(
+              (app: any) => app.status !== 'hired' && app.status !== 'rejected'
+            ).length;
+          }
+        }
+
         const completed = coursesWithProgress.filter((c: any) => c.progress === 100).length;
         setStats({
           enrolledCount: courseIds.length,
           completedCount: completed,
           certificatesCount: completed, // 1 certificate per completed course
-          applicationsCount: 1, // mock job app
+          applicationsCount,
+          activeApplicationsCount: activeAppsCount,
         });
 
       } catch (err: any) {
@@ -193,7 +209,12 @@ export default function StudentDashboard() {
           { label: 'Enrolled Courses', value: stats.enrolledCount.toString(), icon: <BookOpen size={20} className="text-gradient" />, trend: 'Lifetime access' },
           { label: 'Completed', value: stats.completedCount.toString(), icon: <CheckCircle2 size={20} style={{ color: 'var(--success)' }} />, trend: 'Keep it up!' },
           { label: 'Certificates', value: stats.certificatesCount.toString(), icon: <Award size={20} style={{ color: 'var(--warning)' }} />, trend: 'Verified' },
-          { label: 'Applications', value: stats.applicationsCount.toString(), icon: <Briefcase size={20} style={{ color: 'var(--info)' }} />, trend: '1 active' },
+          { 
+            label: 'Applications', 
+            value: stats.applicationsCount.toString(), 
+            icon: <Briefcase size={20} style={{ color: 'var(--info)' }} />, 
+            trend: stats.activeApplicationsCount === 1 ? '1 active' : `${stats.activeApplicationsCount} active` 
+          },
         ].map((stat, i) => (
           <motion.div 
             key={stat.label} 

@@ -1,36 +1,90 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# Skillzy — Full-Stack Interactive Learning Platform
 
-## Getting Started
+Skillzy is a state-of-the-art interactive learning management system (LMS) and coding education platform built with Next.js. It features a curriculum builder for instructors, coding execution labs for students, and full local payment integration.
 
-First, run the development server:
+---
 
+## 🚀 Key Features
+
+* **Student Learn Workspace**: Premium learning dashboard featuring collapsible curriculum sidebars, glowing status badges, paginated text reading steps, and smooth scroll resets.
+* **Interactive Coding Labs**: Browser-based coding exercises with a Monaco editor, execution logs, run controls, and instant code feedback.
+* **Instructor Course Builder**: Visual course outline editor supporting drag-to-reorder for both modules and lessons, collapsible navigation, and inline creation controls.
+* **Payment Integration**: Local standard payment checkout utilizing Razorpay directly in INR (₹).
+* **Caching Layer**: Redis database caching for curriculum queries with automatic invalidate hooks on content mutations.
+* **Secure Auth**: Authentication and middleware protection powered by Clerk.
+
+---
+
+## 🛠️ Tech Stack
+
+* **Framework**: Next.js (App Router)
+* **Language**: TypeScript
+* **Database & ORM**: PostgreSQL & Prisma ORM
+* **Cache**: Redis
+* **Styling**: Vanilla CSS (Tailwind-free for maximum layout control)
+* **Auth**: Clerk
+* **Payments**: Razorpay
+
+---
+
+## 💻 Getting Started (Local Development)
+
+### Prerequisites
+Make sure you have the following installed:
+* [Node.js](https://nodejs.org/) (v20+ recommended)
+* [PostgreSQL](https://www.postgresql.org/) (local server or remote instance)
+* [Redis](https://redis.io/) (running locally or a cloud server)
+
+---
+
+### Step 1: Install Dependencies
+Clone the repository, navigate to the folder, and install the npm packages:
 ```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
+npm install
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+---
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+### Step 2: Configure Environment Variables
+Create a `.env` file at the root of the project and populate the following keys:
+```env
+# Database Connections
+DATABASE_URL="postgresql://user:password@localhost:5432/skillzy?schema=public"
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+# Redis Cache Connection
+REDIS_URL="redis://localhost:6379"
 
-## Learn More
+# Clerk Auth Keys
+NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY=pk_test_...
+CLERK_SECRET_KEY=sk_test_...
+NEXT_PUBLIC_CLERK_SIGN_IN_URL=/sign-in
+NEXT_PUBLIC_CLERK_SIGN_UP_URL=/sign-up
 
-To learn more about Next.js, take a look at the following resources:
+# Razorpay Keys
+RAZORPAY_KEY_ID=rzp_test_...
+RAZORPAY_KEY_SECRET=...
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+# Webhook secret (for Clerk event sync)
+CLERK_WEBHOOK_SECRET=whsec_...
+```
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+---
 
-## Deploy on Vercel
+### Step 3: Database Initialization
+Run Prisma migrations to sync the database schema and seed the initial interactive courses:
+```bash
+# Push schema changes to Database
+npx prisma db push
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+# Seed initial courses and steps
+npx prisma db seed
+```
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+---
+
+### Step 4: Run Development Server
+Start the Next.js development server locally:
+```bash
+npm run dev
+```
+Open [http://localhost:3000](http://localhost:3000) in your browser to see the platform.
