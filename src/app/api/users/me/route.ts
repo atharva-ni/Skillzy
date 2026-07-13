@@ -1,6 +1,8 @@
 import { currentUser } from '@clerk/nextjs/server';
 import { getCurrentUser, syncClerkUser, apiError, apiSuccess } from '@/lib/auth';
 import prisma from '@/lib/prisma';
+import { cache } from '@/lib/redis';
+import { generateConsolidatedFeedback } from '@/lib/socraticTutorAgent';
 
 export async function GET() {
   try {
@@ -40,29 +42,58 @@ export async function GET() {
       orderBy: { createdAt: 'desc' },
     });
 
-    // Fetch latest submissions with their AI reviews
-    const latestSubmission = await prisma.submission.findFirst({
-      where: { userId: dbUser.id },
-      orderBy: { submittedAt: 'desc' },
-      include: {
-        aiReviews: {
-          orderBy: { createdAt: 'desc' },
-          take: 1,
-        },
-        assignment: {
-          select: { title: true }
+    // Generate or fetch consolidated AI feedback
+    let recentAiFeedback = null;
+    try {
+      const cacheKey = `user:consolidated-feedback:${dbUser.id}`;
+      const cachedFeedback = await cache.get(cacheKey);
+
+      if (cachedFeedback) {
+        recentAiFeedback = JSON.parse(cachedFeedback);
+      } else {
+        // Fetch submissions with AI reviews to build a consolidated view
+        const submissions = await prisma.submission.findMany({
+          where: { userId: dbUser.id },
+          include: {
+            aiReviews: {
+              orderBy: { createdAt: 'desc' },
+            },
+            assignment: {
+              select: { title: true }
+            }
+          },
+          orderBy: { submittedAt: 'desc' },
+        });
+
+        const reviews = submissions
+          .flatMap(sub => sub.aiReviews.map(rev => ({
+            assignmentTitle: sub.assignment?.title || 'Coding Practice',
+            code: sub.code || '',
+            language: sub.language || '',
+            summary: rev.summary || '',
+            strengths: Array.isArray(rev.strengths) ? (rev.strengths as unknown as string[]) : [],
+            improvements: Array.isArray(rev.improvements) ? (rev.improvements as unknown as string[]) : [],
+            styleFeedback: rev.styleFeedback || ''
+          })))
+          .slice(0, 10);
+
+        if (reviews.length > 0) {
+          const consolidated = await generateConsolidatedFeedback(reviews);
+          recentAiFeedback = {
+            title: 'Your Socratic Learning Progress',
+            score: 100, // Static placeholder score since score displays are hidden
+            summary: consolidated.summary,
+            strengths: consolidated.strengths,
+            improvements: consolidated.improvements,
+            styleFeedback: consolidated.styleFeedback,
+          };
+          // Cache consolidated feedback for 30 minutes
+          await cache.set(cacheKey, JSON.stringify(recentAiFeedback), 1800);
         }
       }
-    });
-
-    const recentAiFeedback = latestSubmission && latestSubmission.aiReviews.length > 0 ? {
-      title: latestSubmission.assignment?.title || 'Coding Practice Lab',
-      score: latestSubmission.aiReviews[0].overallScore || 0,
-      summary: latestSubmission.aiReviews[0].summary || '',
-      strengths: latestSubmission.aiReviews[0].strengths || [],
-      improvements: latestSubmission.aiReviews[0].improvements || [],
-      styleFeedback: latestSubmission.aiReviews[0].styleFeedback || '',
-    } : null;
+    } catch (feedbackErr) {
+      console.error('Failed to construct consolidated AI feedback:', feedbackErr);
+    }
 
     return apiSuccess({
       user: {

@@ -734,9 +734,25 @@ export default function CourseEditor() {
             disabled={saving} 
             style={{ 
               height: '36px', 
-              gap: '6px', 
+              gap: '8px', 
               fontSize: 'var(--font-size-xs)',
-              position: 'relative'
+              position: 'relative',
+              background: 'linear-gradient(135deg, #6366f1 0%, #4f46e5 100%)',
+              color: '#ffffff',
+              border: 'none',
+              boxShadow: '0 4px 12px rgba(99, 102, 241, 0.25)',
+              fontWeight: 700,
+              padding: '0 16px',
+              borderRadius: '8px',
+              transition: 'all 0.2s ease',
+            }}
+            onMouseEnter={(e: any) => {
+              e.currentTarget.style.transform = 'translateY(-1px)';
+              e.currentTarget.style.boxShadow = '0 6px 16px rgba(99, 102, 241, 0.35)';
+            }}
+            onMouseLeave={(e: any) => {
+              e.currentTarget.style.transform = 'translateY(0)';
+              e.currentTarget.style.boxShadow = '0 4px 12px rgba(99, 102, 241, 0.25)';
             }}
           >
             {saving ? <Loader2 size={14} className="animate-spin" /> : <Save size={14} />} 
@@ -744,13 +760,14 @@ export default function CourseEditor() {
             {unsaved && (
               <span style={{
                 position: 'absolute',
-                top: '-3px',
-                right: '-3px',
-                width: '10px',
-                height: '10px',
+                top: '-2px',
+                right: '-2px',
+                width: '12px',
+                height: '12px',
                 borderRadius: '50%',
-                background: 'var(--warning)',
-                border: '2px solid var(--bg-primary)',
+                background: '#f59e0b',
+                border: '2px solid #ffffff',
+                boxShadow: '0 0 8px #f59e0b',
               }} />
             )}
           </Button>

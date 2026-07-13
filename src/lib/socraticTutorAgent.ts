@@ -193,3 +193,52 @@ ${JSON.stringify({
     throw error;
   }
 }
+
+export interface ConsolidatedFeedback {
+  strengths: string[];
+  improvements: string[];
+  styleFeedback: string;
+  summary: string;
+}
+
+export async function generateConsolidatedFeedback(
+  reviews: { assignmentTitle: string; code: string; language: string; summary: string; strengths: string[]; improvements: string[]; styleFeedback: string }[]
+): Promise<ConsolidatedFeedback> {
+  const systemPrompt = `You are an expert educational coding mentor. Your role is to analyze a list of recent code reviews and socratic tutor hints for a student, and provide a single consolidated, encouraging dashboard feedback report.
+
+You must respond in valid JSON format with the following structure:
+{
+  "summary": "A warm, high-level summary of their recent learning journey (1-2 sentences). Be encouraging and point out what they are currently working on.",
+  "strengths": ["List 2 to 3 key strengths or positive attributes observed across their submissions and code queries"],
+  "improvements": ["List 2 to 3 key concepts, topics, or logical gaps they should work on next to grow their skills"],
+  "styleFeedback": "A concise, supportive advice sentence on code style, debugging discipline, or general learning mindset."
+}`;
+
+  const prompt = `Student's Recent AI Reviews and Code Queries:
+${JSON.stringify(reviews, null, 2)}
+
+Please consolidate these reviews into a single educational report card for the student dashboard. Do not show scores or raw JSON codes to the user.`;
+
+  try {
+    const responseText = await queryGroq(
+      [
+        { role: 'system', content: systemPrompt },
+        { role: 'user', content: prompt }
+      ],
+      { type: "json_object" },
+      0.3
+    );
+
+    return JSON.parse(responseText) as ConsolidatedFeedback;
+  } catch (error) {
+    console.error("Failed to generate consolidated feedback:", error);
+    // Return a basic fallback report if AI query fails
+    return {
+      summary: "Keep pushing forward! Review your recent exercises and build code step-by-step.",
+      strengths: ["Persistent effort", "Interactive query utilization"],
+      improvements: ["Logic debugging", "Edge-case handling"],
+      styleFeedback: "Always test your code locally with custom parameters before submitting."
+    };
+  }
+}
+

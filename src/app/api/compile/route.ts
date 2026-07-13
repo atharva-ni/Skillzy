@@ -4,6 +4,7 @@ import prisma from '@/lib/prisma';
 import { executeCode } from '@/lib/compiler';
 import { z } from 'zod';
 import { analyzeBuggyCode } from '@/lib/socraticTutorAgent';
+import { cache } from '@/lib/redis';
 
 
 const compileRequestSchema = z.object({
@@ -12,6 +13,7 @@ const compileRequestSchema = z.object({
   problemId: z.string().optional(),
   stepId: z.string().optional(),
   isSubmit: z.boolean().optional().default(false),
+  askAi: z.boolean().optional().default(false),
 });
 
 export async function POST(req: NextRequest) {
@@ -19,7 +21,7 @@ export async function POST(req: NextRequest) {
     const dbUser = await requireAuth();
     const body = await req.json();
     
-    const { code, language, problemId, stepId, isSubmit } = compileRequestSchema.parse(body);
+    const { code, language, problemId, stepId, isSubmit, askAi } = compileRequestSchema.parse(body);
 
     // 1. Fetch step if stepId is provided to get metadata
     let dbStep = null;
@@ -128,16 +130,64 @@ export async function POST(req: NextRequest) {
       }
     }
 
-    // 5. If this is a submission, record progress and submission in database
+    // 5. If this is a submission or AI feedback request, process AI feedback
     let aiFeedbackResponse: any = null;
 
-    if (isSubmit) {
+    if (isSubmit || askAi) {
       const targetId = stepId || problemId;
       if (targetId) {
         // Find if this is a step or a standalone problem to check assignment existence
-        const assignment = await prisma.assignment.findUnique({
+        let assignment = await prisma.assignment.findUnique({
           where: { id: targetId }
         });
+
+        // On-demand creation of backing Assignment record if it doesn't exist
+        if (!assignment) {
+          try {
+            if (stepId && dbStep) {
+              const stepDetails = await prisma.lessonStep.findUnique({
+                where: { id: stepId },
+                include: {
+                  lesson: {
+                    include: {
+                      module: true
+                    }
+                  }
+                }
+              });
+
+              if (stepDetails?.lesson?.module) {
+                assignment = await prisma.assignment.create({
+                  data: {
+                    id: stepId,
+                    courseId: stepDetails.lesson.module.courseId,
+                    moduleId: stepDetails.lesson.moduleId,
+                    title: stepDetails.title || 'Coding Lab Step',
+                    assignmentType: 'coding',
+                    status: 'active',
+                    maxScore: 100,
+                  }
+                });
+              }
+            } else if (problemId && dbProblem) {
+              const anyCourse = await prisma.course.findFirst({ select: { id: true } });
+              if (anyCourse) {
+                assignment = await prisma.assignment.create({
+                  data: {
+                    id: targetId,
+                    courseId: anyCourse.id,
+                    title: dbProblem.title || 'Practice Problem',
+                    assignmentType: 'coding',
+                    status: 'active',
+                    maxScore: 100,
+                  }
+                });
+              }
+            }
+          } catch (createErr) {
+            console.error('Failed to auto-create backing assignment:', createErr);
+          }
+        }
 
         // Fetch static data to have as backup or context
         let backupData: any = {};
@@ -212,72 +262,107 @@ export async function POST(req: NextRequest) {
           }
         }
 
-        // If assignment exists, write submission & AI review records to database
-        if (assignment) {
-          const dbSubmission = await prisma.submission.create({
-            data: {
-              assignmentId: targetId,
-              userId: dbUser.id,
-              code,
-              language,
-              status: testPassed ? 'graded' : 'pending',
-              grade: testPassed ? 100.00 : 0.00,
-              feedback: testPassed 
-                ? 'All assertions passed successfully! Excellent work.' 
-                : `Failed verification: ${testSummary}`,
-            },
-          });
-
-          if (testPassed) {
-            await prisma.aiReview.create({
-              data: {
-                submissionId: dbSubmission.id,
-                overallScore: 100,
-                summary: 'Perfect submission! All test cases passed.',
-                strengths: ['Correct logical implementation', 'Passed all standard assertions'],
-                improvements: [],
-                styleFeedback: 'Excellent work completing the exercise!',
-                rawResponse: { success: true },
-                modelUsed: 'Static Checker'
-              }
-            });
-
-            // If tests passed and this is a lesson step, complete the lesson step automatically
-            if (stepId && dbStep) {
-              await prisma.lessonProgress.upsert({
-                where: {
-                  userId_stepId: {
-                    userId: dbUser.id,
-                    stepId,
-                  },
-                },
-                update: {
-                  isCompleted: true,
-                  completedAt: new Date(),
-                },
-                create: {
+        // If assignment exists, write submission & AI review records to database (for both submissions and askAi queries)
+        if (assignment && (isSubmit || askAi)) {
+          try {
+            if (askAi) {
+              // Create pending submission record for on-demand AI hint queries
+              const dbSubmission = await prisma.submission.create({
+                data: {
+                  assignmentId: targetId,
                   userId: dbUser.id,
-                  stepId,
-                  isCompleted: true,
-                  completedAt: new Date(),
+                  code,
+                  language,
+                  status: 'pending',
+                  grade: 0.00,
+                  feedback: 'AI Tutor query by student',
                 },
               });
 
-              // Re-calculate user's course progress percentage
-              const stepDetails = await prisma.lessonStep.findUnique({
-                where: { id: stepId },
-                include: {
-                  lesson: {
+              // Create AI review record storing the Socratic JSON analysis response
+              await prisma.aiReview.create({
+                data: {
+                  submissionId: dbSubmission.id,
+                  overallScore: aiFeedbackResponse?.score ?? 50,
+                  summary: aiFeedbackResponse?.optimalExplanation || 'Socratic tutor review',
+                  strengths: aiFeedbackResponse?.positives || [],
+                  improvements: aiFeedbackResponse?.suggestions || [],
+                  styleFeedback: aiFeedbackResponse?.educationalTips || '',
+                  rawResponse: aiFeedbackResponse || {},
+                  modelUsed: process.env.GROQ_MODEL || 'llama-3.3-70b-versatile'
+                }
+              });
+
+              // Invalidate user's consolidated feedback cache so dashboard updates
+              await cache.del(`user:consolidated-feedback:${dbUser.id}`);
+            } else {
+              // This is a standard user submit
+              const dbSubmission = await prisma.submission.create({
+                data: {
+                  assignmentId: targetId,
+                  userId: dbUser.id,
+                  code,
+                  language,
+                  status: testPassed ? 'graded' : 'pending',
+                  grade: testPassed ? 100.00 : 0.00,
+                  feedback: testPassed 
+                    ? 'All assertions passed successfully! Excellent work.' 
+                    : `Failed verification: ${testSummary}`,
+                },
+              });
+
+              if (testPassed) {
+                await prisma.aiReview.create({
+                  data: {
+                    submissionId: dbSubmission.id,
+                    overallScore: 100,
+                    summary: 'Perfect submission! All test cases passed.',
+                    strengths: ['Correct logical implementation', 'Passed all standard assertions'],
+                    improvements: [],
+                    styleFeedback: 'Excellent work completing the exercise!',
+                    rawResponse: { success: true },
+                    modelUsed: 'Static Checker'
+                  }
+                });
+
+                // If tests passed and this is a lesson step, complete the lesson step automatically
+                if (stepId && dbStep) {
+                  await prisma.lessonProgress.upsert({
+                    where: {
+                      userId_stepId: {
+                        userId: dbUser.id,
+                        stepId,
+                      },
+                    },
+                    update: {
+                      isCompleted: true,
+                      completedAt: new Date(),
+                    },
+                    create: {
+                      userId: dbUser.id,
+                      stepId,
+                      isCompleted: true,
+                      completedAt: new Date(),
+                    },
+                  });
+
+                  // Re-calculate user's course progress percentage
+                  const stepDetails = await prisma.lessonStep.findUnique({
+                    where: { id: stepId },
                     include: {
-                      module: {
+                      lesson: {
                         include: {
-                          course: {
+                          module: {
                             include: {
-                              modules: {
+                              course: {
                                 include: {
-                                  lessons: {
+                                  modules: {
                                     include: {
-                                      steps: true
+                                      lessons: {
+                                        include: {
+                                          steps: true
+                                        }
+                                      }
                                     }
                                   }
                                 }
@@ -287,68 +372,69 @@ export async function POST(req: NextRequest) {
                         }
                       }
                     }
+                  });
+
+                  if (stepDetails?.lesson?.module?.course) {
+                    const course = stepDetails.lesson.module.course;
+                    const allStepIds: string[] = [];
+                    course.modules.forEach(m => {
+                      m.lessons.forEach(l => {
+                        l.steps.forEach(s => {
+                          allStepIds.push(s.id);
+                        });
+                      });
+                    });
+
+                    const completedCount = await prisma.lessonProgress.count({
+                      where: {
+                        userId: dbUser.id,
+                        stepId: { in: allStepIds },
+                        isCompleted: true
+                      }
+                    });
+
+                    const progressPct = allStepIds.length > 0 
+                      ? Math.min((completedCount / allStepIds.length) * 100, 100) 
+                      : 0;
+
+                    await prisma.enrollment.update({
+                      where: {
+                        userId_courseId: {
+                          userId: dbUser.id,
+                          courseId: course.id
+                        }
+                      },
+                      data: {
+                        progressPct: progressPct,
+                        completedAt: progressPct === 100 ? new Date() : null
+                      }
+                    });
                   }
                 }
-              });
-
-              if (stepDetails?.lesson?.module?.course) {
-                const course = stepDetails.lesson.module.course;
-                const allStepIds: string[] = [];
-                course.modules.forEach(m => {
-                  m.lessons.forEach(l => {
-                    l.steps.forEach(s => {
-                      allStepIds.push(s.id);
-                    });
-                  });
-                });
-
-                const completedCount = await prisma.lessonProgress.count({
-                  where: {
-                    userId: dbUser.id,
-                    stepId: { in: allStepIds },
-                    isCompleted: true
-                  }
-                });
-
-                const progressPct = allStepIds.length > 0 
-                  ? Math.min((completedCount / allStepIds.length) * 100, 100) 
-                  : 0;
-
-                await prisma.enrollment.update({
-                  where: {
-                    userId_courseId: {
-                      userId: dbUser.id,
-                      courseId: course.id
-                    }
-                  },
+              } else {
+                // Fails submission
+                const rawSocratic = aiFeedbackResponse?.rawResponse || {};
+                await prisma.aiReview.create({
                   data: {
-                    progressPct: progressPct,
-                    completedAt: progressPct === 100 ? new Date() : null
+                    submissionId: dbSubmission.id,
+                    overallScore: aiFeedbackResponse?.score ?? 50,
+                    summary: rawSocratic.codeIntent || 'Socratic Analysis Feedback',
+                    strengths: rawSocratic.positives || [],
+                    improvements: aiFeedbackResponse?.suggestions || [],
+                    complexityAnalysis: aiFeedbackResponse?.metrics?.complexity || 'Standard',
+                    performanceTips: rawSocratic.inefficiencies?.map((i: any) => i.hint).join('\n') || null,
+                    styleFeedback: rawSocratic.educationalTips || null,
+                    rawResponse: rawSocratic,
+                    modelUsed: process.env.GROQ_MODEL || "llama-3.3-70b-versatile"
                   }
                 });
               }
+
+              // Invalidate user's consolidated feedback cache so dashboard updates
+              await cache.del(`user:consolidated-feedback:${dbUser.id}`);
             }
-          } else {
-            // Fails
-            try {
-              const rawSocratic = aiFeedbackResponse.rawResponse || {};
-              await prisma.aiReview.create({
-                data: {
-                  submissionId: dbSubmission.id,
-                  overallScore: aiFeedbackResponse.score,
-                  summary: rawSocratic.codeIntent || 'Socratic Analysis Feedback',
-                  strengths: rawSocratic.positives || [],
-                  improvements: aiFeedbackResponse.suggestions,
-                  complexityAnalysis: aiFeedbackResponse.metrics.complexity,
-                  performanceTips: rawSocratic.inefficiencies?.map((i: any) => i.hint).join('\n') || null,
-                  styleFeedback: rawSocratic.educationalTips || null,
-                  rawResponse: rawSocratic,
-                  modelUsed: process.env.GROQ_MODEL || "llama-3.3-70b-versatile"
-                }
-              });
-            } catch (dbErr) {
-              console.error('Failed to save AI review to DB:', dbErr);
-            }
+          } catch (dbErr) {
+            console.error('Failed to save submission / AI review to DB:', dbErr);
           }
         }
       }

@@ -126,21 +126,35 @@ export default function CourseApprovals() {
       accessor: (item: CourseRow) => (
         <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
           {item.status === 'pending' && (
-            <Button
-              variant="primary"
-              size="sm"
+            <button
               onClick={() => handleApprove(item.id)}
               style={{
-                padding: '4px 10px',
+                padding: '4px 12px',
                 display: 'flex',
                 alignItems: 'center',
-                gap: '4px',
+                gap: '6px',
                 fontSize: '11px',
-                height: '30px'
+                height: '30px',
+                background: 'linear-gradient(135deg, #10b981 0%, #059669 100%)',
+                border: 'none',
+                borderRadius: '6px',
+                color: '#ffffff',
+                boxShadow: '0 2px 8px rgba(16, 185, 129, 0.25)',
+                fontWeight: 700,
+                cursor: 'pointer',
+                transition: 'all 0.15s ease',
+              }}
+              onMouseEnter={(e) => {
+                e.currentTarget.style.transform = 'translateY(-1px)';
+                e.currentTarget.style.boxShadow = '0 4px 12px rgba(16, 185, 129, 0.35)';
+              }}
+              onMouseLeave={(e) => {
+                e.currentTarget.style.transform = 'translateY(0)';
+                e.currentTarget.style.boxShadow = '0 2px 8px rgba(16, 185, 129, 0.25)';
               }}
             >
               <CheckCircle2 size={12} /> Approve
-            </Button>
+            </button>
           )}
           <Link
             href={`/dashboard/instructor/courses/${item.id}`}

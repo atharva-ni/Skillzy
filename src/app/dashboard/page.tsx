@@ -370,19 +370,6 @@ export default function StudentDashboard() {
                   {recentAiFeedback.summary || 'Interactive optimization feedback'}
                 </p>
               </div>
-              <span style={{
-                background: recentAiFeedback.score >= 80 ? 'rgba(16, 185, 129, 0.08)' : 'rgba(245, 158, 11, 0.08)',
-                color: recentAiFeedback.score >= 80 ? '#059669' : '#d97706',
-                border: `1px solid ${recentAiFeedback.score >= 80 ? 'rgba(16, 185, 129, 0.2)' : 'rgba(245, 158, 11, 0.2)'}`,
-                padding: '4px 12px',
-                fontSize: '0.75rem',
-                fontWeight: 700,
-                borderRadius: 'var(--radius-full)',
-                flexShrink: 0,
-                fontVariantNumeric: 'tabular-nums',
-              }}>
-                {recentAiFeedback.score}/100
-              </span>
             </div>
 
             {/* Feedback items */}
