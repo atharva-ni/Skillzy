@@ -36,7 +36,7 @@ export default function JobBoard() {
     <div className="page-container">
       <div className="page-header">
         <h1 className="page-title">Job Placement Board</h1>
-        <p className="page-subtitle">Find jobs and internships tailored to your Skillzy profile accomplishments.</p>
+        <p className="page-subtitle">Find jobs and internships tailored to your Skilotech profile accomplishments.</p>
       </div>
 
       <SearchFilter
@@ -53,7 +53,7 @@ export default function JobBoard() {
 
       <div style={{ textAlign: 'center', padding: '3rem', color: 'var(--text-secondary)' }}>
         <h3 style={{ color: 'var(--text-primary)', marginBottom: '8px' }}>No jobs posted yet</h3>
-        <p>Check back soon — recruiters are actively posting new opportunities on Skillzy.</p>
+        <p>Check back soon — recruiters are actively posting new opportunities on Skilotech.</p>
       </div>
     </div>
   );
