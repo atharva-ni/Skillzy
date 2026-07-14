@@ -258,10 +258,10 @@ export function useGsapAnimations(isLoaded: boolean) {
           if (idx < panels.length - 1) {
             const nextPanel = panels[idx + 1];
             const nextColor = ambientColors[idx + 1];
-            const currentNode = nodes[idx];
-            const nextNode = nodes[idx + 1];
-            const curText = currentNode.querySelector(".gsap-node-index");
-            const nextText = nextNode.querySelector(".gsap-node-index");
+            const currentNode = nodes[idx] as any;
+            const nextNode = nodes[idx + 1] as any;
+            const curText = currentNode?.querySelector?.(".gsap-node-index");
+            const nextText = nextNode?.querySelector?.(".gsap-node-index");
 
             // Hold current panel visible for a moment
             tl.to({}, { duration: 0.5 });
