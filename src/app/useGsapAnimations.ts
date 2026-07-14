@@ -200,7 +200,7 @@ export function useGsapAnimations(isLoaded: boolean) {
 
       // ─── 12. PROCESS SECTION ANIMATION (GSAP + ScrollTrigger) ───────────────────────
       const processSection = document.querySelector('.gsap-process-section');
-      const nodes = gsap.utils.toArray(".gsap-timeline-node");
+      const nodes = gsap.utils.toArray(".gsap-timeline-node") as any[];
       const leftLight = document.querySelector('.gsap-ambient-left');
       const rightLight = document.querySelector('.gsap-ambient-right');
 
@@ -211,7 +211,7 @@ export function useGsapAnimations(isLoaded: boolean) {
         { left: 'rgba(79, 70, 229, 0.15)',  right: 'rgba(8, 145, 178, 0.15)' }   // Step 4: Indigo/Cyan
       ];
 
-      const panels = gsap.utils.toArray(".gsap-story-panel");
+      const panels = gsap.utils.toArray(".gsap-story-panel") as any[];
 
       if (processSection && panels.length > 1 && window.innerWidth > 1024) {
         // 1. Pinned Timeline Scroll Trigger
