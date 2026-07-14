@@ -82,15 +82,19 @@ const workflowSteps = [
   {
     num: 'Step 01',
     title: 'Enroll in a Course',
-    desc: 'Browse 150+ expert-led courses tailored to real industry roles. Filter by domain, level, or skill — and start learning in minutes.',
+    desc: 'Browse 150+ expert-led courses tailored to real industry roles. Filter by domain, level, or skill - and start learning in minutes.',
     visual: (
-      <div style={{ fontFamily: 'var(--font-family)', fontSize: '0.85rem' }}>
-        <div style={{ marginBottom: '12px', fontWeight: 700, color: 'var(--text-primary)', fontSize: '0.95rem' }}>Trending Courses</div>
+      <div style={{ fontFamily: 'var(--font-family)', fontSize: '0.85rem', width: '100%' }}>
+        <div style={{ marginBottom: '16px', fontWeight: 800, color: 'var(--text-primary)', fontSize: '1.05rem', letterSpacing: '-0.02em' }}>Trending Courses</div>
         {['Full-Stack Web Dev', 'DSA in Python', 'System Design', 'Cloud & DevOps'].map((c, i) => (
-          <div key={c} style={{ display: 'flex', alignItems: 'center', gap: '10px', padding: '10px 12px', background: i === 0 ? 'var(--bg-secondary)' : 'transparent', border: '1px solid ' + (i === 0 ? 'var(--border-accent)' : 'transparent'), borderRadius: '8px', marginBottom: '6px', cursor: 'pointer', transition: 'all 0.2s' }}>
-            <span style={{ fontSize: '10px', fontWeight: 700, textTransform: 'uppercase', color: 'var(--text-tertiary)', background: 'var(--bg-tertiary)', padding: '2px 6px', borderRadius: '4px' }}>{ ['Web','Dsa','Sys','Ops'][i] }</span>
-            <span style={{ fontWeight: 500, color: 'var(--text-primary)' }}>{c}</span>
-            {i === 0 && <span style={{ marginLeft: 'auto', fontSize: '11px', fontWeight: 700, background: 'var(--text-primary)', color: '#fff', padding: '2px 8px', borderRadius: 'var(--radius-full)' }}>Enrolled</span>}
+          <div key={c} style={{ display: 'flex', alignItems: 'center', gap: '12px', padding: '12px 16px', background: i === 0 ? 'var(--bg-secondary)' : 'transparent', border: '1px solid ' + (i === 0 ? 'rgba(99, 102, 241, 0.2)' : 'rgba(0,0,0,0.03)'), borderRadius: '12px', marginBottom: '8px', cursor: 'pointer', transition: 'all 0.2s', boxShadow: i === 0 ? '0 4px 12px rgba(99, 102, 241, 0.05)' : 'none' }}>
+            <span style={{ fontSize: '10px', fontWeight: 700, textTransform: 'uppercase', color: i === 0 ? '#6366f1' : 'var(--text-tertiary)', background: i === 0 ? 'rgba(99, 102, 241, 0.08)' : 'var(--bg-tertiary)', padding: '4px 8px', borderRadius: '6px' }}>{ ['Web','Dsa','Sys','Ops'][i] }</span>
+            <span style={{ fontWeight: 600, color: 'var(--text-primary)' }}>{c}</span>
+            {i === 0 ? (
+              <span style={{ marginLeft: 'auto', fontSize: '11px', fontWeight: 700, background: '#6366f1', color: '#fff', padding: '4px 10px', borderRadius: 'var(--radius-full)' }}>Enrolled</span>
+            ) : (
+              <span style={{ marginLeft: 'auto', fontSize: '11px', fontWeight: 600, color: 'var(--text-tertiary)' }}>12 hrs</span>
+            )}
           </div>
         ))}
       </div>
@@ -101,16 +105,40 @@ const workflowSteps = [
     title: 'Code in the Lab',
     desc: 'Solve real problems in our Monaco-powered coding lab. Write code, run tests, and get instant pass/fail feedback right in your browser.',
     visual: (
-      <div style={{ background: '#090d16', borderRadius: '10px', padding: '14px', fontFamily: 'monospace', fontSize: '11px', color: '#94a3b8' }}>
-        <div style={{ color: '#64748b', marginBottom: '8px', fontSize: '10px' }}>solution.py</div>
-        <div style={{ color: '#7dd3fc' }}>def <span style={{ color: '#a5f3fc' }}>binary_search</span>(arr, target):</div>
-        <div style={{ paddingLeft: '16px', color: '#e2e8f0' }}>low, high = 0, len(arr) - 1</div>
-        <div style={{ paddingLeft: '16px', color: '#e2e8f0' }}>while low &lt;= high:</div>
-        <div style={{ paddingLeft: '32px', color: '#e2e8f0' }}>mid = (low + high) // 2</div>
-        <div style={{ paddingLeft: '32px', color: '#e2e8f0' }}>if arr[mid] == target: <span style={{ color: '#86efac' }}>return mid</span></div>
-        <div style={{ marginTop: '10px', display: 'flex', gap: '6px', alignItems: 'center' }}>
-          <span style={{ color: '#22c55e', fontWeight: 700 }}>✓</span>
-          <span style={{ color: '#22c55e' }}>3/3 tests passed · 12ms</span>
+      <div style={{ background: '#090d16', borderRadius: '16px', border: '1px solid rgba(255,255,255,0.08)', fontFamily: 'monospace', fontSize: '12px', color: '#c9d1d9', width: '100%', overflow: 'hidden', boxShadow: '0 20px 40px rgba(0,0,0,0.3)' }}>
+        {/* Editor Title Bar */}
+        <div style={{ background: '#0d1117', padding: '10px 16px', display: 'flex', alignItems: 'center', justifyContent: 'space-between', borderBottom: '1px solid rgba(255,255,255,0.05)' }}>
+          <div style={{ display: 'flex', gap: '6px' }}>
+            <span style={{ width: '8px', height: '8px', borderRadius: '50%', background: '#ff5f56' }} />
+            <span style={{ width: '8px', height: '8px', borderRadius: '50%', background: '#ffbd2e' }} />
+            <span style={{ width: '8px', height: '8px', borderRadius: '50%', background: '#27c93f' }} />
+          </div>
+          <span style={{ fontSize: '10px', color: '#8b949e', fontWeight: 500 }}>solution.py</span>
+          <div style={{ width: '30px' }} />
+        </div>
+        {/* Editor Code Area */}
+        <div style={{ padding: '16px', display: 'flex', gap: '12px', lineHeight: '1.6', background: '#090d16' }}>
+          {/* Line Numbers */}
+          <div style={{ color: '#4b5563', textAlign: 'right', userSelect: 'none', fontSize: '11px' }}>
+            <div>1</div>
+            <div>2</div>
+            <div>3</div>
+            <div>4</div>
+            <div>5</div>
+          </div>
+          {/* Code */}
+          <div style={{ flex: 1 }}>
+            <div><span style={{ color: '#ff7b72' }}>def</span> <span style={{ color: '#d2a8ff' }}>binary_search</span>(arr, target):</div>
+            <div style={{ paddingLeft: '16px' }}>low, high = <span style={{ color: '#79c0ff' }}>0</span>, <span style={{ color: '#79c0ff' }}>len</span>(arr) - <span style={{ color: '#79c0ff' }}>1</span></div>
+            <div style={{ paddingLeft: '16px' }}><span style={{ color: '#ff7b72' }}>while</span> low &lt;= high:</div>
+            <div style={{ paddingLeft: '32px' }}>mid = (low + high) // <span style={{ color: '#79c0ff' }}>2</span></div>
+            <div style={{ paddingLeft: '32px' }}><span style={{ color: '#ff7b72' }}>if</span> arr[mid] == target: <span style={{ color: '#ff7b72' }}>return</span> mid</div>
+          </div>
+        </div>
+        {/* Editor Console/Output Footer */}
+        <div style={{ background: '#0d1117', padding: '10px 16px', display: 'flex', alignItems: 'center', gap: '8px', borderTop: '1px solid rgba(255,255,255,0.05)', fontSize: '11px', color: '#58a6ff' }}>
+          <span style={{ color: '#56d364', fontWeight: 700 }}>✓</span>
+          <span>3/3 tests passed · 12ms</span>
         </div>
       </div>
     ),
@@ -120,19 +148,19 @@ const workflowSteps = [
     title: 'Get AI Feedback',
     desc: 'Our AI tutor reviews your code after every submission, pinpointing what to optimize, which patterns to adopt, and how to think like a senior engineer.',
     visual: (
-      <div style={{ fontSize: '0.85rem' }}>
-        <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '12px' }}>
-          <span style={{ fontSize: '11px', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.5px', color: 'var(--text-tertiary)', background: 'var(--bg-tertiary)', padding: '2px 8px', borderRadius: '4px' }}>AI</span>
-          <span style={{ fontWeight: 700, color: 'var(--text-primary)', fontSize: '0.9rem' }}>Diagnostics Overview</span>
+      <div style={{ fontSize: '0.85rem', width: '100%' }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '16px' }}>
+          <span style={{ fontSize: '10px', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.5px', color: '#6366f1', background: 'rgba(99, 102, 241, 0.08)', padding: '4px 8px', borderRadius: '6px' }}>AI</span>
+          <span style={{ fontWeight: 800, color: 'var(--text-primary)', fontSize: '1.05rem', letterSpacing: '-0.02em' }}>Diagnostics Overview</span>
         </div>
         {[
-          { label: 'Correct', text: 'Correct binary search logic — O(log n) complexity.', ok: true, col: '#16a34a' },
-          { label: 'Optimize', text: 'Consider using `arr[mid]` directly without extra variable.', ok: null, col: '#7c3aed' },
-          { label: 'Warning', text: 'Use integer overflow-safe midpoint: `low + (high-low)//2`', ok: null, col: '#ea580c' },
+          { label: 'Correct', text: 'Correct binary search logic - O(log n) complexity.', ok: true, col: '#10b981', bg: 'rgba(16, 185, 129, 0.06)' },
+          { label: 'Optimize', text: 'Consider using arr[mid] directly without extra variable.', ok: null, col: '#8b5cf6', bg: 'rgba(139, 92, 246, 0.06)' },
+          { label: 'Warning', text: 'Use integer overflow-safe midpoint: low + (high-low)//2', ok: null, col: '#f59e0b', bg: 'rgba(245, 158, 11, 0.06)' },
         ].map((line, i) => (
-          <div key={i} style={{ display: 'flex', gap: '8px', padding: '8px 10px', background: line.ok ? 'rgba(34, 197, 94, 0.04)' : 'var(--bg-tertiary)', borderRadius: '6px', marginBottom: '6px', lineHeight: 1.4 }}>
-            <span style={{ fontSize: '9px', fontWeight: 700, color: line.col, textTransform: 'uppercase', letterSpacing: '0.5px' }}>{line.label}</span>
-            <span style={{ color: 'var(--text-secondary)', fontSize: '12px' }}>{line.text}</span>
+          <div key={i} style={{ display: 'flex', gap: '12px', padding: '12px 16px', background: line.bg, border: '1px solid rgba(0,0,0,0.02)', borderRadius: '12px', marginBottom: '8px', lineHeight: 1.45 }}>
+            <span style={{ fontSize: '9px', fontWeight: 800, color: line.col, textTransform: 'uppercase', letterSpacing: '0.5px', marginTop: '2px' }}>{line.label}</span>
+            <span style={{ color: 'var(--text-secondary)', fontSize: '12.5px', fontWeight: 500 }}>{line.text}</span>
           </div>
         ))}
       </div>
@@ -141,22 +169,22 @@ const workflowSteps = [
   {
     num: 'Step 04',
     title: 'Land the Job',
-    desc: 'With your verified certificates and real project portfolio, apply directly to our 89+ hiring partners — right from the Skilotech dashboard.',
+    desc: 'With your verified certificates and real project portfolio, apply directly to our 89+ hiring partners - right from the Skilotech dashboard.',
     visual: (
-      <div style={{ fontSize: '0.85rem' }}>
-        <div style={{ fontWeight: 700, color: 'var(--text-primary)', fontSize: '0.9rem', marginBottom: '12px' }}>Your Applications</div>
+      <div style={{ fontSize: '0.85rem', width: '100%' }}>
+        <div style={{ fontWeight: 800, color: 'var(--text-primary)', fontSize: '1.05rem', marginBottom: '16px', letterSpacing: '-0.02em' }}>Your Applications</div>
         {[
-          { co: 'Google', role: 'SWE Intern', status: 'Interview', color: '#2563eb' },
-          { co: 'Razorpay', role: 'Backend Dev', status: 'Applied', color: '#7c3aed' },
-          { co: 'Flipkart', role: 'Full-Stack', status: 'Offer!', color: '#16a34a' },
+          { co: 'Google', role: 'SWE Intern', status: 'Interview', color: '#2563eb', bg: 'rgba(37, 99, 235, 0.08)' },
+          { co: 'Razorpay', role: 'Backend Dev', status: 'Applied', color: '#7c3aed', bg: 'rgba(124, 124, 237, 0.08)' },
+          { co: 'Flipkart', role: 'Full-Stack', status: 'Offer!', color: '#10b981', bg: 'rgba(16, 185, 129, 0.08)' },
         ].map((app, i) => (
-          <div key={i} style={{ display: 'flex', alignItems: 'center', gap: '12px', padding: '10px 12px', background: 'var(--bg-secondary)', border: '1px solid var(--border-primary)', borderRadius: '8px', marginBottom: '6px' }}>
-            <span style={{ width: '8px', height: '8px', borderRadius: '50%', background: ['#2563eb','#7c3aed','#16a34a'][i], display: 'inline-block', flexShrink: 0 }} />
+          <div key={i} style={{ display: 'flex', alignItems: 'center', gap: '14px', padding: '12px 16px', background: 'var(--bg-secondary)', border: '1px solid rgba(0,0,0,0.03)', borderRadius: '12px', marginBottom: '8px', boxShadow: '0 2px 4px rgba(0,0,0,0.01)' }}>
+            <span style={{ width: '8px', height: '8px', borderRadius: '50%', background: ['#2563eb','#7c3aed','#10b981'][i], display: 'inline-block', flexShrink: 0 }} />
             <div style={{ flex: 1 }}>
-              <div style={{ fontWeight: 600, color: 'var(--text-primary)', fontSize: '12px' }}>{app.co}</div>
-              <div style={{ color: 'var(--text-tertiary)', fontSize: '11px' }}>{app.role}</div>
+              <div style={{ fontWeight: 700, color: 'var(--text-primary)', fontSize: '13px' }}>{app.co}</div>
+              <div style={{ color: 'var(--text-tertiary)', fontSize: '11px', marginTop: '2px' }}>{app.role}</div>
             </div>
-            <span style={{ fontSize: '11px', fontWeight: 700, color: app.color, background: app.color + '15', padding: '2px 10px', borderRadius: 'var(--radius-full)' }}>{app.status}</span>
+            <span style={{ fontSize: '11px', fontWeight: 750, color: app.color, background: app.bg, padding: '4px 12px', borderRadius: 'var(--radius-full)' }}>{app.status}</span>
           </div>
         ))}
       </div>
@@ -299,46 +327,15 @@ function MockEditor({ onPhaseChange }: { onPhaseChange?: (phase: string) => void
 export default function LandingPage() {
   const { isLoaded, isSignedIn } = useUser();
   const router = useRouter();
-  const [activeTab, setActiveTab] = useState(0);
   const [editorPhase, setEditorPhase] = useState<string>('typing');
   const [activeFeatureTab, setActiveFeatureTab] = useState(0);
-  useGsapAnimations();
+  useGsapAnimations(isLoaded);
 
   useEffect(() => {
     if (isLoaded && isSignedIn) router.replace('/dashboard');
   }, [isLoaded, isSignedIn, router]);
 
-  useEffect(() => {
-    if (typeof window === 'undefined') return;
-
-    const observer = new IntersectionObserver(
-      (entries) => {
-        entries.forEach((entry) => {
-          if (entry.isIntersecting) {
-            const indexAttr = entry.target.getAttribute('data-step-index');
-            if (indexAttr) {
-              const index = parseInt(indexAttr, 10);
-              if (!isNaN(index) && index >= 0 && index < workflowSteps.length) {
-                setActiveTab(index);
-              }
-            }
-          }
-        });
-      },
-      {
-        root: null,
-        rootMargin: '-35% 0px -40% 0px',
-        threshold: 0.1,
-      }
-    );
-
-    const steps = document.querySelectorAll('.gsap-workflow-step');
-    steps.forEach((step) => observer.observe(step));
-
-    return () => {
-      steps.forEach((step) => observer.unobserve(step));
-    };
-  }, []);
+  // GSAP ScrollTrigger handles all scroll-based step switching now
 
 
   if (!isLoaded || isSignedIn) {
@@ -490,12 +487,7 @@ export default function LandingPage() {
         </div>
       </section>
 
-      {/* ── Scroll Chapter Label ── */}
-      <div className={`${styles.chapterLabel} gsap-chapter-label`}>
-        <span className={styles.chapterLine} />
-        <span className={styles.chapterText}>The Platform</span>
-        <span className={styles.chapterLine} />
-      </div>
+
 
       {/* ── Features Section (YouLearn-style Showcase) ──────────────── */}
       <section className={styles.features} id="features">
@@ -509,7 +501,7 @@ export default function LandingPage() {
           >
             <h2 className={`${styles.sectionTitle} gsap-section-title`}>Built for every stage of your career</h2>
             <p className={`${styles.sectionSubtitle} gsap-section-sub`}>
-              From first line of code to your first offer letter — Skilotech handles the entire engineering journey.
+              From first line of code to your first offer letter - Skilotech handles the entire engineering journey.
             </p>
           </motion.div>
 
@@ -592,7 +584,7 @@ export default function LandingPage() {
                           <span style={{ marginLeft: 'auto', fontSize: '9px', background: '#22c55e20', color: '#22c55e', padding: '2px 8px', borderRadius: '4px', fontWeight: 700 }}>✓ All Tests Passed</span>
                         </div>
                         <div style={{ padding: '16px', fontFamily: 'monospace', fontSize: '11px', lineHeight: 1.7, color: '#c9d1d9' }}>
-                          <div style={{ color: '#6b7280', marginBottom: '8px' }}># Binary Search — O(log N)</div>
+                          <div style={{ color: '#6b7280', marginBottom: '8px' }}># Binary Search - O(log N)</div>
                           <div><span style={{ color: '#ff79c6' }}>def</span> <span style={{ color: '#50fa7b' }}>binary_search</span>(arr, target):</div>
                           <div style={{ paddingLeft: '16px' }}>low, high = <span style={{ color: '#bd93f9' }}>0</span>, len(arr) - <span style={{ color: '#bd93f9' }}>1</span></div>
                           <div style={{ paddingLeft: '16px' }}><span style={{ color: '#ff79c6' }}>while</span> low &lt;= high:</div>
@@ -601,7 +593,7 @@ export default function LandingPage() {
                           <div style={{ paddingLeft: '48px' }}><span style={{ color: '#ff79c6' }}>return</span> mid</div>
                         </div>
                         <div style={{ background: '#0d1117', padding: '10px 16px', borderTop: '1px solid rgba(255,255,255,0.04)', fontFamily: 'monospace', fontSize: '9px', color: '#8b949e' }}>
-                          $ pytest — <span style={{ color: '#50fa7b' }}>3 passed</span> in 0.04s
+                          $ pytest - <span style={{ color: '#50fa7b' }}>3 passed</span> in 0.04s
                         </div>
                       </div>
                     </motion.div>
@@ -693,75 +685,87 @@ export default function LandingPage() {
           </motion.div>
         </div>
       </section>
-      {/* ── Scroll Chapter Label ── */}
-      <div className={`${styles.chapterLabel} gsap-chapter-label`}>
-        <span className={styles.chapterLine} />
-        <span className={styles.chapterText}>How It Works</span>
-        <span className={styles.chapterLine} />
-      </div>
 
-      <section className={styles.workflowSection} id="how-it-works">
+
+      <section className={`${styles.workflowSection} gsap-process-section`} id="how-it-works">
+        {/* Dynamic ambient lights (colors morph on scroll) */}
+        <div className={`${styles.ambientLight} ${styles.ambientLightLeft} gsap-ambient-left`} />
+        <div className={`${styles.ambientLight} ${styles.ambientLightRight} gsap-ambient-right`} />
+
         <div className={styles.sectionInner}>
-          <div style={{ textAlign: 'center', marginBottom: '48px' }}>
-            <h2 className={`${styles.sectionTitle} gsap-section-title`}>How Skilotech Works</h2>
-            <p className={`${styles.sectionSubtitle} gsap-section-sub`}>
+
+          {/* Heading — slides up once on scroll enter */}
+          <div className={`${styles.processHeadingBlock} gsap-story-heading`}>
+            <h2 className={styles.sectionTitle}>How Skilotech Works</h2>
+            <p className={styles.sectionSubtitle}>
               Four simple steps from zero experience to your first offer letter.
             </p>
           </div>
 
-          <div className={styles.storyContainer}>
-            {/* Left Column: Sticky visual preview */}
-            <div className={styles.storySticky}>
-              <div className={styles.storyProgressIndicator}>
-                {workflowSteps.map((_, i) => (
-                  <button
-                    key={i}
-                    className={`${styles.storyProgressDot} ${activeTab === i ? styles.storyProgressDotActive : ''}`}
-                    onClick={() => {
-                      const el = document.getElementById(`workflow-step-${i}`);
-                      el?.scrollIntoView({ behavior: 'smooth', block: 'center' });
-                    }}
-                    aria-label={`Go to step ${i + 1}`}
-                  />
+          {/* Desktop Pinned Layout */}
+          <div className={styles.desktopWorkflow}>
+            <div className={styles.workflowGrid}>
+              {/* Left Column: Vertical Timeline progress indicator */}
+              <div className={styles.timelineColumn}>
+                <div className={styles.timelineTrack} />
+                <div className={`${styles.timelineProgress} gsap-timeline-progress`} />
+                {workflowSteps.map((step, idx) => (
+                  <div key={idx} className={`${styles.timelineNode} gsap-timeline-node`}>
+                    <span className={`${styles.nodeIndex} gsap-node-index`}>0{idx + 1}</span>
+                  </div>
                 ))}
               </div>
-              <div className={styles.storyVisualWrapper}>
-                <AnimatePresence mode="wait">
-                  <motion.div
-                    key={activeTab}
-                    initial={{ opacity: 0, scale: 0.95, y: 15 }}
-                    animate={{ opacity: 1, scale: 1, y: 0 }}
-                    exit={{ opacity: 0, scale: 0.95, y: -15 }}
-                    transition={{ duration: 0.35, ease: 'easeOut' }}
-                    className={styles.storyVisualCard}
+
+              {/* Right Column: Pinned panels */}
+              <div className={styles.processPanels}>
+                {workflowSteps.map((step, i) => (
+                  <article
+                    key={i}
+                    className={`${styles.storyPanel} gsap-story-panel`}
                   >
-                    {workflowSteps[activeTab]?.visual || null}
-                  </motion.div>
-                </AnimatePresence>
+                    {/* Left: visual */}
+                    <div className={styles.panelVisual}>
+                      {step.visual}
+                    </div>
+
+                    {/* Right: text */}
+                    <div className={styles.panelText}>
+                      <span className={styles.storyStepNum}>{step.num}</span>
+                      <h3 className={styles.storyStepTitle}>{step.title}</h3>
+                      <p className={styles.storyStepDesc}>{step.desc}</p>
+                      <div style={{ marginTop: '24px' }}>
+                        <Link href="/sign-up" className="btn btn-primary" style={{ borderRadius: 'var(--radius-md)' }}>
+                          Get Started →
+                        </Link>
+                      </div>
+                    </div>
+                  </article>
+                ))}
               </div>
             </div>
+          </div>
 
-            {/* Right Column: Scrollable cards */}
-            <div className={styles.storyScroll}>
-              {workflowSteps.map((step, i) => (
-                <div
-                  key={i}
-                  id={`workflow-step-${i}`}
-                  className={`${styles.storyStepCard} gsap-workflow-step ${activeTab === i ? styles.storyStepCardActive : ''}`}
-                  data-step-index={i}
-                >
+          {/* Mobile Linear Steps Layout */}
+          <div className={styles.mobileWorkflow}>
+            {workflowSteps.map((step, idx) => (
+              <div key={idx} className={styles.mobileStepCard}>
+                <div className={styles.panelVisual}>
+                  {step.visual}
+                </div>
+                <div className={styles.panelText}>
                   <span className={styles.storyStepNum}>{step.num}</span>
                   <h3 className={styles.storyStepTitle}>{step.title}</h3>
                   <p className={styles.storyStepDesc}>{step.desc}</p>
-                  <div style={{ marginTop: '20px' }}>
+                  <div style={{ marginTop: '24px' }}>
                     <Link href="/sign-up" className="btn btn-primary" style={{ borderRadius: 'var(--radius-md)' }}>
                       Get Started →
                     </Link>
                   </div>
                 </div>
-              ))}
-            </div>
+              </div>
+            ))}
           </div>
+
         </div>
       </section>
 
@@ -782,12 +786,7 @@ export default function LandingPage() {
         </div>
       </section>
 
-      {/* ── Scroll Chapter Label ────────────────────────── */}
-      <div className={`${styles.chapterLabel} gsap-chapter-label`}>
-        <span className={styles.chapterLine} />
-        <span className={styles.chapterText}>By the Numbers</span>
-        <span className={styles.chapterLine} />
-      </div>
+
 
 
       {/* ── Final CTA Section ───────────────────────────────────── */}
