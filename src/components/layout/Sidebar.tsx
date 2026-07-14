@@ -91,13 +91,14 @@ export default function Sidebar() {
       {/* Brand header — logo only */}
       <div className={styles.brand} style={{
         borderBottom: '1px solid #e5e5e5',
-        justifyContent: collapsed ? 'center' : 'flex-start',
+        justifyContent: 'center',
+        padding: collapsed ? '12px 0' : '16px 24px',
       }}>
         <Link href={dashboardHome} className={styles.logo} style={{
           overflow: 'hidden',
           display: 'flex',
           alignItems: 'center',
-          justifyContent: collapsed ? 'center' : 'flex-start',
+          justifyContent: 'center',
           width: '100%',
         }}>
           <AnimatePresence mode="wait" initial={false}>
@@ -155,7 +156,8 @@ export default function Sidebar() {
                 position: 'relative',
                 display: 'flex',
                 alignItems: 'center',
-                padding: '0.625rem 0.875rem',
+                justifyContent: collapsed ? 'center' : 'flex-start',
+                padding: collapsed ? '0.625rem 0' : '0.625rem 0.875rem',
                 margin: '4px 8px',
                 borderRadius: 'var(--radius-md)',
                 color: isActive ? 'var(--text-primary)' : 'var(--text-secondary)',
@@ -256,7 +258,11 @@ export default function Sidebar() {
       </div>
 
       {/* User section */}
-      <div className={styles.userSection} style={{ borderTop: '1px solid #e5e5e5' }}>
+      <div className={styles.userSection} style={{
+        borderTop: '1px solid #e5e5e5',
+        padding: collapsed ? '16px 0' : '16px 24px',
+        justifyContent: collapsed ? 'center' : 'flex-start',
+      }}>
         <motion.div
           className={styles.userAvatar}
           whileHover={{ scale: 1.05 }}
