@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useEffect, useState, Suspense, useRef, useCallback } from 'react';
-import { useSearchParams } from 'next/navigation';
+import { useSearchParams, useRouter } from 'next/navigation';
 import Editor from '@monaco-editor/react';
 import Button from '@/components/ui/Button';
 import { toast } from 'sonner';
@@ -41,6 +41,7 @@ interface ExecutionOutput {
 
 function CodingLabInner() {
   const searchParams = useSearchParams();
+  const router = useRouter();
   const stepId = searchParams.get('stepId');
 
   const [language, setLanguage] = useState<Language>('javascript');
@@ -366,6 +367,31 @@ function CodingLabInner() {
 
           {isStepMode && dbStep ? (
             <div style={{ padding: '20px' }}>
+              {dbStep.lesson?.module?.courseId && (
+                <button
+                  onClick={() => {
+                    router.push(`/dashboard/courses/${dbStep.lesson.module.courseId}/learn`);
+                  }}
+                  style={{
+                    display: 'inline-flex',
+                    alignItems: 'center',
+                    gap: '6px',
+                    background: 'none',
+                    border: 'none',
+                    color: 'var(--accent-primary, #7c3aed)',
+                    fontSize: '12px',
+                    fontWeight: 600,
+                    cursor: 'pointer',
+                    padding: '0',
+                    marginBottom: '14px',
+                    transition: 'color 0.15s ease',
+                  }}
+                  onMouseEnter={(e) => (e.currentTarget.style.color = 'var(--accent-primary-hover, #6d28d9)')}
+                  onMouseLeave={(e) => (e.currentTarget.style.color = 'var(--accent-primary, #7c3aed)')}
+                >
+                  ← Return to Course Workspace
+                </button>
+              )}
               <span className="badge badge-primary" style={{ marginBottom: '8px', display: 'inline-block' }}>
                 💻 LESSON LAB
               </span>
