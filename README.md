@@ -1,4 +1,4 @@
-# Skillzy — Full-Stack Interactive Learning Platform
+# Skillzy - Full-Stack Interactive Learning Platform
 
 Skillzy is a state-of-the-art interactive learning management system (LMS) and coding education platform built with Next.js. It features a curriculum builder for instructors, coding execution labs for students, and full local payment integration.
 

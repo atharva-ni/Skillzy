@@ -1305,7 +1305,7 @@ try {
       ]
     },
     {
-      title: 'Step 3: Lab — Creating your first GET endpoint',
+      title: 'Step 3: Lab - Creating your first GET endpoint',
       testCode: {
         javascript: `
 const http = require('http');
@@ -1349,7 +1349,7 @@ try {
       ]
     },
     {
-      title: 'Step 3: Lab — Implementing Binary Search',
+      title: 'Step 3: Lab - Implementing Binary Search',
       testCode: {
         javascript: '',
         python: `

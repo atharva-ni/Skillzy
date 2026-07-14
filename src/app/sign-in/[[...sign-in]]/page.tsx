@@ -19,7 +19,7 @@ export default function SignInPage() {
           <img src="/logo.png" alt="Skilotech Logo" style={{ width: '200px', height: '200px', marginTop: '-75px', marginBottom: '-75px', objectFit: 'contain', display: 'block' }} />
         </div>
 
-        <p className="auth-tagline">Welcome back — pick up where you left off.</p>
+        <p className="auth-tagline">Welcome back - pick up where you left off.</p>
 
         {/* Clerk Sign-In Card */}
         <SignIn

@@ -214,7 +214,7 @@ export default function RazorpayCheckout({
       onClick={handlePayment}
       disabled={loading}
     >
-      {loading ? 'Opening Secure Gateway...' : `Buy Course — ₹${(coursePrice).toLocaleString('en-IN')} →`}
+      {loading ? 'Opening Secure Gateway...' : `Buy Course - ₹${(coursePrice).toLocaleString('en-IN')} →`}
     </Button>
   );
 }

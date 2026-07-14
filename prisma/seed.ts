@@ -333,7 +333,7 @@ app.listen(3000, () => {
         lessonId: l1_2.id,
         stepType: LessonStepType.lab,
         sortOrder: 3,
-        title: 'Step 3: Lab — Creating your first GET endpoint',
+        title: 'Step 3: Lab - Creating your first GET endpoint',
         labLanguage: 'javascript',
         labStarterCode: `const express = require('express');
 
@@ -378,7 +378,7 @@ Complete the \`createExpressApp\` function:
       id: 'step_web_1_2_3',
       courseId: course1.id,
       moduleId: m1.id,
-      title: 'Step 3: Lab — Creating your first GET endpoint',
+      title: 'Step 3: Lab - Creating your first GET endpoint',
       assignmentType: 'coding',
       status: 'active',
       maxScore: 100,
@@ -465,7 +465,7 @@ For an array of 1 million items, Linear Search takes up to 1,000,000 operations,
         lessonId: course2_l1.id,
         stepType: LessonStepType.lab,
         sortOrder: 3,
-        title: 'Step 3: Lab — Implementing Binary Search',
+        title: 'Step 3: Lab - Implementing Binary Search',
         labLanguage: 'python',
         labStarterCode: `def binary_search(arr, target):
     # TODO: Implement binary search. 
@@ -504,7 +504,7 @@ Implement the \`binary_search\` function in Python:
       id: 'step_dsa_1_1_2',
       courseId: course2.id,
       moduleId: course2_m1.id,
-      title: 'Step 3: Lab — Implementing Binary Search',
+      title: 'Step 3: Lab - Implementing Binary Search',
       assignmentType: 'coding',
       status: 'active',
       maxScore: 100,

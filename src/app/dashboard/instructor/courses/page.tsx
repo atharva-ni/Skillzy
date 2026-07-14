@@ -66,7 +66,7 @@ export default function InstructorCourses() {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           title: newTitle.trim(),
-          description: newDescription.trim() || 'Course description — edit this in the course builder.'
+          description: newDescription.trim() || 'Course description - edit this in the course builder.'
         })
       });
 
@@ -141,7 +141,7 @@ export default function InstructorCourses() {
               />
             </div>
             <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
-              <label className="label">Short Description <span style={{ color: 'var(--text-tertiary)', fontWeight: 400 }}>(optional — can be edited later)</span></label>
+              <label className="label">Short Description <span style={{ color: 'var(--text-tertiary)', fontWeight: 400 }}>(optional - can be edited later)</span></label>
               <input
                 type="text"
                 className="input"

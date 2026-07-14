@@ -223,9 +223,9 @@ function CodingLabInner() {
       if (result.exitCode === 0 && !result.stderr) {
         toast.success(`✅ Code executed successfully in ${elapsed}ms`);
       } else if (result.isTimeout) {
-        toast.error('⏱️ Time Limit Exceeded — optimize your solution');
+        toast.error('⏱️ Time Limit Exceeded - optimize your solution');
       } else if (result.stderr) {
-        toast.error('❌ Runtime error — check console output');
+        toast.error('❌ Runtime error - check console output');
       } else {
         toast.info(`Code finished with exit code ${result.exitCode}`);
       }
@@ -286,7 +286,7 @@ function CodingLabInner() {
         toast.success(`🎉 All ${result.testResults.passedCount} tests passed! (${elapsed}ms)`);
       } else {
         if (result.testResults) {
-          toast.error(`❌ ${result.testResults.passedCount}/${result.testResults.totalCount} passed — ${result.testResults.summary}`);
+          toast.error(`❌ ${result.testResults.passedCount}/${result.testResults.totalCount} passed - ${result.testResults.summary}`);
         } else {
           toast.error(`❌ Submission failed. Check console error outputs.`);
         }

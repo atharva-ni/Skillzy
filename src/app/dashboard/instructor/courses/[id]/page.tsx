@@ -416,7 +416,7 @@ export default function CourseEditor() {
   };
 
   // ----------------------------------------------------
-  // Add Curriculum Nodes (Module, Lesson, Step) — inline
+  // Add Curriculum Nodes (Module, Lesson, Step) - inline
   // ----------------------------------------------------
   const handleAddModule = async () => {
     const title = inlineAddModuleTitle.trim();
@@ -1104,7 +1104,7 @@ export default function CourseEditor() {
                     <div style={{ paddingLeft: '16px', display: 'flex', flexDirection: 'column', gap: '4px' }}>
                       {(mod.lessons || []).length === 0 && inlineAddLesson !== mod.id && (
                         <div style={{ padding: '8px 10px', fontSize: '11px', color: 'var(--text-tertiary)', fontStyle: 'italic' }}>
-                          No lessons yet — 
+                          No lessons yet - 
                           <button
                             onClick={() => { setInlineAddLesson(mod.id); setInlineAddLessonTitle(''); }}
                             style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--accent-primary-hover)', fontWeight: 600, fontSize: '11px', fontStyle: 'normal', padding: '0 2px' }}

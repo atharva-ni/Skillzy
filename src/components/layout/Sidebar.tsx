@@ -88,7 +88,7 @@ export default function Sidebar() {
         overflow: 'hidden',
       }}
     >
-      {/* Brand header — logo only */}
+      {/* Brand header - logo only */}
       <div className={styles.brand} style={{
         borderBottom: '1px solid #e5e5e5',
         justifyContent: 'center',

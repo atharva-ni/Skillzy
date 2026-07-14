@@ -1,11 +1,11 @@
 @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap');
 
 /* ============================================
-   SKILOTECH DESIGN SYSTEM — Premium Dark Mode
+   SKILOTECH DESIGN SYSTEM - Premium Dark Mode
    ============================================ */
 
 :root {
-  /* ---- Color Palette — Clean Minimal Light (Linear / Notion / Vercel) ---- */
+  /* ---- Color Palette - Clean Minimal Light (Linear / Notion / Vercel) ---- */
   --bg-primary: #fafafa;
   --bg-secondary: #ffffff;
   --bg-tertiary: #f4f4f5;
@@ -106,6 +106,8 @@ html {
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
 }
+
+
 
 body {
   font-family: var(--font-family);

@@ -45,7 +45,7 @@ const PISTON_API_URL = process.env.PISTON_API_URL || 'https://compiler.roletwit.
 
 /**
  * Supported languages mapped to their Piston language identifiers and versions.
- * Only these languages are allowed — all others are rejected.
+ * Only these languages are allowed - all others are rejected.
  */
 const SUPPORTED_LANGUAGES: Record<string, { pistonLang: string; version: string }> = {
   javascript: { pistonLang: 'javascript', version: '18.15.0' },
