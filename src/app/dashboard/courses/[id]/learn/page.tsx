@@ -894,61 +894,126 @@ export function MarkdownRenderer({ text }: { text: string }) {
             <div 
               key={index}
               style={{
-                background: '#0f172a',
-                color: '#e2e8f0',
-                borderRadius: '8px',
+                background: '#0b0f19',
+                color: '#f8fafc',
+                borderRadius: '10px',
                 padding: '16px 20px',
-                fontFamily: 'SFMono-Regular, Consolas, "Liberation Mono", Menlo, monospace',
+                fontFamily: 'Consolas, Monaco, "Andale Mono", "Ubuntu Mono", monospace',
                 fontSize: '0.875rem',
                 overflowX: 'auto',
-                border: '1px solid #1e293b',
-                margin: '12px 0',
-                boxShadow: 'inset 0 1px 3px rgba(0,0,0,0.1)',
+                border: '1px solid rgba(255, 255, 255, 0.08)',
+                margin: '18px 0',
+                boxShadow: '0 4px 12px rgba(0,0,0,0.15)',
               }}
             >
-              {language !== 'text' && (
-                <div style={{ fontSize: '10px', textTransform: 'uppercase', color: '#64748b', marginBottom: '8px', borderBottom: '1px solid #1e293b', paddingBottom: '4px', fontWeight: 700, letterSpacing: '0.5px' }}>
-                  {language}
+              {/* Terminal Header Bar */}
+              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '12px', borderBottom: '1px solid rgba(255, 255, 255, 0.06)', paddingBottom: '8px', userSelect: 'none' }}>
+                <div style={{ display: 'flex', gap: '6px' }}>
+                  <span style={{ width: '10px', height: '10px', borderRadius: '50%', background: '#ef4444', display: 'inline-block' }} />
+                  <span style={{ width: '10px', height: '10px', borderRadius: '50%', background: '#f59e0b', display: 'inline-block' }} />
+                  <span style={{ width: '10px', height: '10px', borderRadius: '50%', background: '#10b981', display: 'inline-block' }} />
                 </div>
-              )}
-              <pre style={{ margin: 0, whiteSpace: 'pre' }}><code>{codeLines.join('\n')}</code></pre>
+                <div style={{ fontSize: '10px', fontWeight: 700, color: '#64748b', textTransform: 'uppercase', letterSpacing: '1px' }}>
+                  {language === 'text' ? 'code snippet' : language}
+                </div>
+              </div>
+              <pre style={{ margin: 0, whiteSpace: 'pre', lineHeight: '1.6' }}><code>{codeLines.join('\n')}</code></pre>
             </div>
           );
         } else {
           // Parse paragraph blocks
-          const blocks = part.split(/\n\s*\n/);
+          // Ensure headings are isolated on their own blocks to prevent paragraphs from getting wrapped in heading tags
+          let processedText = part.split('\n').map(line => {
+            const trimmedLine = line.trim();
+            if (trimmedLine.startsWith('# ') || trimmedLine.startsWith('## ') || trimmedLine.startsWith('### ')) {
+              return '\n\n' + trimmedLine + '\n\n';
+            }
+            return line;
+          }).join('\n');
+
+          processedText = processedText.replace(/\n{3,}/g, '\n\n');
+
+          const blocks = processedText.split(/\n\s*\n/);
           return blocks.map((block, bIdx) => {
             const trimmed = block.trim();
             if (!trimmed) return null;
 
             // Check if it is an explicit Markdown Heading
             if (trimmed.startsWith('# ')) {
-              return <h1 key={bIdx} style={{ fontSize: '1.6rem', fontWeight: 800, color: 'var(--text-primary)', marginTop: '24px', marginBottom: '8px', letterSpacing: '-0.4px' }}>{parseInlineMarkdown(trimmed.slice(2))}</h1>;
+              return (
+                <h1 key={bIdx} style={{ 
+                  fontSize: '1.8rem', 
+                  fontWeight: 800, 
+                  color: 'var(--text-primary)', 
+                  marginTop: '32px', 
+                  marginBottom: '12px', 
+                  letterSpacing: '-0.5px',
+                  borderLeft: '4px solid #6366f1',
+                  paddingLeft: '12px',
+                  lineHeight: '1.2'
+                }}>
+                  {parseInlineMarkdown(trimmed.slice(2))}
+                </h1>
+              );
             }
             if (trimmed.startsWith('## ')) {
-              return <h2 key={bIdx} style={{ fontSize: '1.35rem', fontWeight: 700, color: 'var(--text-primary)', marginTop: '20px', marginBottom: '8px', letterSpacing: '-0.3px' }}>{parseInlineMarkdown(trimmed.slice(3))}</h2>;
+              return (
+                <h2 key={bIdx} style={{ 
+                  fontSize: '1.45rem', 
+                  fontWeight: 700, 
+                  color: 'var(--text-primary)', 
+                  marginTop: '28px', 
+                  marginBottom: '10px', 
+                  letterSpacing: '-0.3px',
+                  borderLeft: '4px solid #6366f1',
+                  paddingLeft: '10px',
+                  lineHeight: '1.3'
+                }}>
+                  {parseInlineMarkdown(trimmed.slice(3))}
+                </h2>
+              );
             }
             if (trimmed.startsWith('### ')) {
-              return <h3 key={bIdx} style={{ fontSize: '1.15rem', fontWeight: 700, color: 'var(--text-primary)', marginTop: '16px', marginBottom: '6px' }}>{parseInlineMarkdown(trimmed.slice(4))}</h3>;
+              return (
+                <h3 key={bIdx} style={{ 
+                  fontSize: '1.2rem', 
+                  fontWeight: 700, 
+                  color: 'var(--text-primary)', 
+                  marginTop: '22px', 
+                  marginBottom: '8px',
+                  borderLeft: '3px solid #818cf8',
+                  paddingLeft: '8px',
+                  lineHeight: '1.4'
+                }}>
+                  {parseInlineMarkdown(trimmed.slice(4))}
+                </h3>
+              );
             }
 
-            // Check if it is an explicit Blockquote
+            // Check if it is an explicit Blockquote (renders as premium note banner)
             if (trimmed.startsWith('> ')) {
               return (
-                <blockquote 
+                <div 
                   key={bIdx}
                   style={{
-                    borderLeft: '4px solid var(--accent-primary)',
-                    background: '#f9fafb',
-                    padding: '12px 18px',
-                    margin: '12px 0',
+                    borderLeft: '4px solid #3b82f6',
+                    background: 'rgba(59, 130, 246, 0.04)',
+                    padding: '14px 20px',
+                    margin: '18px 0',
                     borderRadius: '0 8px 8px 0',
-                    color: 'var(--text-secondary)',
-                    fontStyle: 'italic',
+                    color: '#1e3a8a',
+                    fontSize: '1rem',
+                    lineHeight: '1.7',
+                    display: 'flex',
+                    alignItems: 'flex-start',
+                    gap: '10px',
                   }}
                 >
-                  {parseInlineMarkdown(trimmed.slice(2))}
-                </blockquote>
+                  <span style={{ color: '#3b82f6', fontSize: '1.15rem', userSelect: 'none', lineHeight: '1.5' }}>💡</span>
+                  <div style={{ flex: 1 }}>
+                    {parseInlineMarkdown(trimmed.slice(2))}
+                  </div>
+                </div>
               );
             }
 
@@ -968,19 +1033,30 @@ export function MarkdownRenderer({ text }: { text: string }) {
                 <div 
                   key={bIdx}
                   style={{
-                    background: '#0f172a',
-                    color: '#e2e8f0',
-                    borderRadius: '8px',
-                    padding: '14px 18px',
-                    fontFamily: 'SFMono-Regular, Consolas, monospace',
+                    background: '#0b0f19',
+                    color: '#f8fafc',
+                    borderRadius: '10px',
+                    padding: '16px 20px',
+                    fontFamily: 'Consolas, Monaco, "Andale Mono", "Ubuntu Mono", monospace',
                     fontSize: '0.875rem',
                     overflowX: 'auto',
-                    border: '1px solid #1e293b',
-                    margin: '10px 0',
-                    boxShadow: 'inset 0 1px 3px rgba(0,0,0,0.1)',
+                    border: '1px solid rgba(255, 255, 255, 0.08)',
+                    margin: '16px 0',
+                    boxShadow: '0 4px 12px rgba(0,0,0,0.15)',
                   }}
                 >
-                  <pre style={{ margin: 0, whiteSpace: 'pre-wrap' }}><code>{trimmed}</code></pre>
+                  {/* macOS controls mock for inline code logs */}
+                  <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '12px', borderBottom: '1px solid rgba(255, 255, 255, 0.06)', paddingBottom: '8px', userSelect: 'none' }}>
+                    <div style={{ display: 'flex', gap: '6px' }}>
+                      <span style={{ width: '10px', height: '10px', borderRadius: '50%', background: '#ef4444', display: 'inline-block' }} />
+                      <span style={{ width: '10px', height: '10px', borderRadius: '50%', background: '#f59e0b', display: 'inline-block' }} />
+                      <span style={{ width: '10px', height: '10px', borderRadius: '50%', background: '#10b981', display: 'inline-block' }} />
+                    </div>
+                    <div style={{ fontSize: '10px', fontWeight: 700, color: '#64748b', textTransform: 'uppercase', letterSpacing: '1px' }}>
+                      interactive console
+                    </div>
+                  </div>
+                  <pre style={{ margin: 0, whiteSpace: 'pre-wrap', lineHeight: '1.6' }}><code>{trimmed}</code></pre>
                 </div>
               );
             }
@@ -991,10 +1067,13 @@ export function MarkdownRenderer({ text }: { text: string }) {
 
             if (isUnordered) {
               return (
-                <ul key={bIdx} style={{ paddingLeft: '20px', margin: '12px 0', display: 'flex', flexDirection: 'column', gap: '8px' }}>
+                <ul key={bIdx} style={{ paddingLeft: '4px', marginTop: '8px', marginBottom: '16px', display: 'flex', flexDirection: 'column', gap: '10px' }}>
                   {lines.map((line, lIdx) => (
-                    <li key={lIdx} style={{ listStyleType: 'disc', color: 'var(--text-secondary)', fontSize: '1.025rem', paddingLeft: '4px' }}>
-                      {parseInlineMarkdown(line.trim().slice(2))}
+                    <li key={lIdx} style={{ display: 'flex', alignItems: 'flex-start', gap: '10px' }}>
+                      <span style={{ color: '#6366f1', fontSize: '11px', marginTop: '6px', userSelect: 'none', lineHeight: '1' }}>✦</span>
+                      <span style={{ color: '#334155', fontSize: '1.025rem', lineHeight: '1.7' }}>
+                        {parseInlineMarkdown(line.trim().slice(2))}
+                      </span>
                     </li>
                   ))}
                 </ul>
@@ -1003,12 +1082,15 @@ export function MarkdownRenderer({ text }: { text: string }) {
 
             if (isOrdered) {
               return (
-                <ol key={bIdx} style={{ paddingLeft: '20px', margin: '12px 0', display: 'flex', flexDirection: 'column', gap: '8px' }}>
+                <ol key={bIdx} style={{ paddingLeft: '4px', marginTop: '8px', marginBottom: '16px', display: 'flex', flexDirection: 'column', gap: '10px' }}>
                   {lines.map((line, lIdx) => {
                     const content = line.trim().replace(/^\d+\.\s/, '');
                     return (
-                      <li key={lIdx} style={{ listStyleType: 'decimal', color: 'var(--text-secondary)', fontSize: '1.025rem', paddingLeft: '4px' }}>
-                        {parseInlineMarkdown(content)}
+                      <li key={lIdx} style={{ display: 'flex', alignItems: 'flex-start', gap: '10px' }}>
+                        <span style={{ color: '#6366f1', fontSize: '1.025rem', fontWeight: 700, minWidth: '22px', userSelect: 'none', lineHeight: '1.7' }}>{lIdx + 1}.</span>
+                        <span style={{ color: '#334155', fontSize: '1.025rem', lineHeight: '1.7' }}>
+                          {parseInlineMarkdown(content)}
+                        </span>
                       </li>
                     );
                   })}
@@ -1020,10 +1102,13 @@ export function MarkdownRenderer({ text }: { text: string }) {
             // If the preceding paragraph ended with a colon, and this block is split into multiple short lines:
             if (lines.length > 1 && lines.every(line => line.length < 50 && !line.includes('.'))) {
               return (
-                <ul key={bIdx} style={{ paddingLeft: '20px', margin: '12px 0', display: 'flex', flexDirection: 'column', gap: '8px' }}>
+                <ul key={bIdx} style={{ paddingLeft: '4px', marginTop: '8px', marginBottom: '16px', display: 'flex', flexDirection: 'column', gap: '10px' }}>
                   {lines.map((line, lIdx) => (
-                    <li key={lIdx} style={{ listStyleType: 'disc', color: 'var(--text-secondary)', fontSize: '1.025rem', paddingLeft: '4px' }}>
-                      {parseInlineMarkdown(line.trim())}
+                    <li key={lIdx} style={{ display: 'flex', alignItems: 'flex-start', gap: '10px' }}>
+                      <span style={{ color: '#6366f1', fontSize: '11px', marginTop: '6px', userSelect: 'none', lineHeight: '1' }}>✦</span>
+                      <span style={{ color: '#334155', fontSize: '1.025rem', lineHeight: '1.7' }}>
+                        {parseInlineMarkdown(line.trim())}
+                      </span>
                     </li>
                   ))}
                 </ul>
@@ -1055,10 +1140,11 @@ export function MarkdownRenderer({ text }: { text: string }) {
               <p 
                 key={bIdx}
                 style={{
-                  margin: '14px 0',
-                  color: 'var(--text-secondary)',
+                  marginTop: '8px',
+                  marginBottom: '16px',
+                  color: '#334155',
                   fontSize: '1.025rem',
-                  lineHeight: '1.8',
+                  lineHeight: '1.85',
                 }}
               >
                 {parseInlineMarkdown(trimmed)}
@@ -1089,13 +1175,13 @@ function parseInlineMarkdown(text: string): React.ReactNode[] {
         <code 
           key={index} 
           style={{
-            background: '#f1f5f9',
-            color: '#0f172a',
+            background: 'rgba(99, 102, 241, 0.06)',
+            color: '#4f46e5',
             padding: '2px 6px',
             borderRadius: '4px',
             fontFamily: 'SFMono-Regular, Consolas, monospace',
-            fontSize: '0.85em',
-            border: '1px solid #e2e8f0',
+            fontSize: '0.875em',
+            border: '1px solid rgba(99, 102, 241, 0.15)',
             fontWeight: 600,
           }}
         >

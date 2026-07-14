@@ -9,6 +9,8 @@ import { useAuth } from '@/context/AuthContext';
 import RazorpayCheckout from '@/components/payments/RazorpayCheckout';
 import { toast } from 'sonner';
 
+import { MarkdownRenderer } from './learn/page';
+
 interface PageProps {
   params: Promise<{ id: string }>;
 }
@@ -91,10 +93,10 @@ export default function CourseDetail({ params }: PageProps) {
             <Badge variant="primary">{course.category?.name || 'Technology'}</Badge>
             <Badge variant="info">{course.level.toUpperCase()}</Badge>
           </div>
-          <h1 className="page-title" style={{ fontSize: '2.5rem', lineHeight: '1.2' }}>{course.title}</h1>
-          <p style={{ fontSize: 'var(--font-size-md)', color: 'var(--text-secondary)', marginTop: 'var(--spacing-sm)' }}>
-            {course.description}
-          </p>
+          <h1 className="page-title" style={{ fontSize: '2.5rem', lineHeight: '1.2', marginBottom: '16px' }}>{course.title}</h1>
+          <div style={{ fontSize: 'var(--font-size-md)', color: 'var(--text-secondary)', marginTop: 'var(--spacing-sm)', lineHeight: '1.7' }}>
+            <MarkdownRenderer text={course.description} />
+          </div>
         </div>
 
         {/* Rating and Info */}

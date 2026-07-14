@@ -1,5 +1,7 @@
 import { z } from 'zod';
 
+const optionalUrlSchema = z.preprocess((val) => (val === '' || val === null) ? undefined : val, z.string().url().optional());
+
 // ── Course Schemas ──────────────────────────────────────────────
 
 export const createCourseSchema = z.object({
@@ -10,8 +12,8 @@ export const createCourseSchema = z.object({
   level: z.enum(['beginner', 'intermediate', 'advanced']).default('beginner'),
   price: z.number().int().min(0).default(0),
   currency: z.string().default('INR'),
-  thumbnailUrl: z.string().url().optional(),
-  previewVideoUrl: z.string().url().optional(),
+  thumbnailUrl: optionalUrlSchema,
+  previewVideoUrl: optionalUrlSchema,
   isFree: z.boolean().default(false),
 });
 
@@ -47,7 +49,7 @@ export const createLessonStepSchema = z.object({
   sortOrder: z.number().int().min(0).default(0),
   title: z.string().min(1).max(255),
   textContent: z.string().optional(),
-  videoUrl: z.string().url().optional(),
+  videoUrl: optionalUrlSchema,
   videoDurationSecs: z.number().int().optional(),
   labLanguage: z.string().optional(),
   labStarterCode: z.string().optional(),

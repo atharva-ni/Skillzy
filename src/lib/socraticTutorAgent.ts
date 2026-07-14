@@ -242,3 +242,37 @@ Please consolidate these reviews into a single educational report card for the s
   }
 }
 
+export async function beautifyCourseContent(rawText: string, contentType: 'description' | 'lesson'): Promise<string> {
+  const systemPrompt = `You are an expert curriculum designer and copywriter. Your job is to take raw, plain-text course descriptions or lesson contents, and format them into structured, readable, and highly appealing Markdown text.
+
+Formatting Guidelines:
+- Add clear headings (#, ##, ###) for major sections.
+- Break wall of texts into short, digestible paragraphs (max 3-4 sentences).
+- Use bullet points (- or *) for lists, prerequisites, objectives, and step-by-step guides.
+- Use bold keywords (**text**) strategically to emphasize core terms.
+- Use inline code (\`let\` or \`print\`) and code blocks (\`\`\`python ... \`\`\`) where appropriate for concepts.
+- Keep the tone highly engaging, professional, and educational.
+- Do NOT add a title heading at the very beginning of a lesson (as the platform renders the lesson title automatically).
+- Return ONLY the formatted Markdown content. Do not write any conversational preamble or notes.`;
+
+  const prompt = `Format this raw content for a ${contentType}:
+---
+${rawText}
+---`;
+
+  try {
+    const responseText = await queryGroq(
+      [
+        { role: 'system', content: systemPrompt },
+        { role: 'user', content: prompt }
+      ],
+      undefined,
+      0.3
+    );
+    return responseText.trim();
+  } catch (error) {
+    console.error("AI Formatting Error:", error);
+    throw error;
+  }
+}
+

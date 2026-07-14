@@ -130,6 +130,57 @@ export default function CourseEditor() {
     return savedSnapshot !== '' && currentData !== savedSnapshot;
   }, [selectedNode, editCourse, editModule, editLesson, editStep, savedSnapshot]);
 
+  const [isFormattingDescription, setIsFormattingDescription] = useState(false);
+  const [isFormattingStep, setIsFormattingStep] = useState(false);
+
+  const handleAiFormatDescription = async () => {
+    if (!editCourse.description) {
+      toast.error('Please enter some text in the description field first');
+      return;
+    }
+    setIsFormattingDescription(true);
+    try {
+      const res = await fetch('/api/ai/format-content', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ text: editCourse.description, type: 'description' })
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || 'Failed to format content');
+      setEditCourse((prev: any) => ({ ...prev, description: data.formattedText }));
+      toast.success('✨ Course description beautified with AI formatting!');
+    } catch (err: any) {
+      console.error(err);
+      toast.error(err.message || 'Failed to auto-format with AI');
+    } finally {
+      setIsFormattingDescription(false);
+    }
+  };
+
+  const handleAiFormatStep = async () => {
+    if (!editStep.textContent) {
+      toast.error('Please enter some text in the content field first');
+      return;
+    }
+    setIsFormattingStep(true);
+    try {
+      const res = await fetch('/api/ai/format-content', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ text: editStep.textContent, type: 'lesson' })
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || 'Failed to format content');
+      setEditStep((prev: any) => ({ ...prev, textContent: data.formattedText }));
+      toast.success('✨ Lesson step text beautified with AI formatting!');
+    } catch (err: any) {
+      console.error(err);
+      toast.error(err.message || 'Failed to auto-format with AI');
+    } finally {
+      setIsFormattingStep(false);
+    }
+  };
+
   // Load course full curriculum tree and categories
   const fetchData = async () => {
     try {
@@ -1342,7 +1393,33 @@ export default function CourseEditor() {
               </div>
 
               <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
-                <label className="label">Full Description (Markdown supported)</label>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                  <label className="label">Full Description (Markdown supported)</label>
+                  <button
+                    type="button"
+                    onClick={handleAiFormatDescription}
+                    disabled={isFormattingDescription}
+                    style={{
+                      background: 'linear-gradient(135deg, #6366f1 0%, #4f46e5 100%)',
+                      color: 'white',
+                      border: 'none',
+                      borderRadius: '4px',
+                      padding: '4px 10px',
+                      fontSize: '11.5px',
+                      fontWeight: 600,
+                      cursor: 'pointer',
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: '4px',
+                      transition: 'transform 0.1s ease',
+                      boxShadow: 'var(--shadow-sm)'
+                    }}
+                    onMouseEnter={(e) => e.currentTarget.style.transform = 'scale(1.02)'}
+                    onMouseLeave={(e) => e.currentTarget.style.transform = 'scale(1.0)'}
+                  >
+                    {isFormattingDescription ? '⏳ Formatting...' : '✨ AI Auto-Format'}
+                  </button>
+                </div>
                 <textarea 
                   className="input" 
                   rows={6}
@@ -1537,7 +1614,33 @@ export default function CourseEditor() {
                 return (
                   <div style={{ display: 'flex', flexDirection: 'column', gap: '8px', flex: 1 }}>
                     <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                      <label className="label">Step Text Content (Markdown supported)</label>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+                        <label className="label" style={{ margin: 0 }}>Step Text Content (Markdown supported)</label>
+                        <button
+                          type="button"
+                          onClick={handleAiFormatStep}
+                          disabled={isFormattingStep}
+                          style={{
+                            background: 'linear-gradient(135deg, #6366f1 0%, #4f46e5 100%)',
+                            color: 'white',
+                            border: 'none',
+                            borderRadius: '4px',
+                            padding: '4px 10px',
+                            fontSize: '10px',
+                            fontWeight: 600,
+                            cursor: 'pointer',
+                            display: 'flex',
+                            alignItems: 'center',
+                            gap: '4px',
+                            transition: 'transform 0.1s ease',
+                            boxShadow: 'var(--shadow-sm)'
+                          }}
+                          onMouseEnter={(e) => e.currentTarget.style.transform = 'scale(1.02)'}
+                          onMouseLeave={(e) => e.currentTarget.style.transform = 'scale(1.0)'}
+                        >
+                          {isFormattingStep ? '⏳ Formatting...' : '✨ AI Auto-Format'}
+                        </button>
+                      </div>
                       {pages.length > 1 && (
                         <span style={{ fontSize: '11px', color: 'var(--accent-primary-hover)', fontWeight: 600, background: 'rgba(99,102,241,0.08)', padding: '2px 8px', borderRadius: '12px' }}>
                           📄 Split into {pages.length} pages
