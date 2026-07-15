@@ -207,7 +207,7 @@ export default function Header() {
   // Search filter query
   useEffect(() => {
     if (!searchQuery.trim()) {
-      setSearchResults([]);
+      setSearchResults(allSearchableItems.slice(0, 10));
       return;
     }
     const query = searchQuery.toLowerCase();
@@ -216,7 +216,7 @@ export default function Header() {
         item.title.toLowerCase().includes(query) ||
         item.subtitle.toLowerCase().includes(query)
     );
-    setSearchResults(filtered.slice(0, 5));
+    setSearchResults(filtered.slice(0, 10));
   }, [searchQuery, allSearchableItems]);
 
   const markAsRead = (id: string) => {
