@@ -766,22 +766,47 @@ export default function StudentDashboard() {
 
               <div className={styles.communityFeedList}>
                 {recentPosts.length > 0 ? (
-                  recentPosts.map((post) => (
-                    <div key={post.id} className={styles.communityFeedItem}>
-                      <div className={styles.postAuthorRow}>
-                        <span className={styles.authorAvatar}>👤</span>
-                        <span className={styles.authorName}>{post.author ? `${post.author.firstName ?? ''} ${post.author.lastName ?? ''}`.trim() || post.author.username || 'Student' : 'Student'}</span>
+                  recentPosts.map((post) => {
+                    const lines = post.content.split('\n');
+                    const title = lines[0] || '';
+                    const imageRegex = /!\[.*?\]\((data:image\/.*?)\)/;
+                    const hasImage = imageRegex.test(post.content);
+                    const cleanTitle = title.replace(imageRegex, '').trim();
+                    const displayedTitle = cleanTitle.length > 50 ? `${cleanTitle.substring(0, 50)}...` : cleanTitle;
+
+                    return (
+                      <div key={post.id} className={styles.communityFeedItem}>
+                        <div className={styles.postAuthorRow}>
+                          <span className={styles.authorAvatar}>👤</span>
+                          <span className={styles.authorName}>{post.author ? `${post.author.firstName ?? ''} ${post.author.lastName ?? ''}`.trim() || post.author.username || 'Student' : 'Student'}</span>
+                        </div>
+                        <p className={styles.postSnippet}>
+                          {displayedTitle}
+                          {hasImage && (
+                            <span style={{ 
+                              color: 'var(--text-tertiary)', 
+                              fontSize: '10px', 
+                              fontWeight: 600,
+                              display: 'inline-flex', 
+                              alignItems: 'center', 
+                              gap: '2px', 
+                              background: 'rgba(0,0,0,0.03)', 
+                              padding: '1px 6px', 
+                              borderRadius: '4px', 
+                              marginLeft: '6px' 
+                            }}>
+                              📷 Image
+                            </span>
+                          )}
+                        </p>
+                        <div className={styles.postFooterMeta}>
+                          <span>{post.likesCount || 0} likes</span>
+                          <span style={{ margin: '0 4px' }}>•</span>
+                          <span>{post.commentsCount || 0} replies</span>
+                        </div>
                       </div>
-                      <p className={styles.postSnippet}>
-                        {post.content.length > 55 ? `${post.content.substring(0, 55)}...` : post.content}
-                      </p>
-                      <div className={styles.postFooterMeta}>
-                        <span>{post.likesCount || 0} likes</span>
-                        <span style={{ margin: '0 4px' }}>•</span>
-                        <span>{post.commentsCount || 0} replies</span>
-                      </div>
-                    </div>
-                  ))
+                    );
+                  })
                 ) : (
                   <div className={styles.communityEmptyState}>
                     No discussions yet. Start one!

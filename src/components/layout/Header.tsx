@@ -178,11 +178,19 @@ export default function Header() {
               const authorName = post.author
                 ? `${post.author.firstName ?? ''} ${post.author.lastName ?? ''}`.trim() || post.author.username || 'Student'
                 : 'Student';
-              const cleanContent = post.content.length > 45 ? `${post.content.slice(0, 45)}...` : post.content;
+              
+              const lines = post.content.split('\n');
+              const title = lines[0] || '';
+              const imageRegex = /!\[.*?\]\((data:image\/.*?)\)/;
+              const hasImage = imageRegex.test(post.content);
+              const cleanTitle = title.replace(imageRegex, '').trim();
+              const displayedTitle = cleanTitle.length > 35 ? `${cleanTitle.slice(0, 35)}...` : cleanTitle;
+              const suffix = hasImage ? ' 📷' : '';
+
               return {
                 id: `comm-${post.id}`,
                 title: '💬 New Discussion',
-                description: `${authorName}: "${cleanContent}"`,
+                description: `${authorName}: "${displayedTitle}"${suffix}`,
                 time: formatRelativeTime(post.createdAt),
                 type: 'community' as const,
               };
