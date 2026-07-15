@@ -30,54 +30,58 @@ export default function CourseCard({
   const [isHovered, setIsHovered] = useState(false);
 
   const getCategoryStyles = (cat: string) => {
+    const monochromeBg = '#f9fafb';
+    const monochromeText = 'var(--text-secondary, #6b7280)';
+    const monochromeIconBg = 'var(--accent-primary, #000000)';
+
     switch (cat) {
       case 'Web Development':
         return {
-          bg: '#f0fdfa', // light teal
-          iconBg: '#0f766e', // dark teal
-          textColor: '#0d9488', // teal-600
+          bg: monochromeBg,
+          iconBg: monochromeIconBg,
+          textColor: monochromeText,
           iconType: 'code'
         };
       case 'Computer Science':
         return {
-          bg: '#f0fdfa', // light teal
+          bg: monochromeBg,
           iconBg: '#ffffff', // white bg for abacus logo container
-          textColor: '#0d9488', // teal-600
+          textColor: monochromeText,
           iconType: 'abacus'
         };
       case 'AI & ML':
         return {
-          bg: '#faf5ff', // light purple
-          iconBg: '#7c3aed', // purple-600
-          textColor: '#7c3aed', // purple-600
+          bg: monochromeBg,
+          iconBg: monochromeIconBg,
+          textColor: monochromeText,
           iconType: 'bot'
         };
       case 'DevOps':
         return {
-          bg: '#ecfdf5', // light emerald
-          iconBg: '#059669', // emerald-600
-          textColor: '#059669', // emerald-600
+          bg: monochromeBg,
+          iconBg: monochromeIconBg,
+          textColor: monochromeText,
           iconType: 'cpu'
         };
       case 'Design':
         return {
-          bg: '#fdf2f8', // light pink
-          iconBg: '#db2777', // pink-600
-          textColor: '#db2777', // pink-600
+          bg: monochromeBg,
+          iconBg: monochromeIconBg,
+          textColor: monochromeText,
           iconType: 'palette'
         };
       case 'Security':
         return {
-          bg: '#fff1f2', // light rose
-          iconBg: '#e11d48', // rose-600
-          textColor: '#e11d48', // rose-600
+          bg: monochromeBg,
+          iconBg: monochromeIconBg,
+          textColor: monochromeText,
           iconType: 'lock'
         };
       default:
         return {
-          bg: '#f8fafc', // light slate
-          iconBg: '#475569', // slate-600
-          textColor: '#475569', // slate-600
+          bg: monochromeBg,
+          iconBg: monochromeIconBg,
+          textColor: monochromeText,
           iconType: 'laptop'
         };
     }
@@ -229,7 +233,7 @@ export default function CourseCard({
           }}>
             {rating > 0 ? (
               <>
-                <span style={{ color: '#eab308', fontWeight: 700, display: 'flex', alignItems: 'center', gap: '2px' }}>
+                <span style={{ color: 'var(--text-primary, #171717)', fontWeight: 700, display: 'flex', alignItems: 'center', gap: '2px' }}>
                   ★ {rating.toFixed(1)}
                 </span>
                 <span>·</span>
@@ -269,9 +273,9 @@ export default function CourseCard({
               {/* Learn More pill button */}
               <div style={{
                 fontSize: '0.75rem',
-                color: '#0f766e',
-                backgroundColor: '#ccfbf1',
-                fontWeight: 700,
+                color: 'var(--text-on-accent, #ffffff)',
+                backgroundColor: 'var(--accent-primary, #000000)',
+                fontWeight: 600,
                 padding: '6px 14px',
                 borderRadius: '8px',
                 display: 'inline-flex',

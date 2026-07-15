@@ -150,7 +150,7 @@ export default function CourseCatalog() {
         <p style={{
           fontSize: '0.7rem',
           fontWeight: 700,
-          color: '#0d9488', // teal-600
+          color: 'var(--text-secondary, #6b7280)', // monochrome instead of teal
           letterSpacing: '0.12em',
           textTransform: 'uppercase',
           marginBottom: '8px',
@@ -158,19 +158,19 @@ export default function CourseCatalog() {
           alignItems: 'center',
           gap: '8px'
         }}>
-          <span style={{ height: '1px', width: '16px', backgroundColor: '#0d9488' }}></span>
+          <span style={{ height: '1px', width: '16px', backgroundColor: 'var(--text-secondary, #6b7280)' }}></span>
           learning & development
         </p>
         <h1 style={{
           fontSize: '2rem',
           fontWeight: 800,
-          color: '#0f172a', // dark navy/slate
+          color: 'var(--text-primary, #171717)',
           marginBottom: '8px',
           letterSpacing: '-0.025em'
         }}>Course Catalog</h1>
         <p style={{
           fontSize: '0.925rem',
-          color: '#475569', // slate-600
+          color: 'var(--text-secondary, #6b7280)',
           maxWidth: '650px',
           lineHeight: '1.5'
         }}>
@@ -181,42 +181,42 @@ export default function CourseCatalog() {
       {/* Redesigned Statistics Container */}
       <div style={{
         display: 'flex',
-        background: '#ffffff',
-        border: '1px solid #e2e8f0',
+        background: 'var(--bg-card, #ffffff)',
+        border: '1px solid var(--border-primary, rgba(0, 0, 0, 0.05))',
         borderRadius: '12px',
         marginBottom: '32px',
         overflow: 'hidden',
-        boxShadow: '0 1px 3px 0 rgba(0, 0, 0, 0.05)'
+        boxShadow: 'var(--shadow-sm)'
       }}>
-        <div style={{ flex: 1, padding: '16px 24px', borderRight: '1px solid #e2e8f0' }}>
-          <div style={{ fontSize: '1.75rem', fontWeight: 800, color: '#0f172a', lineHeight: 1.2 }}>
+        <div style={{ flex: 1, padding: '16px 24px', borderRight: '1px solid var(--border-primary, rgba(0, 0, 0, 0.05))' }}>
+          <div style={{ fontSize: '1.75rem', fontWeight: 800, color: 'var(--text-primary, #171717)', lineHeight: 1.2 }}>
             {stats.coursesCount || 2}
           </div>
-          <div style={{ fontSize: '0.65rem', fontWeight: 700, color: '#64748b', letterSpacing: '0.05em', marginTop: '4px', textTransform: 'uppercase' }}>
+          <div style={{ fontSize: '0.65rem', fontWeight: 700, color: 'var(--text-secondary, #6b7280)', letterSpacing: '0.05em', marginTop: '4px', textTransform: 'uppercase' }}>
             Courses Live
           </div>
         </div>
-        <div style={{ flex: 1, padding: '16px 24px', borderRight: '1px solid #e2e8f0' }}>
-          <div style={{ fontSize: '1.75rem', fontWeight: 800, color: '#0f172a', lineHeight: 1.2 }}>
+        <div style={{ flex: 1, padding: '16px 24px', borderRight: '1px solid var(--border-primary, rgba(0, 0, 0, 0.05))' }}>
+          <div style={{ fontSize: '1.75rem', fontWeight: 800, color: 'var(--text-primary, #171717)', lineHeight: 1.2 }}>
             {stats.hoursCount || 59}
           </div>
-          <div style={{ fontSize: '0.65rem', fontWeight: 700, color: '#64748b', letterSpacing: '0.05em', marginTop: '4px', textTransform: 'uppercase' }}>
+          <div style={{ fontSize: '0.65rem', fontWeight: 700, color: 'var(--text-secondary, #6b7280)', letterSpacing: '0.05em', marginTop: '4px', textTransform: 'uppercase' }}>
             Hours of Content
           </div>
         </div>
-        <div style={{ flex: 1, padding: '16px 24px', borderRight: '1px solid #e2e8f0' }}>
-          <div style={{ fontSize: '1.75rem', fontWeight: 800, color: '#0f172a', lineHeight: 1.2 }}>
+        <div style={{ flex: 1, padding: '16px 24px', borderRight: '1px solid var(--border-primary, rgba(0, 0, 0, 0.05))' }}>
+          <div style={{ fontSize: '1.75rem', fontWeight: 800, color: 'var(--text-primary, #171717)', lineHeight: 1.2 }}>
             {stats.categoriesCount || 2}
           </div>
-          <div style={{ fontSize: '0.65rem', fontWeight: 700, color: '#64748b', letterSpacing: '0.05em', marginTop: '4px', textTransform: 'uppercase' }}>
+          <div style={{ fontSize: '0.65rem', fontWeight: 700, color: 'var(--text-secondary, #6b7280)', letterSpacing: '0.05em', marginTop: '4px', textTransform: 'uppercase' }}>
             Categories
           </div>
         </div>
         <div style={{ flex: 1, padding: '16px 24px' }}>
-          <div style={{ fontSize: '1.75rem', fontWeight: 800, color: '#0f172a', lineHeight: 1.2 }}>
+          <div style={{ fontSize: '1.75rem', fontWeight: 800, color: 'var(--text-primary, #171717)', lineHeight: 1.2 }}>
             {stats.enrolledCount || 10}
           </div>
-          <div style={{ fontSize: '0.65rem', fontWeight: 700, color: '#64748b', letterSpacing: '0.05em', marginTop: '4px', textTransform: 'uppercase' }}>
+          <div style={{ fontSize: '0.65rem', fontWeight: 700, color: 'var(--text-secondary, #6b7280)', letterSpacing: '0.05em', marginTop: '4px', textTransform: 'uppercase' }}>
             Enrolled Learners
           </div>
         </div>
