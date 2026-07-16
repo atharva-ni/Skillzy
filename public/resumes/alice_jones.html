@@ -1,0 +1,235 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Alice Jones - Software Engineer Resume</title>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --text-primary: #171717;
+      --text-secondary: #4b5563;
+      --text-tertiary: #9ca3af;
+      --accent: #0f172a;
+      --accent-light: #f1f5f9;
+      --bg: #fafafa;
+      --card-bg: #ffffff;
+      --border: #e5e7eb;
+    }
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+    body {
+      font-family: 'Inter', sans-serif;
+      background-color: var(--bg);
+      color: var(--text-primary);
+      line-height: 1.6;
+      padding: 40px 20px;
+    }
+    .container {
+      max-width: 800px;
+      margin: 0 auto;
+      background: var(--card-bg);
+      border: 1px solid var(--border);
+      border-radius: 16px;
+      padding: 40px;
+      box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05), 0 2px 4px -1px rgba(0, 0, 0, 0.03);
+    }
+    header {
+      border-bottom: 2px solid var(--border);
+      padding-bottom: 24px;
+      margin-bottom: 24px;
+    }
+    .header-top {
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-start;
+    }
+    h1 {
+      font-size: 2.25rem;
+      font-weight: 800;
+      letter-spacing: -0.025em;
+      color: var(--text-primary);
+    }
+    .title {
+      font-size: 1.1rem;
+      font-weight: 600;
+      color: var(--accent);
+      margin-top: 4px;
+    }
+    .contact-info {
+      margin-top: 12px;
+      display: flex;
+      flex-wrap: wrap;
+      gap: 16px;
+      font-size: 0.875rem;
+      color: var(--text-secondary);
+    }
+    .contact-info span {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+    section {
+      margin-bottom: 28px;
+    }
+    h2 {
+      font-size: 1.25rem;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      color: var(--text-primary);
+      margin-bottom: 12px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    h2::after {
+      content: '';
+      flex: 1;
+      height: 1px;
+      background-color: var(--border);
+    }
+    .summary {
+      color: var(--text-secondary);
+      font-size: 0.95rem;
+    }
+    .skills-grid {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+    }
+    .skill-tag {
+      background-color: var(--bg);
+      border: 1px solid var(--border);
+      color: var(--text-secondary);
+      padding: 6px 12px;
+      border-radius: 8px;
+      font-size: 0.85rem;
+      font-weight: 500;
+    }
+    .experience-item {
+      margin-bottom: 20px;
+    }
+    .experience-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-start;
+      margin-bottom: 6px;
+    }
+    .job-title {
+      font-weight: 700;
+      font-size: 1.05rem;
+    }
+    .company-date {
+      text-align: right;
+    }
+    .company {
+      font-weight: 600;
+      color: var(--accent);
+      font-size: 0.9rem;
+    }
+    .date {
+      font-size: 0.8rem;
+      color: var(--text-tertiary);
+      margin-top: 2px;
+    }
+    .details {
+      list-style-type: disc;
+      margin-left: 20px;
+      font-size: 0.9rem;
+      color: var(--text-secondary);
+    }
+    .details li {
+      margin-bottom: 4px;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <header>
+      <div class="header-top">
+        <div>
+          <h1>Alice Jones</h1>
+          <div class="title">Software Engineer (Systems & Microservices)</div>
+        </div>
+      </div>
+      <div class="contact-info">
+        <span>📧 alice.jones@example.com</span>
+        <span>🌐 github.com/alicejones</span>
+        <span>📍 London, UK</span>
+      </div>
+    </header>
+
+    <section>
+      <h2>Professional Summary</h2>
+      <p class="summary">
+        Highly structured Systems Engineer and Backend Developer with focus on designing concurrent distributed systems using the Go programming language. Experienced in building high-throughput microservices, setting up isolated Docker containers, and managing transactional messaging backbones.
+      </p>
+    </section>
+
+    <section>
+      <h2>Key Technical Skills</h2>
+      <div class="skills-grid">
+        <span class="skill-tag">Go (Golang)</span>
+        <span class="skill-tag">Docker</span>
+        <span class="skill-tag">Kubernetes</span>
+        <span class="skill-tag">RESTful APIs</span>
+        <span class="skill-tag">gRPC & Protobuf</span>
+        <span class="skill-tag">Redis Caching</span>
+        <span class="skill-tag">PostgreSQL</span>
+        <span class="skill-tag">Apache Kafka</span>
+        <span class="skill-tag">CI/CD Pipelines</span>
+      </div>
+    </section>
+
+    <section>
+      <h2>Projects & Experience</h2>
+      <div class="experience-item">
+        <div class="experience-header">
+          <div class="job-title">Backend Systems Developer</div>
+          <div class="company-date">
+            <div class="company">LogiTech Corp</div>
+            <div class="date">Aug 2025 - Present</div>
+          </div>
+        </div>
+        <ul class="details">
+          <li>Architected custom Go-based transactional processing microservices handling high concurrency with goroutines and channels.</li>
+          <li>Deployed containerized applications to staging networks using Docker Compose and automated registry builds.</li>
+          <li>Implemented cache layers using Redis, decreasing overall database request count by 40%.</li>
+        </ul>
+      </div>
+
+      <div class="experience-item">
+        <div class="experience-header">
+          <div class="job-title">Personal Project: Go-Kafka Event Router</div>
+          <div class="company-date">
+            <div class="company">Independent Project</div>
+            <div class="date">Feb 2025 - Jul 2025</div>
+          </div>
+        </div>
+        <ul class="details">
+          <li>Built a high-performance event consumer and publisher in Go to route JSON-structured web events into Kafka topics.</li>
+          <li>Structured real-time stream aggregation routines, achieving latencies under 5ms.</li>
+          <li>Configured GitHub Actions CI pipeline to run tests, checks, and build steps automatically on code merge.</li>
+        </ul>
+      </div>
+    </section>
+
+    <section>
+      <h2>Education</h2>
+      <div class="experience-item">
+        <div class="experience-header">
+          <div class="job-title">B.Sc. in Computer Science</div>
+          <div class="company-date">
+            <div class="company">University College London</div>
+            <div class="date">Graduated Jun 2025</div>
+          </div>
+        </div>
+      </div>
+    </section>
+  </div>
+</body>
+</html>
