@@ -46,7 +46,7 @@ export default function CourseDetail({ params }: PageProps) {
 
   useEffect(() => {
     fetchCourseDetails();
-  }, [id, user]);
+  }, [id, user?.id]);
 
   const handlePaymentSuccess = async (invoiceId: string) => {
     toast.success('Enrollment confirmed!');
