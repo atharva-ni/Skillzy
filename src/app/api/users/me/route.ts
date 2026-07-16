@@ -113,7 +113,10 @@ export async function GET() {
 
     // Fetch user enrollments and module progress to check module completion
     const userEnrollments = await prisma.enrollment.findMany({
-      where: { userId: dbUser.id, status: 'active' },
+      where: {
+        userId: dbUser.id,
+        status: { in: ['active', 'completed'] },
+      },
       include: {
         course: {
           include: {
@@ -168,12 +171,12 @@ export async function GET() {
     });
 
     // Generate daily contributions: Key is YYYY-MM-DD
-    const dailyContributions: Record<string, { problems: Set<string>, modulesCount: number }> = {};
+    const dailyContributions: Record<string, { problems: Set<string>, modulesCount: number, stepsCount: number }> = {};
 
     for (const sub of userSubmissions) {
       const dateStr = sub.createdAt.toISOString().slice(0, 10);
       if (!dailyContributions[dateStr]) {
-        dailyContributions[dateStr] = { problems: new Set(), modulesCount: 0 };
+        dailyContributions[dateStr] = { problems: new Set(), modulesCount: 0, stepsCount: 0 };
       }
       dailyContributions[dateStr].problems.add(sub.assignmentId);
     }
@@ -181,12 +184,22 @@ export async function GET() {
     for (const mc of moduleCompletionDates) {
       const dateStr = mc.completedAt.toISOString().slice(0, 10);
       if (!dailyContributions[dateStr]) {
-        dailyContributions[dateStr] = { problems: new Set(), modulesCount: 0 };
+        dailyContributions[dateStr] = { problems: new Set(), modulesCount: 0, stepsCount: 0 };
       }
       dailyContributions[dateStr].modulesCount++;
     }
 
-    // Calculate unique days with at least one contribution (completed module or solved problem)
+    // Count individual step completions per day for granular heatmap intensity
+    for (const p of allUserProgress) {
+      const completionDate = p.completedAt || p.updatedAt;
+      const dateStr = new Date(completionDate).toISOString().slice(0, 10);
+      if (!dailyContributions[dateStr]) {
+        dailyContributions[dateStr] = { problems: new Set(), modulesCount: 0, stepsCount: 0 };
+      }
+      dailyContributions[dateStr].stepsCount++;
+    }
+
+    // Calculate unique days with at least one contribution (completed step, module, or solved problem)
     const uniqueDates = Object.keys(dailyContributions).sort((a, b) => b.localeCompare(a));
 
     // Calculate consecutive days streak
@@ -225,13 +238,15 @@ export async function GET() {
       const dayData = dailyContributions[cellDateStr];
       const problemsCount = dayData ? dayData.problems.size : 0;
       const modulesCount = dayData ? dayData.modulesCount : 0;
-      const totalDayCount = problemsCount + modulesCount;
+      const stepsCount = dayData ? dayData.stepsCount : 0;
+      // Use steps + problems for shade intensity (more granular than modules alone)
+      const totalDayCount = stepsCount + problemsCount;
       
       let shade = 0;
-      if (totalDayCount === 1) shade = 1;
-      else if (totalDayCount === 2) shade = 2;
-      else if (totalDayCount === 3) shade = 3;
-      else if (totalDayCount >= 4) shade = 4;
+      if (totalDayCount >= 1 && totalDayCount <= 2) shade = 1;
+      else if (totalDayCount >= 3 && totalDayCount <= 5) shade = 2;
+      else if (totalDayCount >= 6 && totalDayCount <= 10) shade = 3;
+      else if (totalDayCount >= 11) shade = 4;
       
       heatmapCells.push({
         date: cellDateStr,

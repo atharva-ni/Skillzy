@@ -693,7 +693,8 @@
   display: flex;
   flex-direction: column;
   gap: 12px;
-  width: fit-content;
+  flex: 1 1 300px;
+  min-width: 300px;
   max-width: 100%;
 }
 
@@ -1133,9 +1134,9 @@
   display: flex;
   flex-direction: column;
   gap: 12px;
-  flex: 1;
+  flex: 1 1 240px;
   min-width: 240px;
-  max-width: 320px;
+  max-width: 100%;
 }
 
 .communityHubLink {
@@ -1214,4 +1215,38 @@
   text-align: center;
   padding: 12px 0;
   font-style: italic;
+}
+
+/* Responsive enhancements */
+@media (max-width: 768px) {
+  .heroMiddleGrid {
+    grid-template-columns: 1fr;
+    gap: 16px;
+  }
+  
+  .courseCardHorizontal {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 16px;
+  }
+  
+  .courseThumbnailWrapper {
+    align-self: flex-start;
+  }
+  
+  .courseProgressSection {
+    min-width: 0;
+  }
+  
+  .resumeBtn {
+    margin-left: 0;
+    text-align: center;
+    width: 100%;
+  }
+}
+
+@media (max-width: 480px) {
+  .statsGrid {
+    grid-template-columns: 1fr;
+  }
 }
