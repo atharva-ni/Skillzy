@@ -7,87 +7,121 @@ import DataTable from '@/components/ui/DataTable';
 import Button from '@/components/ui/Button';
 import { Link as LinkIcon, Edit } from 'lucide-react';
 
+function parseMarkdownLine(line: string, idx: number) {
+  const trimmed = line.trim();
+
+  // Helper to replace markdown bold **text** with JSX strong elements
+  const parseBoldText = (text: string): React.ReactNode[] => {
+    const parts = text.split(/\*\*([^*]+)\*\*/g);
+    return parts.map((part, index) => {
+      if (index % 2 === 1) {
+        return <strong key={index} style={{ fontWeight: 700 }}>{part}</strong>;
+      }
+      return part;
+    });
+  };
+
+  // 1. Blockquote starting with >
+  if (trimmed.startsWith('>')) {
+    let cleanText = trimmed.substring(1).trim();
+    if (cleanText.startsWith('[!NOTE]')) {
+      cleanText = cleanText.substring('[!NOTE]'.length).trim();
+    }
+    return (
+      <blockquote key={idx} style={{
+        borderLeft: '3px solid #6366f1',
+        background: 'rgba(99, 102, 241, 0.03)',
+        padding: '8px 12px',
+        margin: '6px 0',
+        borderRadius: '0 8px 8px 0',
+        fontSize: '11px',
+        color: 'var(--text-secondary)',
+        lineHeight: '1.5'
+      }}>
+        {parseBoldText(cleanText)}
+      </blockquote>
+    );
+  }
+
+  // 2. Headers starting with #
+  const headerMatch = trimmed.match(/^(#{1,6})\s+(.*)$/);
+  if (headerMatch) {
+    const level = headerMatch[1].length;
+    const text = headerMatch[2];
+    const fontSize = level === 1 ? '16px' : level === 2 ? '15px' : level === 3 ? '13.5px' : '12px';
+    const marginTop = level === 1 ? '16px' : level === 2 ? '14px' : level === 3 ? '12px' : '10px';
+    
+    return React.createElement(
+      `h${level}`,
+      {
+        key: idx,
+        style: {
+          fontSize,
+          fontWeight: 800,
+          marginTop,
+          marginBottom: '6px',
+          borderBottom: level <= 2 ? '1px solid #f1f5f9' : 'none',
+          paddingBottom: level <= 2 ? '4px' : '0',
+          color: 'var(--text-primary)'
+        }
+      },
+      parseBoldText(text)
+    );
+  }
+
+  // 3. Dialog starting with 💬 or 👤
+  if (trimmed.startsWith('💬') || trimmed.startsWith('👤')) {
+    const isAi = trimmed.startsWith('💬');
+    return (
+      <div key={idx} style={{
+        padding: '8px 12px', 
+        borderRadius: '8px', 
+        fontSize: '11px',
+        background: isAi ? 'rgba(99, 102, 241, 0.04)' : '#f8fafc',
+        border: isAi ? '1px solid rgba(99, 102, 241, 0.08)' : '1px solid #e2e8f0',
+        marginLeft: isAi ? '0' : '16px',
+        margin: '4px 0',
+        maxWidth: '95%',
+        lineHeight: '1.4'
+      }}>
+        {parseBoldText(trimmed)}
+      </div>
+    );
+  }
+
+  // 4. Bullet points/lists starting with * or -
+  if (trimmed.startsWith('*') || trimmed.startsWith('-')) {
+    const text = trimmed.substring(1).trim();
+    return (
+      <li key={idx} style={{ 
+        fontSize: '11px', 
+        color: 'var(--text-secondary)', 
+        marginLeft: '16px',
+        marginBottom: '3px',
+        listStyleType: 'disc'
+      }}>
+        {parseBoldText(text)}
+      </li>
+    );
+  }
+
+  // 5. Empty lines
+  if (!trimmed) return <div key={idx} style={{ height: '4px' }} />;
+
+  // 6. Regular paragraphs
+  return (
+    <p key={idx} style={{ fontSize: '11.5px', color: 'var(--text-secondary)', margin: 0, lineHeight: '1.5' }}>
+      {parseBoldText(trimmed)}
+    </p>
+  );
+}
+
 function renderMarkdownReport(report: string) {
   if (!report) return <p style={{ fontSize: '11px', color: 'var(--text-tertiary)', fontStyle: 'italic' }}>No report content available.</p>;
   const lines = report.split('\n');
   return (
-    <div style={{ display: 'flex', flexDirection: 'column', gap: '8px', textAlign: 'left', lineHeight: '1.6' }}>
-      {lines.map((line, idx) => {
-        const trimmed = line.trim();
-        if (trimmed.startsWith('###')) {
-          return (
-            <h3 key={idx} style={{ 
-              fontSize: '14px', 
-              fontWeight: 800, 
-              marginTop: '12px', 
-              borderBottom: '1px solid #f1f5f9', 
-              paddingBottom: '4px', 
-              color: 'var(--text-primary)' 
-            }}>
-              {trimmed.replace('###', '').trim()}
-            </h3>
-          );
-        }
-        if (trimmed.startsWith('####')) {
-          return (
-            <h4 key={idx} style={{ 
-              fontSize: '12px', 
-              fontWeight: 700, 
-              marginTop: '8px', 
-              color: '#4f46e5' 
-            }}>
-              {trimmed.replace('####', '').trim()}
-            </h4>
-          );
-        }
-        if (trimmed.startsWith('**Match Score**') || trimmed.startsWith('**Fit Recommendation**')) {
-          return (
-            <div key={idx} style={{ 
-              background: 'rgba(99, 102, 241, 0.04)', 
-              borderLeft: '3px solid #6366f1', 
-              padding: '6px 12px', 
-              borderRadius: '0 8px 8px 0', 
-              fontSize: '12px',
-              fontWeight: 600,
-              color: 'var(--text-primary)',
-              margin: '4px 0'
-            }}>
-              {trimmed.replace(/\*\*/g, '').trim()}
-            </div>
-          );
-        }
-        if (trimmed.startsWith('💬') || trimmed.startsWith('👤')) {
-          const isAi = trimmed.startsWith('💬');
-          return (
-            <div key={idx} style={{
-              padding: '8px 12px', 
-              borderRadius: '8px', 
-              fontSize: '11px',
-              background: isAi ? 'rgba(99, 102, 241, 0.04)' : '#f8fafc',
-              border: isAi ? '1px solid rgba(99, 102, 241, 0.08)' : '1px solid #e2e8f0',
-              marginLeft: isAi ? '0' : '16px',
-              maxWidth: '90%',
-              lineHeight: '1.4'
-            }}>
-              {trimmed}
-            </div>
-          );
-        }
-        if (trimmed.startsWith('*')) {
-          return (
-            <li key={idx} style={{ 
-              fontSize: '11px', 
-              color: 'var(--text-secondary)', 
-              marginLeft: '12px',
-              listStyleType: 'disc'
-            }}>
-              {trimmed.substring(1).trim()}
-            </li>
-          );
-        }
-        if (!trimmed) return <div key={idx} style={{ height: '4px' }} />;
-        return <p key={idx} style={{ fontSize: '11px', color: 'var(--text-secondary)', margin: 0 }}>{trimmed}</p>;
-      })}
+    <div style={{ display: 'flex', flexDirection: 'column', gap: '8px', textAlign: 'left' }}>
+      {lines.map((line, idx) => parseMarkdownLine(line, idx))}
     </div>
   );
 }
@@ -113,7 +147,17 @@ export default function RecruiterApplicants() {
       const res = await fetch('/api/jobs/applications');
       const data = await res.json();
       if (!res.ok) throw new Error(data.error || 'Failed to fetch applicants');
-      setApplicants(Array.isArray(data) ? data : []);
+      const apps = Array.isArray(data) ? data : [];
+      setApplicants(apps);
+      
+      // Auto-populate screened status from database on page load/refresh
+      const initialScreened: Record<string, boolean> = {};
+      apps.forEach((app: any) => {
+        if (app.matchScore !== null && app.matchScore !== undefined) {
+          initialScreened[app.id] = true;
+        }
+      });
+      setScreenedApps(initialScreened);
     } catch (err: any) {
       toast.error(err.message);
     } finally {
