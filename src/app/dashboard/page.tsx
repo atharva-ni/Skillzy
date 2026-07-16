@@ -413,7 +413,7 @@ export default function StudentDashboard() {
     }
 
     loadDashboardData();
-  }, [user]);
+  }, [user?.id]);
 
   // Loading spinner
   if (loading) {

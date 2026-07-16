@@ -31,7 +31,7 @@ export default function InstructorDashboard() {
       }
     }
     if (user) fetchCourses();
-  }, [user]);
+  }, [user?.id]);
 
   const stats = [
     { label: 'Total Courses', value: courses.length.toString(), icon: '📚', trend: 'Your courses' },

@@ -40,7 +40,7 @@ export default function InstructorCourses() {
       }
     }
     if (user) fetchCourses();
-  }, [user]);
+  }, [user?.id]);
 
   // Auto-focus title input when create form opens
   useEffect(() => {

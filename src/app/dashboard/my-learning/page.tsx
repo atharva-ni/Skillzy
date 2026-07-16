@@ -56,7 +56,7 @@ export default function MyLearning() {
     }
 
     loadMyLearningData();
-  }, [user]);
+  }, [user?.id]);
 
   const filteredCourses = enrolledCourses.filter((c) => {
     if (filter === 'in-progress') return c.progress > 0 && c.progress < 100;

@@ -75,12 +75,12 @@ export default function StepWiseLearningPage({ params }: PageProps) {
   // Flattened steps list for next/prev calculations
   const [flatSteps, setFlatSteps] = useState<any[]>([]);
 
-  const loadData = async () => {
+  const loadData = async (signal?: AbortSignal) => {
     try {
       setLoading(true);
       
       // 1. Fetch course details with modules, lessons, steps
-      const res = await fetch(`/api/courses/${courseId}`);
+      const res = await fetch(`/api/courses/${courseId}`, { signal });
       if (!res.ok) throw new Error('Course not found');
       const data = await res.json();
       
@@ -121,6 +121,7 @@ export default function StepWiseLearningPage({ params }: PageProps) {
         setExpandedLessons(new Set([activeStep.lessonId]));
       }
     } catch (err: any) {
+      if (err.name === 'AbortError') return;
       console.error(err);
       toast.error('Failed to load learning environment');
     } finally {
@@ -156,8 +157,10 @@ export default function StepWiseLearningPage({ params }: PageProps) {
   }, [currentTextPage]);
 
   useEffect(() => {
-    loadData();
-  }, [courseId, user]);
+    const controller = new AbortController();
+    loadData(controller.signal);
+    return () => controller.abort();
+  }, [courseId, user?.id]);
 
   const activeStepIndex = flatSteps.findIndex((s) => s.id === activeStepId);
   const activeStep = flatSteps[activeStepIndex];
