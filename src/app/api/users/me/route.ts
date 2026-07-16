@@ -112,6 +112,7 @@ export async function GET() {
     }
 
     // Fetch user enrollments and module progress to check module completion
+    // Only select step IDs to avoid loading full step content (text, lab code, etc.)
     const userEnrollments = await prisma.enrollment.findMany({
       where: {
         userId: dbUser.id,
@@ -124,7 +125,9 @@ export async function GET() {
               include: {
                 lessons: {
                   include: {
-                    steps: true
+                    steps: {
+                      select: { id: true }
+                    }
                   }
                 }
               }
@@ -138,7 +141,8 @@ export async function GET() {
       where: {
         userId: dbUser.id,
         isCompleted: true
-      }
+      },
+      select: { stepId: true, completedAt: true, updatedAt: true }
     });
 
     const moduleCompletionDates: { moduleId: string; completedAt: Date }[] = [];
