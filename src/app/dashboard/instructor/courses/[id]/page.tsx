@@ -732,8 +732,8 @@ export default function CourseEditor() {
               <BookOpen size={20} /> {course?.title}
             </h1>
             <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginTop: '2px' }}>
-              <Badge variant={course?.status === 'published' ? 'success' : course?.status === 'pending' ? 'info' : 'warning'}>
-                {course?.status}
+              <Badge variant={course?.status === 'published' ? 'success' : course?.status === 'pending' ? 'info' : course?.status === 'archived' ? 'error' : 'warning'}>
+                {course?.status === 'archived' ? 'inactive' : course?.status}
               </Badge>
               <span style={{ fontSize: '11px', color: 'var(--text-tertiary)' }}>
                 {course?.isFree ? 'Free Course' : `₹${(course?.price || 0).toLocaleString('en-IN')}`}
@@ -747,7 +747,7 @@ export default function CourseEditor() {
           <select 
             value={editCourse.status || course?.status || 'draft'}
             className="input select"
-            style={{ width: '140px', padding: '6px 12px', height: '36px', fontSize: 'var(--font-size-xs)' }}
+            style={{ width: '160px', padding: '6px 12px', height: '36px', fontSize: 'var(--font-size-xs)' }}
             onChange={async (e) => {
               const newStatus = e.target.value;
               try {
@@ -757,7 +757,7 @@ export default function CourseEditor() {
                   body: JSON.stringify({ status: newStatus })
                 });
                 if (res.ok) {
-                  toast.success(`Course status updated to ${newStatus}`);
+                  toast.success(`Course status updated to ${newStatus === 'archived' ? 'inactive' : newStatus}`);
                   fetchData();
                 } else {
                   toast.error('Failed to update status');
@@ -770,6 +770,7 @@ export default function CourseEditor() {
             <option value="draft">Draft Mode</option>
             <option value="pending">Submit Review</option>
             <option value="published">Publish Public</option>
+            <option value="archived">Inactive (Soft Delete)</option>
           </select>
 
           <Button 

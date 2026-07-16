@@ -78,20 +78,7 @@ async function main() {
     },
   });
 
-  const admin = await prisma.user.create({
-    data: {
-      clerkId: 'usr_admin_1',
-      email: 'sneha@skilotech.com',
-      firstName: 'Sneha',
-      lastName: 'Verma',
-      username: 'sneha_verma',
-      avatarUrl: '⚙️',
-      role: UserRole.admin,
-      bio: 'SkillBridge Platform Administrator. Managing courses, recruiters, and payments analytics.',
-      phone: '+919876543213',
-      isVerified: true,
-    },
-  });
+
 
   console.log('Seeding categories...');
   

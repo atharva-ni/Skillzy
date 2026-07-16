@@ -85,6 +85,35 @@ export default function InstructorCourses() {
     }
   };
 
+  const handleToggleActive = async (id: string, currentStatus: string) => {
+    const newStatus = currentStatus === 'archived' ? 'published' : 'archived';
+    const actionLabel = newStatus === 'archived' ? 'deactivate' : 'activate';
+    
+    if (!window.confirm(`Are you sure you want to ${actionLabel} this course?`)) {
+      return;
+    }
+    
+    try {
+      const res = await fetch(`/api/courses/${id}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ status: newStatus }),
+      });
+      const data = await res.json();
+      if (res.ok) {
+        setCourses(prev =>
+          prev.map((c) => (c.id === id ? { ...c, status: newStatus } : c))
+        );
+        toast.success(newStatus === 'archived' ? 'Course deactivated successfully.' : 'Course activated and published successfully.');
+      } else {
+        toast.error(data.error || 'Failed to update course status');
+      }
+    } catch (err) {
+      console.error(err);
+      toast.error('Connection error updating course status');
+    }
+  };
+
   const handleCancelCreate = () => {
     setShowCreateForm(false);
     setNewTitle('');
@@ -199,8 +228,12 @@ export default function InstructorCourses() {
                 <span style={{ fontSize: 'var(--font-size-xs)', fontWeight: 600, color: 'var(--accent-primary-hover)' }}>
                   {course.category?.name || 'Uncategorized'}
                 </span>
-                <Badge variant={course.status === 'published' ? 'success' : course.status === 'pending' ? 'info' : 'warning'}>
-                  {course.status}
+                <Badge variant={
+                  course.status === 'published' ? 'success' : 
+                  course.status === 'pending' ? 'info' : 
+                  course.status === 'archived' ? 'error' : 'warning'
+                }>
+                  {course.status === 'archived' ? 'inactive' : course.status}
                 </Badge>
               </div>
 
@@ -221,13 +254,29 @@ export default function InstructorCourses() {
                 <span style={{ fontWeight: 600, color: 'var(--text-primary)' }}>
                   {course.isFree ? 'Free' : `₹${(course.price || 0).toLocaleString('en-IN')}`}
                 </span>
-                <button
-                  onClick={() => router.push(`/dashboard/instructor/courses/${course.id}`)}
-                  className="btn btn-ghost btn-sm"
-                  style={{ color: 'var(--accent-primary-hover)', fontWeight: 600 }}
-                >
-                  Manage ➔
-                </button>
+                <div style={{ display: 'flex', gap: '4px', alignItems: 'center' }}>
+                  <button
+                    onClick={() => handleToggleActive(course.id, course.status)}
+                    style={{
+                      background: 'transparent',
+                      border: 'none',
+                      color: course.status === 'archived' ? '#10b981' : 'var(--text-secondary)',
+                      fontSize: '11px',
+                      fontWeight: 600,
+                      cursor: 'pointer',
+                      padding: '4px 8px',
+                    }}
+                  >
+                    {course.status === 'archived' ? 'Activate' : 'Deactivate'}
+                  </button>
+                  <button
+                    onClick={() => router.push(`/dashboard/instructor/courses/${course.id}`)}
+                    className="btn btn-ghost btn-sm"
+                    style={{ color: 'var(--accent-primary-hover)', fontWeight: 600 }}
+                  >
+                    Manage ➔
+                  </button>
+                </div>
               </div>
             </div>
           ))}

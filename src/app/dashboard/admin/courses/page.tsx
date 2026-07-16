@@ -96,6 +96,35 @@ export default function CourseApprovals() {
     }
   };
 
+  const handleToggleActive = async (id: string, currentStatus: string) => {
+    const newStatus = currentStatus === 'archived' ? 'published' : 'archived';
+    const actionLabel = newStatus === 'archived' ? 'deactivate' : 'activate';
+    
+    if (!window.confirm(`Are you sure you want to ${actionLabel} this course?`)) {
+      return;
+    }
+    
+    try {
+      const res = await fetch(`/api/courses/${id}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ status: newStatus }),
+      });
+      const data = await res.json();
+      if (res.ok) {
+        setCourses(
+          courses.map((c) => (c.id === id ? { ...c, status: newStatus as any } : c))
+        );
+        toast.success(newStatus === 'archived' ? 'Course deactivated successfully.' : 'Course activated and published successfully.');
+      } else {
+        toast.error(data.error || 'Failed to update course status');
+      }
+    } catch (err) {
+      console.error(err);
+      toast.error('Connection error updating course status');
+    }
+  };
+
   const getStatusBadge = (status: string) => {
     switch (status) {
       case 'published':
@@ -104,6 +133,8 @@ export default function CourseApprovals() {
         return <Badge variant="warning">Pending Review</Badge>;
       case 'draft':
         return <Badge variant="info">Draft</Badge>;
+      case 'archived':
+        return <Badge variant="error">Inactive</Badge>;
       default:
         return <Badge variant="error">{status}</Badge>;
     }
@@ -158,6 +189,24 @@ export default function CourseApprovals() {
               <CheckCircle2 size={12} /> Approve
             </button>
           )}
+
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() => handleToggleActive(item.id, item.status)}
+            style={{
+              padding: '4px 10px',
+              display: 'inline-flex',
+              alignItems: 'center',
+              fontSize: '11px',
+              height: '30px',
+              borderColor: item.status === 'archived' ? '#10b981' : '#e2e8f0',
+              color: item.status === 'archived' ? '#10b981' : 'var(--text-primary)',
+            }}
+          >
+            {item.status === 'archived' ? 'Activate' : 'Deactivate'}
+          </Button>
+
           <Link
             href={`/dashboard/instructor/courses/${item.id}`}
             style={{ textDecoration: 'none' }}
