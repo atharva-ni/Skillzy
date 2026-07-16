@@ -2,6 +2,8 @@ import { requireRole, apiError, apiSuccess } from '@/lib/auth';
 import prisma from '@/lib/prisma';
 import { screenCandidate } from '@/lib/aiScreeningAgent';
 import { NextRequest } from 'next/server';
+import fs from 'fs';
+import path from 'path';
 
 interface RouteParams {
   params: Promise<{ id: string }>;
@@ -85,6 +87,12 @@ export async function POST(req: NextRequest, { params }: RouteParams) {
     return apiSuccess({ success: true, application: updatedApplication });
   } catch (error: any) {
     console.error('Candidate AI screening failed:', error);
+    try {
+      const logDir = 'C:\\Users\\Adwait\\.gemini\\antigravity-ide\\brain\\97d00269-5bd0-4e4c-849b-384b3d7c7685\\scratch';
+      fs.writeFileSync(path.join(logDir, 'error-route.log'), `Error message: ${error?.message}\nStack: ${error?.stack}\n`);
+    } catch (e) {
+      console.error('Failed to write route error log:', e);
+    }
     return apiError(error?.message || 'AI Screening failed to process', 500);
   }
 }

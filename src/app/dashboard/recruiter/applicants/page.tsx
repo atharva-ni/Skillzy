@@ -177,7 +177,17 @@ export default function RecruiterApplicants() {
       const res = await fetch(`/api/jobs/applications/${appId}/ai-screen`, {
         method: 'POST'
       });
-      const data = await res.json();
+      
+      let data: any;
+      const contentType = res.headers.get('content-type');
+      if (contentType && contentType.includes('application/json')) {
+        data = await res.json();
+      } else {
+        const text = await res.text();
+        console.error('Non-JSON response from AI screen API:', text);
+        throw new Error(`Server returned HTML error: ${text.substring(0, 120)}...`);
+      }
+
       if (!res.ok) throw new Error(data.error || 'Failed to screen candidate');
       toast.success('AI Screening evaluation complete!');
       await fetchApplicants();
