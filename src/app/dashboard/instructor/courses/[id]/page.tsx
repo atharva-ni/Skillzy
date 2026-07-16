@@ -197,7 +197,6 @@ export default function CourseEditor() {
       setCourse(courseData);
       setModules(courseData.modules || []);
       
-      // Seed course editor form
       setEditCourse({
         title: courseData.title || '',
         description: courseData.description || '',
@@ -206,7 +205,8 @@ export default function CourseEditor() {
         level: courseData.level || 'beginner',
         categoryId: courseData.categoryId || '',
         status: courseData.status || 'draft',
-        isFree: courseData.isFree || false
+        isFree: courseData.isFree || false,
+        thumbnailUrl: courseData.thumbnailUrl || ''
       });
 
       if (catRes.ok) {
@@ -248,7 +248,8 @@ export default function CourseEditor() {
         level: course.level || 'beginner',
         categoryId: course.categoryId || '',
         status: course.status || 'draft',
-        isFree: course.isFree || false
+        isFree: course.isFree || false,
+        thumbnailUrl: course.thumbnailUrl || ''
       };
       setEditCourse(data);
       setSavedSnapshot(JSON.stringify(data));
@@ -1437,6 +1438,17 @@ export default function CourseEditor() {
                   style={{ height: 'auto', resize: 'vertical' }}
                   value={editCourse.description || ''} 
                   onChange={(e) => setEditCourse({ ...editCourse, description: e.target.value })}
+                />
+              </div>
+
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
+                <label className="label">Thumbnail URL</label>
+                <input 
+                  type="text" 
+                  className="input" 
+                  placeholder="https://example.com/thumbnail-image.jpg"
+                  value={editCourse.thumbnailUrl || ''} 
+                  onChange={(e) => setEditCourse({ ...editCourse, thumbnailUrl: e.target.value })}
                 />
               </div>
 

@@ -236,6 +236,7 @@ export default function CourseCatalog() {
               rating={Number(course.ratingAvg)}
               studentsEnrolled={course.studentsEnrolled}
               duration={`${Math.round(course.durationHours || 0)} hours`}
+              thumbnailUrl={course.thumbnailUrl}
             />
           ))}
 

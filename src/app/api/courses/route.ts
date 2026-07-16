@@ -83,25 +83,101 @@ export async function GET(req: NextRequest) {
       orderBy = { studentsEnrolled: 'desc' };
     }
 
-    // Fetch pagination details
-    const skip = (query.page - 1) * query.limit;
+    // Fetch database courses matching the query
+    const dbCoursesRaw = await prisma.course.findMany({
+      where,
+      include: {
+        category: { select: { name: true, slug: true, icon: true } },
+        instructor: { select: { firstName: true, lastName: true, avatarUrl: true } },
+        modules: {
+          select: {
+            lessons: {
+              select: {
+                id: true
+              }
+            }
+          }
+        }
+      },
+    });
 
-    const [courses, total] = await Promise.all([
-      prisma.course.findMany({
-        where,
-        orderBy,
-        skip,
-        take: query.limit,
-        include: {
-          category: { select: { name: true, slug: true, icon: true } },
-          instructor: { select: { firstName: true, lastName: true, avatarUrl: true } },
-        },
-      }),
-      prisma.course.count({ where }),
-    ]);
+    const dbCourses = dbCoursesRaw.map((course: any) => {
+      const lessonsCount = course.modules?.reduce((acc: number, mod: any) => acc + (mod.lessons?.length || 0), 0) || 0;
+      const { modules, ...rest } = course;
+      return {
+        ...rest,
+        _count: {
+          lessons: lessonsCount
+        }
+      };
+    });
+
+    // Check if the current user is a student (or guest student)
+    const { getCurrentUser } = await import('@/lib/auth');
+    const dbUser = await getCurrentUser().catch(() => null);
+    const isStudent = !dbUser || dbUser.role === 'student';
+
+    // Retrieve and filter mock courses if student
+    let filteredMock: any[] = [];
+    if (isStudent) {
+      const { MOCK_COURSES } = await import('@/data/mockCourses');
+      filteredMock = MOCK_COURSES.filter((course) => {
+        // Search filter
+        if (query.search) {
+          const searchLower = query.search.toLowerCase();
+          const matchesSearch =
+            course.title.toLowerCase().includes(searchLower) ||
+            course.description.toLowerCase().includes(searchLower);
+          if (!matchesSearch) return false;
+        }
+
+        // Category filter
+        if (query.category && query.category !== 'All') {
+          const catLower = query.category.toLowerCase();
+          const matchesCategory =
+            course.category.name.toLowerCase() === catLower ||
+            course.category.slug.toLowerCase() === catLower ||
+            course.categoryId.toLowerCase() === catLower;
+          if (!matchesCategory) return false;
+        }
+
+        // Level filter
+        if (query.level) {
+          if (course.level !== query.level) return false;
+        }
+
+        return true;
+      });
+    }
+
+    // Combine courses
+    const combined = [...dbCourses, ...filteredMock];
+
+    // Sort the combined list
+    if (query.sort === 'rating') {
+      combined.sort((a, b) => (b.ratingAvg || 0) - (a.ratingAvg || 0));
+    } else if (query.sort === 'price_asc') {
+      combined.sort((a, b) => (a.price || 0) - (b.price || 0));
+    } else if (query.sort === 'price_desc') {
+      combined.sort((a, b) => (b.price || 0) - (a.price || 0));
+    } else if (query.sort === 'newest') {
+      // For mock courses, we just sort them below or assume they are newer
+      combined.sort((a, b) => {
+        const dateA = a.createdAt ? new Date(a.createdAt).getTime() : 0;
+        const dateB = b.createdAt ? new Date(b.createdAt).getTime() : 0;
+        return dateB - dateA;
+      });
+    } else {
+      // Default: popular (by students enrolled)
+      combined.sort((a, b) => (b.studentsEnrolled || 0) - (a.studentsEnrolled || 0));
+    }
+
+    const total = combined.length;
+    const skip = (query.page - 1) * query.limit;
+    const paginatedCourses = combined.slice(skip, skip + query.limit);
 
     const result = {
-      courses,
+      courses: paginatedCourses,
       pagination: {
         total,
         page: query.page,

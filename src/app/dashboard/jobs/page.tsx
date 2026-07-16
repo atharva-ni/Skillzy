@@ -22,6 +22,51 @@ const jobTypeToEnum: Record<string, string> = {
   'Contract': 'contract'
 };
 
+const fallbackJobs = [
+  {
+    id: 'mock-job-1',
+    title: 'Junior Python Developer',
+    company: 'Stripe',
+    location: 'Remote',
+    jobType: 'full_time',
+    salaryDisplay: '$95,000 - $115,000',
+    description: 'We are looking for a Junior Python Developer to join our backend integration team. You will write clean, testable Python code and build scalable APIs.',
+    requirements: '• Solid understanding of Python 3\n• Experience with Flask, Django or FastAPI\n• Familiarity with relational databases (PostgreSQL/MySQL)\n• Basic git workflow knowledge',
+    skills: ['Python', 'FastAPI', 'PostgreSQL', 'Git'],
+    applicantCount: 14,
+    status: 'active',
+    createdAt: new Date(Date.now() - 2 * 24 * 60 * 60 * 1000).toISOString() // 2 days ago
+  },
+  {
+    id: 'mock-job-2',
+    title: 'Frontend Engineer Intern',
+    company: 'Vercel',
+    location: 'San Francisco, CA',
+    jobType: 'internship',
+    salaryDisplay: '$40 - $55 / hr',
+    description: 'Join the Vercel design system team to craft premium web interfaces using React, Next.js, and CSS modules. Help build the future of the web platform.',
+    requirements: '• Strong knowledge of HTML, CSS, and modern JavaScript\n• Hands-on projects built with React/Next.js\n• Attention to detail, layouts, and web animations\n• Good team communication skills',
+    skills: ['React', 'Next.js', 'CSS Modules', 'TypeScript'],
+    applicantCount: 28,
+    status: 'active',
+    createdAt: new Date(Date.now() - 1 * 24 * 60 * 60 * 1000).toISOString() // 1 day ago
+  },
+  {
+    id: 'mock-job-3',
+    title: 'Software Engineer',
+    company: 'GitHub',
+    location: 'Remote, US',
+    jobType: 'full_time',
+    salaryDisplay: '$110,000 - $140,000',
+    description: 'Help build and maintain the developer platforms at GitHub. You will design web-scale APIs, work with highly distributed service grids, and improve the daily flow of millions of developers.',
+    requirements: '• 2+ years of software development experience\n• Proficiency in Go, Ruby, or Node.js\n• Experience building high-throughput distributed systems\n• Solid understanding of API security protocols',
+    skills: ['Go', 'Ruby on Rails', 'Docker', 'REST APIs'],
+    applicantCount: 42,
+    status: 'active',
+    createdAt: new Date().toISOString() // today
+  }
+];
+
 export default function StudentJobBoard() {
   // Tabs
   const [activeTab, setActiveTab] = useState<'explore' | 'applications'>('explore');
@@ -55,7 +100,12 @@ export default function StudentJobBoard() {
       const jobsData = await jobsRes.json();
       const appsData = await appsRes.json();
 
-      setJobs(Array.isArray(jobsData) ? jobsData : []);
+      let activeJobsList = Array.isArray(jobsData) ? jobsData : [];
+      if (activeJobsList.filter((j: any) => j.status === 'active').length === 0) {
+        activeJobsList = fallbackJobs;
+      }
+
+      setJobs(activeJobsList);
       setApplications(Array.isArray(appsData) ? appsData : []);
     } catch {
       toast.error('Failed to load job listings');

@@ -34,13 +34,20 @@ export interface BuggyCodeAnalysis {
  * Helper to query the Groq API using standard fetch (no external openai package required).
  */
 async function queryGroq(messages: { role: string; content: string }[], responseFormat?: { type: string }, temperature = 0.2): Promise<string> {
-  const apiKey = process.env.GROQ_API_KEY;
-  if (!apiKey) {
-    throw new Error("GROQ_API_KEY is not defined. Please configure it in your env.");
-  }
-  const model = process.env.GROQ_MODEL || "llama-3.3-70b-versatile";
+  const groqKey = process.env.GROQ_API_KEY;
+  const grokKey = process.env.GROK_API_KEY;
 
-  const response = await fetch("https://api.groq.com/openai/v1/chat/completions", {
+  const apiKey = groqKey || grokKey;
+  if (!apiKey) {
+    throw new Error("Neither GROQ_API_KEY nor GROK_API_KEY is defined. Please configure one of them in your env.");
+  }
+
+  const isGrok = apiKey.startsWith("xai-") || (!groqKey && !!grokKey);
+  const endpoint = isGrok ? "https://api.x.ai/v1/chat/completions" : "https://api.groq.com/openai/v1/chat/completions";
+  const defaultModel = isGrok ? "grok-beta" : "llama-3.3-70b-versatile";
+  const model = (isGrok ? process.env.GROK_MODEL : process.env.GROQ_MODEL) || defaultModel;
+
+  const response = await fetch(endpoint, {
     method: "POST",
     headers: {
       "Content-Type": "application/json",
@@ -57,7 +64,7 @@ async function queryGroq(messages: { role: string; content: string }[], response
 
   if (!response.ok) {
     const errorText = await response.text();
-    throw new Error(`Groq API returned status ${response.status}: ${errorText}`);
+    throw new Error(`AI API returned status ${response.status}: ${errorText}`);
   }
 
   const data = await response.json();

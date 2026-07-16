@@ -10,6 +10,13 @@ interface RouteParams {
 export async function GET(req: NextRequest, { params }: RouteParams) {
   try {
     const { id: courseId } = await params;
+    if (courseId.startsWith('mock-')) {
+      return apiSuccess({
+        progressPct: 0,
+        completedSteps: [],
+        detailedProgress: [],
+      });
+    }
     const dbUser = await requireAuth();
 
     // Verify enrollment
@@ -60,6 +67,13 @@ export async function GET(req: NextRequest, { params }: RouteParams) {
 export async function POST(req: Request, { params }: RouteParams) {
   try {
     const { id: courseId } = await params;
+    if (courseId.startsWith('mock-')) {
+      return apiSuccess({
+        success: true,
+        progressPct: 0,
+        completedSteps: [],
+      });
+    }
     const dbUser = await requireAuth();
 
     const body = await req.json();

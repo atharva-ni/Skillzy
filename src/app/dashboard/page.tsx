@@ -526,7 +526,7 @@ export default function StudentDashboard() {
           {/* Stats KPI Grid */}
           <div className={styles.statsGrid}>
             {/* Problems Solved */}
-            <div className={styles.statCard}>
+            <Link href="/dashboard/coding-lab" className={styles.statCard}>
               <div className={styles.statIconContainerBlack}>
                 <Code size={16} />
               </div>
@@ -540,7 +540,7 @@ export default function StudentDashboard() {
                 <span className={styles.statTitle}>Problems Solved</span>
                 <span className={styles.statSubtext}>+{stats.submissionsTodayCount} solved today</span>
               </div>
-            </div>
+            </Link>
 
             {/* Coding XP */}
             <div className={styles.statCard}>
@@ -558,7 +558,7 @@ export default function StudentDashboard() {
             </div>
 
             {/* Active Course */}
-            <div className={styles.statCard}>
+            <Link href="/dashboard/courses" className={styles.statCard}>
               <div className={styles.statIconContainer}>
                 <BookOpen size={16} />
               </div>
@@ -567,7 +567,7 @@ export default function StudentDashboard() {
                 <span className={styles.statTitle}>Active Course</span>
                 <span className={styles.statSubtext}>Keep it up!</span>
               </div>
-            </div>
+            </Link>
 
             {/* Learning Streak */}
             <div className={styles.statCard}>

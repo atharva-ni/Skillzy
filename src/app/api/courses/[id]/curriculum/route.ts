@@ -13,6 +13,12 @@ export async function GET(req: NextRequest, { params }: RouteParams) {
   try {
     const { id: courseId } = await params;
 
+    if (courseId.startsWith('mock-')) {
+      const { MOCK_COURSES } = await import('@/data/mockCourses');
+      const mockCourse = MOCK_COURSES.find((c) => c.id === courseId);
+      return apiSuccess({ curriculum: mockCourse?.modules || [] });
+    }
+
     // Fetch the modules and lessons
     const curriculum = await prisma.module.findMany({
       where: { courseId },
@@ -61,6 +67,9 @@ export async function GET(req: NextRequest, { params }: RouteParams) {
 export async function POST(req: Request, { params }: RouteParams) {
   try {
     const { id: courseId } = await params;
+    if (courseId.startsWith('mock-')) {
+      return apiError('Cannot add curriculum items to virtual courses', 400);
+    }
     const dbUser = await requireRole(UserRole.instructor, UserRole.admin, UserRole.super_admin);
 
     const body = await req.json();

@@ -35,7 +35,7 @@ export default function InstructorDashboard() {
 
   const stats = [
     { label: 'Total Courses', value: courses.length.toString(), icon: '📚', trend: 'Your courses' },
-    { label: 'Active Students', value: '0', icon: '👥', trend: 'Enrolled learners' },
+    { label: 'Active Students', value: courses.reduce((acc, c) => acc + (c.studentsEnrolled || 0), 0).toString(), icon: '👥', trend: 'Enrolled learners' },
     { label: 'Pending Reviews', value: '0', icon: '📝', trend: 'No submissions yet' },
   ];
 

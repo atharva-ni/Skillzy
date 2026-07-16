@@ -128,6 +128,7 @@ export default function MyLearning() {
               studentsEnrolled={course.studentsEnrolled || 0}
               duration={`${Math.round(course.durationHours || 0)} hours`}
               progress={course.progress}
+              thumbnailUrl={course.thumbnailUrl}
             />
           ))}
         </div>

@@ -12,6 +12,22 @@ interface RouteParams {
 export async function GET(req: NextRequest, { params }: RouteParams) {
   try {
     const { id } = await params;
+    
+    // Intercept mock course details
+    if (id.startsWith('mock-')) {
+      const { MOCK_COURSES } = await import('@/data/mockCourses');
+      const mockCourse = MOCK_COURSES.find((c) => c.id === id);
+      if (!mockCourse) {
+        return apiError('Course not found', 404);
+      }
+      return apiSuccess({
+        ...mockCourse,
+        isEnrolled: true,
+        progressPct: 0,
+        completedSteps: [],
+      });
+    }
+
     const dbUser = await getCurrentUser();
 
     // Cache static course details (avoiding heavy DB joins on modules/lessons/steps)
@@ -189,6 +205,9 @@ export async function GET(req: NextRequest, { params }: RouteParams) {
 export async function PUT(req: Request, { params }: RouteParams) {
   try {
     const { id } = await params;
+    if (id.startsWith('mock-')) {
+      return apiError('Cannot modify virtual courses', 400);
+    }
     const dbUser = await requireRole(UserRole.instructor, UserRole.admin, UserRole.super_admin);
 
     // Find course first to verify ownership
@@ -232,6 +251,9 @@ export async function PUT(req: Request, { params }: RouteParams) {
 export async function DELETE(req: Request, { params }: RouteParams) {
   try {
     const { id } = await params;
+    if (id.startsWith('mock-')) {
+      return apiError('Cannot delete virtual courses', 400);
+    }
     const dbUser = await requireRole(UserRole.instructor, UserRole.admin, UserRole.super_admin);
 
     const course = await prisma.course.findUnique({ where: { id } });

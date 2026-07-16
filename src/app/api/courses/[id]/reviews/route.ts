@@ -16,6 +16,9 @@ const reviewSchema = z.object({
 export async function POST(req: NextRequest, { params }: RouteParams) {
   try {
     const { id: courseId } = await params;
+    if (courseId.startsWith('mock-')) {
+      return apiSuccess({ success: true, ratingAvg: 4.8, ratingCount: 50 });
+    }
     const dbUser = await requireAuth();
 
     // 1. Parse and validate review request body

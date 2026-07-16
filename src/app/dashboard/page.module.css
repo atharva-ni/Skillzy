@@ -213,6 +213,8 @@
   gap: 14px;
   box-shadow: var(--shadow-sm);
   transition: transform 0.2s ease, box-shadow 0.2s ease;
+  text-decoration: none;
+  cursor: pointer;
 }
 
 .statCard:hover {

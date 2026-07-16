@@ -14,6 +14,7 @@ interface CourseCardProps {
   studentsEnrolled: number;
   duration: string;
   progress?: number;
+  thumbnailUrl?: string;
 }
 
 export default function CourseCard({
@@ -25,14 +26,136 @@ export default function CourseCard({
   rating,
   studentsEnrolled,
   duration,
-  progress
+  progress,
+  thumbnailUrl
 }: CourseCardProps) {
   const [isHovered, setIsHovered] = useState(false);
 
-  const getCategoryStyles = (cat: string) => {
+  const getCategoryStyles = (cat: string, courseTitle: string) => {
     const monochromeBg = '#f9fafb';
     const monochromeText = 'var(--text-secondary, #6b7280)';
     const monochromeIconBg = 'var(--accent-primary, #000000)';
+
+    const titleLower = courseTitle.toLowerCase();
+    
+    if (titleLower === 'python programming course') {
+      return {
+        bg: 'linear-gradient(135deg, #e2f1e8 0%, #fef08a 100%)',
+        iconBg: '#306998',
+        textColor: '#0369a1',
+        iconType: 'custom',
+        customIcon: <span style={{ fontSize: '1.45rem', lineHeight: 1 }}>🐍</span>
+      };
+    }
+    if (titleLower === 'introduction to ai for beginners') {
+      return {
+        bg: 'linear-gradient(135deg, #f5f3ff 0%, #e0e7ff 100%)',
+        iconBg: '#8b5cf6',
+        textColor: '#6d28d9',
+        iconType: 'custom',
+        customIcon: <span style={{ fontSize: '1.45rem', lineHeight: 1 }}>🤖</span>
+      };
+    }
+    if (titleLower === 'python basic') {
+      return {
+        bg: 'linear-gradient(135deg, #ecfdf5 0%, #fef08a 100%)',
+        iconBg: '#4584b6',
+        textColor: '#047857',
+        iconType: 'custom',
+        customIcon: <span style={{ fontSize: '1.45rem', lineHeight: 1 }}>🐍</span>
+      };
+    }
+
+    if (titleLower.includes('python') && titleLower.includes('euroschool')) {
+      return {
+        bg: 'linear-gradient(135deg, #e0f2fe 0%, #fef08a 100%)',
+        iconBg: '#306998',
+        textColor: '#0369a1',
+        iconType: 'custom',
+        customIcon: <span style={{ fontSize: '1.45rem', lineHeight: 1 }}>🐍</span>
+      };
+    }
+    if (titleLower.includes('java') && titleLower.includes('delhi')) {
+      return {
+        bg: 'linear-gradient(135deg, #ffedd5 0%, #fee2e2 100%)',
+        iconBg: '#f89820',
+        textColor: '#c2410c',
+        iconType: 'custom',
+        customIcon: <span style={{ fontSize: '1.45rem', lineHeight: 1 }}>☕</span>
+      };
+    }
+    if (titleLower.includes('scratch') && titleLower.includes('orchids')) {
+      return {
+        bg: 'linear-gradient(135deg, #ffedd5 0%, #fef3c7 100%)',
+        iconBg: '#f59e0b',
+        textColor: '#b45309',
+        iconType: 'custom',
+        customIcon: <span style={{ fontSize: '1.45rem', lineHeight: 1 }}>🐱</span>
+      };
+    }
+    if (titleLower.includes('html') && titleLower.includes('vibgyor')) {
+      return {
+        bg: 'linear-gradient(135deg, #e0f2fe 0%, #ffedd5 100%)',
+        iconBg: '#e34f26',
+        textColor: '#0369a1',
+        iconType: 'custom',
+        customIcon: <span style={{ fontSize: '1.45rem', lineHeight: 1 }}>🌐</span>
+      };
+    }
+    if (titleLower.includes('c programming') && titleLower.includes('ryan')) {
+      return {
+        bg: 'linear-gradient(135deg, #f1f5f9 0%, #e2e8f0 100%)',
+        iconBg: '#00599c',
+        textColor: '#475569',
+        iconType: 'custom',
+        customIcon: <span style={{ fontSize: '1.25rem', fontWeight: 'bold', color: '#ffffff' }}>C</span>
+      };
+    }
+    if (titleLower.includes('react') && titleLower.includes('next.js')) {
+      return {
+        bg: 'linear-gradient(135deg, #ecfeff 0%, #e0f2fe 100%)',
+        iconBg: '#00bcd4',
+        textColor: '#0891b2',
+        iconType: 'custom',
+        customIcon: <span style={{ fontSize: '1.45rem', lineHeight: 1 }}>⚛️</span>
+      };
+    }
+    if (titleLower.includes('machine learning')) {
+      return {
+        bg: 'linear-gradient(135deg, #f5f3ff 0%, #e0e7ff 100%)',
+        iconBg: '#8b5cf6',
+        textColor: '#6d28d9',
+        iconType: 'custom',
+        customIcon: <span style={{ fontSize: '1.45rem', lineHeight: 1 }}>🧠</span>
+      };
+    }
+    if (titleLower.includes('data structures')) {
+      return {
+        bg: 'linear-gradient(135deg, #f0fdf4 0%, #dcfce7 100%)',
+        iconBg: '#10b981',
+        textColor: '#047857',
+        iconType: 'custom',
+        customIcon: <span style={{ fontSize: '1.45rem', lineHeight: 1 }}>🌳</span>
+      };
+    }
+    if (titleLower.includes('cybersecurity')) {
+      return {
+        bg: 'linear-gradient(135deg, #fee2e2 0%, #ffedd5 100%)',
+        iconBg: '#ef4444',
+        textColor: '#b91c1c',
+        iconType: 'custom',
+        customIcon: <span style={{ fontSize: '1.45rem', lineHeight: 1 }}>🛡️</span>
+      };
+    }
+    if (titleLower.includes('aws') || titleLower.includes('cloud computing')) {
+      return {
+        bg: 'linear-gradient(135deg, #ffedd5 0%, #e0f2fe 100%)',
+        iconBg: '#ff9900',
+        textColor: '#d97706',
+        iconType: 'custom',
+        customIcon: <span style={{ fontSize: '1.45rem', lineHeight: 1 }}>☁️</span>
+      };
+    }
 
     switch (cat) {
       case 'Web Development':
@@ -45,7 +168,7 @@ export default function CourseCard({
       case 'Computer Science':
         return {
           bg: monochromeBg,
-          iconBg: '#ffffff', // white bg for abacus logo container
+          iconBg: '#ffffff',
           textColor: monochromeText,
           iconType: 'abacus'
         };
@@ -108,7 +231,7 @@ export default function CourseCard({
     }
   };
 
-  const styles = getCategoryStyles(category);
+  const styles = getCategoryStyles(category, title);
 
   return (
     <Link href={`/dashboard/courses/${id}`} style={{ textDecoration: 'none', color: 'inherit', display: 'block', height: '100%' }}>
@@ -131,10 +254,12 @@ export default function CourseCard({
           boxShadow: isHovered ? '0 10px 25px -5px rgba(0, 0, 0, 0.05), 0 8px 10px -6px rgba(0, 0, 0, 0.03)' : 'none'
         }}
       >
-        {/* Course Card Header */}
         <div style={{
           height: '140px',
           background: styles.bg,
+          backgroundImage: thumbnailUrl ? `url(${thumbnailUrl})` : undefined,
+          backgroundSize: 'cover',
+          backgroundPosition: 'center',
           display: 'flex',
           alignItems: 'center',
           justifyContent: 'center',
@@ -142,22 +267,22 @@ export default function CourseCard({
           borderBottom: '1px solid #f1f5f9',
           zIndex: 1
         }}>
-          {/* Central category icon container */}
-          <div style={{
-            width: '42px',
-            height: '42px',
-            backgroundColor: styles.iconBg,
-            borderRadius: styles.iconType === 'abacus' || styles.iconType === 'bot' ? '10px' : '50%',
-            border: styles.iconType === 'abacus' ? '2.5px solid #ff5e3a' : 'none', // orange-red border for abacus
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            boxShadow: '0 2px 8px rgba(0,0,0,0.06)'
-          }}>
-            {renderIcon(styles.iconType)}
-          </div>
+          {!thumbnailUrl && (
+            <div style={{
+              width: '42px',
+              height: '42px',
+              backgroundColor: styles.iconBg,
+              borderRadius: styles.iconType === 'abacus' || styles.iconType === 'bot' ? '10px' : '50%',
+              border: styles.iconType === 'abacus' ? '2.5px solid #ff5e3a' : 'none',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              boxShadow: '0 2px 8px rgba(0,0,0,0.06)'
+            }}>
+              {styles.customIcon ? styles.customIcon : renderIcon(styles.iconType)}
+            </div>
+          )}
 
-          {/* Duration Badge at top right */}
           <span style={{
             position: 'absolute',
             top: '12px',
