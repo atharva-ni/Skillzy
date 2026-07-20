@@ -17,6 +17,62 @@ interface CourseCardProps {
   thumbnailUrl?: string;
 }
 
+const getThumbnailUrl = (courseTitle: string, providedUrl?: string) => {
+  const titleLower = courseTitle.toLowerCase();
+  
+  if (titleLower.includes('python')) {
+    return '/python_course_thumbnail.png';
+  }
+  if (
+    titleLower.includes('react') ||
+    titleLower.includes('next.js') ||
+    titleLower.includes('web development') ||
+    titleLower.includes('node.js') ||
+    titleLower.includes('html') ||
+    titleLower.includes('css') ||
+    titleLower.includes('javascript') ||
+    titleLower.includes('js')
+  ) {
+    return '/web_dev_course_thumbnail.png';
+  }
+  if (
+    titleLower.includes('machine learning') ||
+    titleLower.includes('ai') ||
+    titleLower.includes('artificial intelligence') ||
+    titleLower.includes('deep learning')
+  ) {
+    return '/ai_ml_course_thumbnail.png';
+  }
+  if (
+    titleLower.includes('data structures') ||
+    titleLower.includes('algorithms') ||
+    titleLower.includes('dsa') ||
+    titleLower.includes('c++')
+  ) {
+    return '/dsa_course_thumbnail.png';
+  }
+  if (
+    titleLower.includes('cybersecurity') ||
+    titleLower.includes('security') ||
+    titleLower.includes('cryptography')
+  ) {
+    return '/cybersecurity_course_thumbnail.png';
+  }
+  if (
+    titleLower.includes('aws') ||
+    titleLower.includes('cloud') ||
+    titleLower.includes('devops')
+  ) {
+    return '/cloud_computing_course_thumbnail.png';
+  }
+  
+  if (providedUrl && !providedUrl.startsWith('/course-')) {
+    return providedUrl;
+  }
+  
+  return '/web_dev_course_thumbnail.png';
+};
+
 export default function CourseCard({
   id,
   title,
@@ -63,52 +119,6 @@ export default function CourseCard({
         textColor: '#047857',
         iconType: 'custom',
         customIcon: <span style={{ fontSize: '1.45rem', lineHeight: 1 }}>🐍</span>
-      };
-    }
-
-    if (titleLower.includes('python') && titleLower.includes('euroschool')) {
-      return {
-        bg: 'linear-gradient(135deg, #e0f2fe 0%, #fef08a 100%)',
-        iconBg: '#306998',
-        textColor: '#0369a1',
-        iconType: 'custom',
-        customIcon: <span style={{ fontSize: '1.45rem', lineHeight: 1 }}>🐍</span>
-      };
-    }
-    if (titleLower.includes('java') && titleLower.includes('delhi')) {
-      return {
-        bg: 'linear-gradient(135deg, #ffedd5 0%, #fee2e2 100%)',
-        iconBg: '#f89820',
-        textColor: '#c2410c',
-        iconType: 'custom',
-        customIcon: <span style={{ fontSize: '1.45rem', lineHeight: 1 }}>☕</span>
-      };
-    }
-    if (titleLower.includes('scratch') && titleLower.includes('orchids')) {
-      return {
-        bg: 'linear-gradient(135deg, #ffedd5 0%, #fef3c7 100%)',
-        iconBg: '#f59e0b',
-        textColor: '#b45309',
-        iconType: 'custom',
-        customIcon: <span style={{ fontSize: '1.45rem', lineHeight: 1 }}>🐱</span>
-      };
-    }
-    if (titleLower.includes('html') && titleLower.includes('vibgyor')) {
-      return {
-        bg: 'linear-gradient(135deg, #e0f2fe 0%, #ffedd5 100%)',
-        iconBg: '#e34f26',
-        textColor: '#0369a1',
-        iconType: 'custom',
-        customIcon: <span style={{ fontSize: '1.45rem', lineHeight: 1 }}>🌐</span>
-      };
-    }
-    if (titleLower.includes('c programming') && titleLower.includes('ryan')) {
-      return {
-        bg: 'linear-gradient(135deg, #f1f5f9 0%, #e2e8f0 100%)',
-        iconBg: '#00599c',
-        textColor: '#475569',
-        iconType: 'custom',
-        customIcon: <span style={{ fontSize: '1.25rem', fontWeight: 'bold', color: '#ffffff' }}>C</span>
       };
     }
     if (titleLower.includes('react') && titleLower.includes('next.js')) {
@@ -232,6 +242,7 @@ export default function CourseCard({
   };
 
   const styles = getCategoryStyles(category, title);
+  const resolvedThumbnailUrl = getThumbnailUrl(title, thumbnailUrl);
 
   return (
     <Link href={`/dashboard/courses/${id}`} style={{ textDecoration: 'none', color: 'inherit', display: 'block', height: '100%' }}>
@@ -257,7 +268,7 @@ export default function CourseCard({
         <div style={{
           height: '140px',
           background: styles.bg,
-          backgroundImage: thumbnailUrl ? `url(${thumbnailUrl})` : undefined,
+          backgroundImage: `url(${resolvedThumbnailUrl})`,
           backgroundSize: 'cover',
           backgroundPosition: 'center',
           display: 'flex',
@@ -267,21 +278,6 @@ export default function CourseCard({
           borderBottom: '1px solid #f1f5f9',
           zIndex: 1
         }}>
-          {!thumbnailUrl && (
-            <div style={{
-              width: '42px',
-              height: '42px',
-              backgroundColor: styles.iconBg,
-              borderRadius: styles.iconType === 'abacus' || styles.iconType === 'bot' ? '10px' : '50%',
-              border: styles.iconType === 'abacus' ? '2.5px solid #ff5e3a' : 'none',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              boxShadow: '0 2px 8px rgba(0,0,0,0.06)'
-            }}>
-              {styles.customIcon ? styles.customIcon : renderIcon(styles.iconType)}
-            </div>
-          )}
 
           <span style={{
             position: 'absolute',

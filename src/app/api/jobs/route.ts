@@ -12,9 +12,9 @@ export async function GET(req: NextRequest) {
       if (!user || (user.role !== 'recruiter' && user.role !== 'admin' && user.role !== 'super_admin')) {
         return apiError('Forbidden', 403);
       }
-      // If recruiter, return their own jobs. If admin/super_admin, return all jobs.
+      // Return all jobs in the system for recruiter and admin management
       const jobs = await prisma.job.findMany({
-        where: user.role === 'recruiter' ? { recruiterId: user.id } : {},
+        where: {},
         orderBy: { createdAt: 'desc' }
       });
       return apiSuccess(jobs);

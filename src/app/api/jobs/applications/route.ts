@@ -9,11 +9,7 @@ export async function GET(req: NextRequest) {
     if (user.role === 'recruiter' || user.role === 'admin' || user.role === 'super_admin') {
       // Recruiter/Admin view: Return applications received for jobs they posted (or all jobs for admin)
       const applications = await prisma.application.findMany({
-        where: user.role === 'recruiter' ? {
-          job: {
-            recruiterId: user.id
-          }
-        } : {},
+        where: {},
         include: {
           job: {
             select: {

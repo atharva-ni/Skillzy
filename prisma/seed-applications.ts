@@ -36,7 +36,8 @@ async function main() {
       avatarUrl: '👨‍💻',
       bio: 'Self-taught Python enthusiast who loves building API backends with FastAPI and Flask. Familiar with relational databases.',
       coverLetter: 'I am extremely excited about the Junior Python Developer role at Stripe. I have been building Flask and FastAPI projects for over a year and have a solid foundation in SQL database querying, Git version control, and writing clear, testable code.',
-      targetJobTitle: 'Junior Python Developer'
+      targetJobTitle: 'Junior Python Developer',
+      resumeUrl: '/resumes/john_doe.html'
     },
     {
       email: 'jane.smith@example.com',
@@ -47,7 +48,8 @@ async function main() {
       avatarUrl: '👩‍💻',
       bio: 'Frontend developer focused on building interactive, premium interfaces with React and modern CSS frameworks.',
       coverLetter: 'I love crafting polished user interfaces with Next.js and Vercel. I have built several interactive responsive projects and have solid skills in TypeScript, CSS modules, and custom micro-animations.',
-      targetJobTitle: 'Frontend Engineer Intern'
+      targetJobTitle: 'Frontend Engineer Intern',
+      resumeUrl: '/resumes/jane_smith.html'
     },
     {
       email: 'alice.jones@example.com',
@@ -58,7 +60,8 @@ async function main() {
       avatarUrl: '🕵️‍♀️',
       bio: 'Junior systems developer focusing on Go programming language, Docker deployment pipelines, and building scalable JSON APIs.',
       coverLetter: 'Having built highly concurrent microservices in Go and deployed them using Docker containers, I believe my skills match the Software Engineer role at GitHub. I excel at writing clean RESTful service endpoints and database interactions.',
-      targetJobTitle: 'Software Engineer'
+      targetJobTitle: 'Software Engineer',
+      resumeUrl: '/resumes/alice_jones.html'
     }
   ];
 
@@ -111,13 +114,22 @@ async function main() {
           userId: student.id,
           status: ApplicationStatus.applied,
           coverLetter: item.coverLetter,
-          resumeUrl: 'https://www.w3.org/WAI/ER/tests/xhtml/testfiles/resources/pdf/dummy.pdf', // placeholder resume pdf URL
+          resumeUrl: item.resumeUrl,
           matchScore: null,
           recruiterNotes: null
         }
       });
     } else {
-      console.log(`Application for ${item.firstName} ${item.lastName} already exists.`);
+      console.log(`Application for ${item.firstName} ${item.lastName} already exists. Resetting to initial state...`);
+      await prisma.application.update({
+        where: { id: existingApp.id },
+        data: {
+          resumeUrl: item.resumeUrl,
+          status: ApplicationStatus.applied,
+          matchScore: null,
+          recruiterNotes: null
+        }
+      });
     }
   }
 

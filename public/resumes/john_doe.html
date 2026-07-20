@@ -1,0 +1,235 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>John Doe - Junior Python Developer Resume</title>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --text-primary: #171717;
+      --text-secondary: #4b5563;
+      --text-tertiary: #9ca3af;
+      --accent: #4f46e5;
+      --accent-light: #e0e7ff;
+      --bg: #fafafa;
+      --card-bg: #ffffff;
+      --border: #e5e7eb;
+    }
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+    body {
+      font-family: 'Inter', sans-serif;
+      background-color: var(--bg);
+      color: var(--text-primary);
+      line-height: 1.6;
+      padding: 40px 20px;
+    }
+    .container {
+      max-width: 800px;
+      margin: 0 auto;
+      background: var(--card-bg);
+      border: 1px solid var(--border);
+      border-radius: 16px;
+      padding: 40px;
+      box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05), 0 2px 4px -1px rgba(0, 0, 0, 0.03);
+    }
+    header {
+      border-bottom: 2px solid var(--border);
+      padding-bottom: 24px;
+      margin-bottom: 24px;
+    }
+    .header-top {
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-start;
+    }
+    h1 {
+      font-size: 2.25rem;
+      font-weight: 800;
+      letter-spacing: -0.025em;
+      color: var(--text-primary);
+    }
+    .title {
+      font-size: 1.1rem;
+      font-weight: 600;
+      color: var(--accent);
+      margin-top: 4px;
+    }
+    .contact-info {
+      margin-top: 12px;
+      display: flex;
+      flex-wrap: wrap;
+      gap: 16px;
+      font-size: 0.875rem;
+      color: var(--text-secondary);
+    }
+    .contact-info span {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+    section {
+      margin-bottom: 28px;
+    }
+    h2 {
+      font-size: 1.25rem;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      color: var(--text-primary);
+      margin-bottom: 12px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    h2::after {
+      content: '';
+      flex: 1;
+      height: 1px;
+      background-color: var(--border);
+    }
+    .summary {
+      color: var(--text-secondary);
+      font-size: 0.95rem;
+    }
+    .skills-grid {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+    }
+    .skill-tag {
+      background-color: var(--bg);
+      border: 1px solid var(--border);
+      color: var(--text-secondary);
+      padding: 6px 12px;
+      border-radius: 8px;
+      font-size: 0.85rem;
+      font-weight: 500;
+    }
+    .experience-item {
+      margin-bottom: 20px;
+    }
+    .experience-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-start;
+      margin-bottom: 6px;
+    }
+    .job-title {
+      font-weight: 700;
+      font-size: 1.05rem;
+    }
+    .company-date {
+      text-align: right;
+    }
+    .company {
+      font-weight: 600;
+      color: var(--accent);
+      font-size: 0.9rem;
+    }
+    .date {
+      font-size: 0.8rem;
+      color: var(--text-tertiary);
+      margin-top: 2px;
+    }
+    .details {
+      list-style-type: disc;
+      margin-left: 20px;
+      font-size: 0.9rem;
+      color: var(--text-secondary);
+    }
+    .details li {
+      margin-bottom: 4px;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <header>
+      <div class="header-top">
+        <div>
+          <h1>John Doe</h1>
+          <div class="title">Junior Python Developer</div>
+        </div>
+      </div>
+      <div class="contact-info">
+        <span>📧 john.doe@example.com</span>
+        <span>🌐 github.com/johndoe</span>
+        <span>📍 Bangalore, India</span>
+      </div>
+    </header>
+
+    <section>
+      <h2>Professional Summary</h2>
+      <p class="summary">
+        Highly motivated and detail-oriented Junior Python Developer with 1+ years of academic and hands-on experience building backend APIs and database-driven software applications. Skilled in writing clean, structured code and optimizing queries with PostgreSQL. Enthusiastic about creating stable and scalable web service layers.
+      </p>
+    </section>
+
+    <section>
+      <h2>Key Technical Skills</h2>
+      <div class="skills-grid">
+        <span class="skill-tag">Python 3</span>
+        <span class="skill-tag">FastAPI</span>
+        <span class="skill-tag">Django</span>
+        <span class="skill-tag">PostgreSQL</span>
+        <span class="skill-tag">SQLAlchemy</span>
+        <span class="skill-tag">REST APIs</span>
+        <span class="skill-tag">Git & GitHub</span>
+        <span class="skill-tag">Docker</span>
+        <span class="skill-tag">Unit Testing</span>
+      </div>
+    </section>
+
+    <section>
+      <h2>Projects & Experience</h2>
+      <div class="experience-item">
+        <div class="experience-header">
+          <div class="job-title">Backend Python Developer (Academic Internship)</div>
+          <div class="company-date">
+            <div class="company">TechNova Solutions</div>
+            <div class="date">Jan 2026 - Present</div>
+          </div>
+        </div>
+        <ul class="details">
+          <li>Co-designed and developed a microservice-based backend API using Python and FastAPI, handling 15,000+ requests daily.</li>
+          <li>Optimized relational database schemas and indexed slow PostgreSQL queries, resulting in a 25% improvement in response time.</li>
+          <li>Authored comprehensive suite of unit tests with Pytest to ensure 85%+ test coverage.</li>
+        </ul>
+      </div>
+
+      <div class="experience-item">
+        <div class="experience-header">
+          <div class="job-title">Personal Project: DevHub API Portal</div>
+          <div class="company-date">
+            <div class="company">Independent Project</div>
+            <div class="date">Jul 2025 - Dec 2025</div>
+          </div>
+        </div>
+        <ul class="details">
+          <li>Built a fully functional REST API service using Django REST Framework for user profile management and repository linking.</li>
+          <li>Implemented JWT token authentication and token refreshes to secure API endpoints.</li>
+          <li>Containerized the setup using Docker Compose to align database and caching dependencies locally.</li>
+        </ul>
+      </div>
+    </section>
+
+    <section>
+      <h2>Education</h2>
+      <div class="experience-item">
+        <div class="experience-header">
+          <div class="job-title">B.Tech in Computer Science & Engineering</div>
+          <div class="company-date">
+            <div class="company">Delhi Technological University</div>
+            <div class="date">Graduated May 2025</div>
+          </div>
+        </div>
+      </div>
+    </section>
+  </div>
+</body>
+</html>

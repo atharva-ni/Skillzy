@@ -21,10 +21,7 @@ export async function PUT(req: NextRequest, { params }: { params: Promise<{ id: 
       return apiError('Application not found', 404);
     }
 
-    // Recruiters can only modify applications for jobs they posted
-    if (user.role === 'recruiter' && application.job.recruiterId !== user.id) {
-      return apiError('Forbidden', 403);
-    }
+
 
     const updated = await prisma.application.update({
       where: { id },

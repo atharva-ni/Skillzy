@@ -1,0 +1,235 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Jane Smith - Frontend Engineer Intern Resume</title>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --text-primary: #171717;
+      --text-secondary: #4b5563;
+      --text-tertiary: #9ca3af;
+      --accent: #6366f1;
+      --accent-light: #e0e7ff;
+      --bg: #fafafa;
+      --card-bg: #ffffff;
+      --border: #e5e7eb;
+    }
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+    body {
+      font-family: 'Inter', sans-serif;
+      background-color: var(--bg);
+      color: var(--text-primary);
+      line-height: 1.6;
+      padding: 40px 20px;
+    }
+    .container {
+      max-width: 800px;
+      margin: 0 auto;
+      background: var(--card-bg);
+      border: 1px solid var(--border);
+      border-radius: 16px;
+      padding: 40px;
+      box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05), 0 2px 4px -1px rgba(0, 0, 0, 0.03);
+    }
+    header {
+      border-bottom: 2px solid var(--border);
+      padding-bottom: 24px;
+      margin-bottom: 24px;
+    }
+    .header-top {
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-start;
+    }
+    h1 {
+      font-size: 2.25rem;
+      font-weight: 800;
+      letter-spacing: -0.025em;
+      color: var(--text-primary);
+    }
+    .title {
+      font-size: 1.1rem;
+      font-weight: 600;
+      color: var(--accent);
+      margin-top: 4px;
+    }
+    .contact-info {
+      margin-top: 12px;
+      display: flex;
+      flex-wrap: wrap;
+      gap: 16px;
+      font-size: 0.875rem;
+      color: var(--text-secondary);
+    }
+    .contact-info span {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+    section {
+      margin-bottom: 28px;
+    }
+    h2 {
+      font-size: 1.25rem;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      color: var(--text-primary);
+      margin-bottom: 12px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    h2::after {
+      content: '';
+      flex: 1;
+      height: 1px;
+      background-color: var(--border);
+    }
+    .summary {
+      color: var(--text-secondary);
+      font-size: 0.95rem;
+    }
+    .skills-grid {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+    }
+    .skill-tag {
+      background-color: var(--bg);
+      border: 1px solid var(--border);
+      color: var(--text-secondary);
+      padding: 6px 12px;
+      border-radius: 8px;
+      font-size: 0.85rem;
+      font-weight: 500;
+    }
+    .experience-item {
+      margin-bottom: 20px;
+    }
+    .experience-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-start;
+      margin-bottom: 6px;
+    }
+    .job-title {
+      font-weight: 700;
+      font-size: 1.05rem;
+    }
+    .company-date {
+      text-align: right;
+    }
+    .company {
+      font-weight: 600;
+      color: var(--accent);
+      font-size: 0.9rem;
+    }
+    .date {
+      font-size: 0.8rem;
+      color: var(--text-tertiary);
+      margin-top: 2px;
+    }
+    .details {
+      list-style-type: disc;
+      margin-left: 20px;
+      font-size: 0.9rem;
+      color: var(--text-secondary);
+    }
+    .details li {
+      margin-bottom: 4px;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <header>
+      <div class="header-top">
+        <div>
+          <h1>Jane Smith</h1>
+          <div class="title">Frontend Engineer Intern</div>
+        </div>
+      </div>
+      <div class="contact-info">
+        <span>📧 jane.smith@example.com</span>
+        <span>🌐 github.com/janesmith</span>
+        <span>📍 Mumbai, India</span>
+      </div>
+    </header>
+
+    <section>
+      <h2>Professional Summary</h2>
+      <p class="summary">
+        Energetic Frontend Developer specialized in building highly responsive, intuitive, and interactive user interfaces using React, Next.js, and CSS modules. Passionate about web performance, animations, clean semantic layout hierarchies, and collaborating with cross-functional designer/developer teams.
+      </p>
+    </section>
+
+    <section>
+      <h2>Key Technical Skills</h2>
+      <div class="skills-grid">
+        <span class="skill-tag">HTML5 & CSS3</span>
+        <span class="skill-tag">JavaScript (ES6+)</span>
+        <span class="skill-tag">TypeScript</span>
+        <span class="skill-tag">React.js</span>
+        <span class="skill-tag">Next.js</span>
+        <span class="skill-tag">CSS Modules & Tailwind</span>
+        <span class="skill-tag">Framer Motion</span>
+        <span class="skill-tag">Git & GitHub</span>
+        <span class="skill-tag">UI/UX Design Systems</span>
+      </div>
+    </section>
+
+    <section>
+      <h2>Projects & Experience</h2>
+      <div class="experience-item">
+        <div class="experience-header">
+          <div class="job-title">UI/UX Frontend Developer Intern</div>
+          <div class="company-date">
+            <div class="company">CreativeWeb Studio</div>
+            <div class="date">Sep 2025 - Present</div>
+          </div>
+        </div>
+        <ul class="details">
+          <li>Constructed responsive interactive landing sites using React and Tailwind CSS, reducing layout load times by 15%.</li>
+          <li>Collaborated closely with designers to implement visual components matching mockups exactly, adhering strictly to Figma specifications.</li>
+          <li>Integrated REST APIs with Next.js client sides and managed shared global state containers safely.</li>
+        </ul>
+      </div>
+
+      <div class="experience-item">
+        <div class="experience-header">
+          <div class="job-title">Personal Project: PixelArt Portfolio Builder</div>
+          <div class="company-date">
+            <div class="company">Independent Project</div>
+            <div class="date">May 2025 - Aug 2025</div>
+          </div>
+        </div>
+        <ul class="details">
+          <li>Created a custom portfolio layout generator using Next.js with drag-and-drop support, storing configs in local storage.</li>
+          <li>Added smooth transition pages and animations via Framer Motion to raise visual appeal.</li>
+          <li>Validated client state synchronization and responsive layouts across iOS, Android, and Desktop formats.</li>
+        </ul>
+      </div>
+    </section>
+
+    <section>
+      <h2>Education</h2>
+      <div class="experience-item">
+        <div class="experience-header">
+          <div class="job-title">B.Sc. in Information Technology</div>
+          <div class="company-date">
+            <div class="company">University of Mumbai</div>
+            <div class="date">Graduated May 2025</div>
+          </div>
+        </div>
+      </div>
+    </section>
+  </div>
+</body>
+</html>

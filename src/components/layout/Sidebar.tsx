@@ -56,7 +56,7 @@ const navConfig: Record<UserRole, (collapsed: boolean) => NavItem[]> = {
   ],
 };
 
-const SIDEBAR_WIDTH = 260;
+const SIDEBAR_WIDTH = 210;
 const SIDEBAR_COLLAPSED = 72;
 
 export default function Sidebar() {
