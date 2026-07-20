@@ -405,7 +405,7 @@ export default function CourseCard({
                 transition: 'all 0.2s ease',
                 transform: isHovered ? 'translateX(2px)' : 'none'
               }}>
-                Learn more <span style={{ transition: 'transform 0.2s ease', transform: isHovered ? 'translateX(2px)' : 'none' }}>→</span>
+                Start Learning <span style={{ transition: 'transform 0.2s ease', transform: isHovered ? 'translateX(2px)' : 'none' }}>→</span>
               </div>
             </div>
           )}
