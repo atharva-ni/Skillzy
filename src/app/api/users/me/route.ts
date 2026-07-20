@@ -34,6 +34,9 @@ export async function GET() {
         userId: dbUser.id,
         status: { in: ['active', 'completed'] },
       },
+      orderBy: {
+        lastAccessed: 'desc'
+      },
       select: { courseId: true },
     });
 
@@ -228,13 +231,13 @@ export async function GET() {
       }
     }
 
-    // Generate heatmap cells (7 rows x 16 columns = 112 cells)
+    // Generate heatmap cells (7 rows x 53 columns = 371 cells)
     const heatmapCells: { date: string; problemsCount: number; modulesCount: number; shade: number; isFuture?: boolean }[] = [];
     const MS_PER_DAY = 24 * 60 * 60 * 1000;
     const today = new Date();
     const todayWeekday = today.getDay(); // 0 = Sun, 1 = Mon, ... 6 = Sat
     const futurePadding = 6 - todayWeekday;
-    const activeCellsCount = 112 - futurePadding;
+    const activeCellsCount = 371 - futurePadding;
 
     for (let i = activeCellsCount - 1; i >= 0; i--) {
       const cellDate = new Date(today.getTime() - i * MS_PER_DAY);
@@ -330,6 +333,38 @@ export async function GET() {
     const codingXp = (completedStepsCount * 10) + (submissionsCount * 100);
     const codingXpToday = (progressToday.length * 10) + (submissionsTodayCount * 100);
 
+    const level = Math.floor(codingXp / 1000) + 1;
+
+    // Fetch all users to compute ranking dynamically
+    const allUsersForRank = await prisma.user.findMany({
+      where: { role: 'student' },
+      select: {
+        id: true,
+        _count: {
+          select: {
+            lessonProgress: true,
+            submissions: true
+          }
+        }
+      }
+    });
+
+    const rankList = allUsersForRank.map(u => ({
+      id: u.id,
+      xp: (u._count.lessonProgress * 10) + (u._count.submissions * 100)
+    })).sort((a, b) => b.xp - a.xp);
+
+    const userRankIndex = rankList.findIndex(rl => rl.id === dbUser.id);
+    const leaderboardRank = userRankIndex !== -1 ? userRankIndex + 1 : 1;
+
+    // Calculate dynamic badges based on achievements
+    const badges: string[] = [];
+    if (submissionsTodayCount > 0) badges.push('Speedrunner 🏃‍♂️');
+    if (streakCount >= 3) badges.push('Consistent 🔥');
+    if (submissionsCount >= 5) badges.push('Master Coder 🏆');
+    if (completedStepsCount >= 10) badges.push('Pathfinder 🗺️');
+    if (completedStepsCount >= 30) badges.push('Guru 🧠');
+
     // Calculate weekly progress (Monday to Sunday)
     const currentDay = nowTime.getDay();
     const monday = new Date(nowTime);
@@ -412,6 +447,9 @@ export async function GET() {
       weeklyDailyAvg,
       weeklyGoalPct,
       modulesCompletedToday,
+      level,
+      leaderboardRank,
+      badges,
     });
   } catch (error: any) {
     console.error('Error fetching /api/users/me:', error);

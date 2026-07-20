@@ -34,7 +34,8 @@ import {
   AlertTriangle,
   Pencil,
   Trash2,
-  MessageSquare
+  MessageSquare,
+  Heart
 } from 'lucide-react';
 
 // Map each role to its dedicated dashboard path
@@ -139,6 +140,19 @@ export default function StudentDashboard() {
   const { user } = useAuth();
   const router = useRouter();
 
+  const avatarColor = (nameStr: string) => {
+    const colors = [
+      '#ef4444', '#f97316', '#f59e0b', '#10b981', 
+      '#06b6d4', '#3b82f6', '#6366f1', '#8b5cf6', '#ec4899'
+    ];
+    let hash = 0;
+    for (let i = 0; i < nameStr.length; i++) {
+      hash = nameStr.charCodeAt(i) + ((hash << 5) - hash);
+    }
+    const index = Math.abs(hash) % colors.length;
+    return colors[index];
+  };
+
   // Todo list state with localStorage sync
   const [todos, setTodos] = useState<any[]>([]);
 
@@ -211,6 +225,10 @@ export default function StudentDashboard() {
   const [availableJobs, setAvailableJobs] = useState<any[]>([]);
   const [dynamicHeatmap, setDynamicHeatmap] = useState<{ date: string; problemsCount: number; modulesCount: number; shade: number; isFuture?: boolean }[]>([]);
   const [modulesCompletedToday, setModulesCompletedToday] = useState(0);
+  const [averageCodeScore, setAverageCodeScore] = useState(88);
+  const [devLevel, setDevLevel] = useState(1);
+  const [leaderboardRank, setLeaderboardRank] = useState(1);
+  const [badges, setBadges] = useState<string[]>([]);
   const [recentPosts, setRecentPosts] = useState<any[]>([]);
   const [isAddingTask, setIsAddingTask] = useState(false);
   const [newTaskText, setNewTaskText] = useState('');
@@ -284,9 +302,15 @@ export default function StudentDashboard() {
         setWeeklyDailyAvg(meData.weeklyDailyAvg || 0);
         setWeeklyGoalPct(meData.weeklyGoalPct || 0);
         setModulesCompletedToday(meData.modulesCompletedToday || 0);
+        setAverageCodeScore(meData.averageCodeScore || 88);
+        setDevLevel(meData.level || 1);
+        setLeaderboardRank(meData.leaderboardRank || 1);
+        setBadges(meData.badges || []);
         
-        // Match course IDs to full courses details
-        const fullEnrolled = data.courses.filter((c: any) => courseIds.includes(c.id));
+        // Match course IDs to full courses details, preserving user's recent access order
+        const fullEnrolled = courseIds
+          .map((id: string) => data.courses.find((c: any) => c.id === id))
+          .filter(Boolean);
         
         // Fetch progress for each course
         const coursesWithProgress = await Promise.all(
@@ -303,12 +327,12 @@ export default function StudentDashboard() {
           })
         );
 
-        // Sort courses so that active learning courses (progress > 0) come first
-        const sortedCourses = [...coursesWithProgress].sort((a: any, b: any) => b.progress - a.progress);
+        // Filter out completed courses (progress === 100) so we only display incomplete courses
+        const sortedCourses = coursesWithProgress.filter((c: any) => c.progress < 100);
 
         setEnrolledCourses(sortedCourses);
         
-        const completed = sortedCourses.filter((c: any) => c.progress === 100).length;
+        const completed = coursesWithProgress.filter((c: any) => c.progress === 100).length;
         setStats({
           enrolledCount: courseIds.length,
           completedCount: completed,
@@ -399,7 +423,7 @@ export default function StudentDashboard() {
           const postsRes = await fetch(`/api/community/posts?t=${Date.now()}`, { cache: 'no-store' });
           if (postsRes.ok) {
             const postsData = await postsRes.json();
-            setRecentPosts(Array.isArray(postsData) ? postsData.slice(0, 2) : []);
+            setRecentPosts(Array.isArray(postsData) ? postsData.slice(0, 3) : []);
           }
         } catch (postErr) {
           console.error('Failed to load recent posts:', postErr);
@@ -449,12 +473,12 @@ export default function StudentDashboard() {
     }
   };
 
-  // Heatmap values representation (7 rows x 16 columns = 112 cells)
+  // Heatmap values representation (7 rows x 53 columns = 371 cells)
   const heatmapCells = (() => {
     const today = new Date();
     const todayWeekday = today.getDay(); // 0 = Sun, 1 = Mon, ... 6 = Sat
     const futurePadding = 6 - todayWeekday;
-    const activeCellsCount = 112 - futurePadding;
+    const activeCellsCount = 371 - futurePadding;
     const cells: { date: string; problemsCount: number; modulesCount: number; shade: number; isFuture?: boolean }[] = [];
     const MS_PER_DAY = 24 * 60 * 60 * 1000;
 
@@ -480,6 +504,31 @@ export default function StudentDashboard() {
     }
     return cells;
   })();
+
+  // Generate month labels with their column spans dynamically
+  const cellsSource = dynamicHeatmap.length > 0 ? dynamicHeatmap : heatmapCells;
+  const columnsCount = Math.ceil(cellsSource.length / 7);
+  const monthLabels: { label: string; colIndex: number }[] = [];
+  let lastMonth = '';
+  
+  for (let col = 0; col < columnsCount; col++) {
+    const firstDayIndex = col * 7;
+    if (firstDayIndex < cellsSource.length) {
+      const dateStr = cellsSource[firstDayIndex].date;
+      try {
+        const date = new Date(dateStr);
+        if (!isNaN(date.getTime())) {
+          const monthName = date.toLocaleDateString(undefined, { month: 'short' });
+          if (monthName !== lastMonth) {
+            monthLabels.push({ label: monthName, colIndex: col });
+            lastMonth = monthName;
+          }
+        }
+      } catch (e) {
+        // Safe fallback
+      }
+    }
+  }
 
   return (
     <motion.div 
@@ -508,18 +557,30 @@ export default function StudentDashboard() {
             <div className={styles.heroMiddleGrid}>
               <div className={styles.heroMetaItem}>
                 <span className={styles.heroMetaLabel}>Current Course</span>
-                <span className={styles.heroMetaValue}>{enrolledCourses[0]?.title || 'Python Programming'}</span>
-                <span className={styles.heroMetaSub}>Current Module: {currentModuleTitle}</span>
+                <span className={styles.heroMetaValue}>
+                  {enrolledCourses.length > 0 
+                    ? enrolledCourses[0].title 
+                    : stats.completedCount > 0 
+                      ? 'All courses completed! 🎉' 
+                      : 'Not enrolled in any courses'}
+                </span>
+                <span className={styles.heroMetaSub}>
+                  {enrolledCourses.length > 0 
+                    ? `Current Module: ${currentModuleTitle}` 
+                    : stats.completedCount > 0 
+                      ? 'Explore new skills in the catalog' 
+                      : 'Visit the catalog to get started'}
+                </span>
               </div>
               <div className={styles.heroMetaItem}>
-                <span className={styles.heroMetaLabel}>Current Lesson</span>
-                <span className={styles.heroMetaValue}>{currentLessonTitle}</span>
-                <span className={styles.heroMetaSub}>{enrolledCourses[0]?.progress || 2}% Completed</span>
+                <span className={styles.heroMetaLabel}>Leaderboard Rank</span>
+                <span className={styles.heroMetaValue}>Rank #{leaderboardRank}</span>
+                <span className={styles.heroMetaSub}>Based on learning XP</span>
               </div>
               <div className={styles.heroMetaItem}>
-                <span className={styles.heroMetaLabel}>Progress Metrics</span>
-                <span className={styles.heroMetaValue}>84% On Track</span>
-                <span className={styles.heroMetaSub}>{stats.submissionsCount} problems solved</span>
+                <span className={styles.heroMetaLabel}>Developer Level</span>
+                <span className={styles.heroMetaValue}>Level {devLevel}</span>
+                <span className={styles.heroMetaSub}>{1000 - (stats.codingXp % 1000)} XP to level up</span>
               </div>
             </div>
           </div>
@@ -583,7 +644,109 @@ export default function StudentDashboard() {
             </div>
           </div>
 
+          {/* Learning Streak Container (tight spacing wrapper) */}
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+            {/* Learning Streak Headers (outside the card) */}
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-end' }}>
+              <div>
+                <h3 style={{ 
+                  fontSize: '11.5px', 
+                  fontWeight: 700, 
+                  color: 'var(--text-primary)', 
+                  textTransform: 'uppercase', 
+                  letterSpacing: '0.05em',
+                  margin: 0
+                }}>
+                  Learning streak
+                </h3>
+                <p style={{ fontSize: '12px', color: 'var(--text-secondary)', margin: '4px 0 0 0', fontWeight: 500 }}>
+                  Today: {modulesCompletedToday} modules • {stats.submissionsTodayCount} code solved
+                </p>
+              </div>
+              <span style={{ fontSize: '12px', fontWeight: 700, color: 'var(--text-primary)' }}>
+                {stats.streakCount} Day Streak 🔥
+              </span>
+            </div>
 
+            {/* Learning Streak Heatmap Widget (GitHub-style) */}
+            <div className={styles.progressCard} style={{ width: '100%', padding: '20px' }}>
+              {/* Heatmap Section */}
+              <div className={styles.heatmapContainer} style={{ width: '100%', maxWidth: '100%' }}>
+                
+                {/* Month labels on top */}
+                <div style={{ 
+                  display: 'flex', 
+                  position: 'relative', 
+                  height: '16px', 
+                  marginBottom: '6px',
+                  marginLeft: '34px', // alignment offset for weekdayLabels (24px) + gap (10px)
+                  fontSize: '9.5px',
+                  color: 'var(--text-tertiary)',
+                  fontWeight: 500
+                }}>
+                  {monthLabels.map((ml, i) => {
+                    const leftPos = ml.colIndex * (12 + 2); // cell-size (12px) + cell-gap (2px)
+                    return (
+                      <span 
+                        key={i} 
+                        style={{ 
+                          position: 'absolute', 
+                          left: `${leftPos}px`,
+                          transform: 'translateX(-2px)',
+                          whiteSpace: 'nowrap'
+                        }}
+                      >
+                        {ml.label}
+                      </span>
+                    );
+                  })}
+                </div>
+
+                <div className={styles.heatmapMain}>
+                  {/* Weekday labels on the left */}
+                  <div className={styles.weekdayLabels}>
+                    <span></span>
+                    <span>Mon</span>
+                    <span></span>
+                    <span>Wed</span>
+                    <span></span>
+                    <span>Fri</span>
+                    <span></span>
+                  </div>
+
+                  {/* Heatmap Grid */}
+                  <div className={styles.heatmapGrid}>
+                    {(dynamicHeatmap.length > 0 ? dynamicHeatmap : heatmapCells).map((cell, idx) => (
+                      <motion.div
+                        key={idx}
+                        className={`${styles.heatmapCell} ${styles[`heatmapCell${cell.shade}`]}`}
+                        style={cell.isFuture ? { visibility: 'hidden' } : {}}
+                        title={cell.isFuture ? undefined : `${cell.modulesCount} modules and ${cell.problemsCount} code solved on ${new Date(cell.date).toLocaleDateString(undefined, { month: 'short', day: 'numeric', year: 'numeric' })}`}
+                        initial={{ opacity: 0, scale: 0.6 }}
+                        animate={{ opacity: 1, scale: 1 }}
+                        transition={{ duration: 0.3, delay: idx * 0.005 }}
+                      />
+                    ))}
+                  </div>
+                </div>
+
+                <div className={styles.heatmapLegend} style={{ marginTop: '10px' }}>
+                  <span style={{ fontSize: '10px', color: 'var(--text-tertiary)', fontWeight: 500 }}>Learn how we count contributions</span>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+                    <span>Less</span>
+                    <div className={styles.heatmapLegendColors}>
+                      <div className={`${styles.heatmapCell} ${styles.heatmapCell0}`} />
+                      <div className={`${styles.heatmapCell} ${styles.heatmapCell1}`} />
+                      <div className={`${styles.heatmapCell} ${styles.heatmapCell2}`} />
+                      <div className={`${styles.heatmapCell} ${styles.heatmapCell3}`} />
+                      <div className={`${styles.heatmapCell} ${styles.heatmapCell4}`} />
+                    </div>
+                    <span>More</span>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
 
           {/* Recent AI Feedback (Overhauled Socratic Layout) */}
           <div>
@@ -695,125 +858,90 @@ export default function StudentDashboard() {
 
         {/* RIGHT COLUMN (SIDEBAR WIDGETS) */}
         <div className={styles.sideStack}>
-          {/* Heatmap & Community Side-by-Side Wrapper */}
-          <div className={styles.sideStackRow}>
-            {/* Learning Streak Heatmap Widget */}
-            <div className={styles.progressCard}>
-              <div className={styles.progressHeader} style={{ marginBottom: '16px' }}>
-                <div>
-                  <p className={styles.progressTitle}>Learning streak</p>
-                  <span className={styles.progressDuration}>
-                    Today: {modulesCompletedToday} modules • {stats.submissionsTodayCount} code solved
-                  </span>
-                </div>
-                <span className={styles.streakValueBadge} style={{ alignSelf: 'flex-start' }}>{stats.streakCount} Day Streak 🔥</span>
+          {/* Community Mini Card */}
+          <div className={styles.communityMiniCard}>
+            <div className={styles.progressHeader} style={{ marginBottom: '16px' }}>
+              <div>
+                <p className={styles.progressTitle}>Community Hub</p>
+                <span className={styles.progressDuration}>Discussions & updates</span>
               </div>
-
-              {/* Heatmap Section */}
-              <div className={styles.heatmapContainer}>
-                <div className={styles.heatmapMain}>
-                  {/* Weekday labels on the left */}
-                  <div className={styles.weekdayLabels}>
-                    <span></span>
-                    <span>Mon</span>
-                    <span></span>
-                    <span>Wed</span>
-                    <span></span>
-                    <span>Fri</span>
-                    <span></span>
-                  </div>
-
-                  {/* Heatmap Grid */}
-                  <div className={styles.heatmapGrid}>
-                    {(dynamicHeatmap.length > 0 ? dynamicHeatmap : heatmapCells).map((cell, idx) => (
-                      <motion.div
-                        key={idx}
-                        className={`${styles.heatmapCell} ${styles[`heatmapCell${cell.shade}`]}`}
-                        style={cell.isFuture ? { visibility: 'hidden' } : {}}
-                        title={cell.isFuture ? undefined : `${cell.modulesCount} modules and ${cell.problemsCount} code solved on ${new Date(cell.date).toLocaleDateString(undefined, { month: 'short', day: 'numeric', year: 'numeric' })}`}
-                        initial={{ opacity: 0, scale: 0.6 }}
-                        animate={{ opacity: 1, scale: 1 }}
-                        transition={{ duration: 0.3, delay: idx * 0.005 }}
-                      />
-                    ))}
-                  </div>
-                </div>
-
-                <div className={styles.heatmapLegend}>
-                  <span>Less</span>
-                  <div className={styles.heatmapLegendColors}>
-                    <div className={`${styles.heatmapCell} ${styles.heatmapCell0}`} />
-                    <div className={`${styles.heatmapCell} ${styles.heatmapCell1}`} />
-                    <div className={`${styles.heatmapCell} ${styles.heatmapCell2}`} />
-                    <div className={`${styles.heatmapCell} ${styles.heatmapCell3}`} />
-                    <div className={`${styles.heatmapCell} ${styles.heatmapCell4}`} />
-                  </div>
-                  <span>More</span>
-                </div>
-              </div>
+              <Link href="/dashboard/community" className={styles.communityHubLink}>
+                Go to Hub <ArrowRight size={10} style={{ marginLeft: '2px' }} />
+              </Link>
             </div>
 
-            {/* Community Mini Card */}
-            <div className={styles.communityMiniCard}>
-              <div className={styles.progressHeader} style={{ marginBottom: '16px' }}>
-                <div>
-                  <p className={styles.progressTitle}>Community Hub</p>
-                  <span className={styles.progressDuration}>Discussions & updates</span>
-                </div>
-                <Link href="/dashboard/community" className={styles.communityHubLink}>
-                  Go to Hub <ArrowRight size={10} style={{ marginLeft: '2px' }} />
-                </Link>
-              </div>
+            <div className={styles.communityFeedList}>
+              {recentPosts.length > 0 ? (
+                recentPosts.map((post) => {
+                  const lines = post.content.split('\n');
+                  const title = lines[0] || '';
+                  const imageRegex = /!\[.*?\]\((data:image\/.*?)\)/;
+                  const hasImage = imageRegex.test(post.content);
+                  const cleanTitle = title.replace(imageRegex, '').trim();
+                  const displayedTitle = cleanTitle.length > 50 ? `${cleanTitle.substring(0, 50)}...` : cleanTitle;
+                  const name = post.author ? `${post.author.firstName ?? ''} ${post.author.lastName ?? ''}`.trim() || post.author.username || 'Student' : 'Student';
+                  const type = post.type || 'discussion';
 
-              <div className={styles.communityFeedList}>
-                {recentPosts.length > 0 ? (
-                  recentPosts.map((post) => {
-                    const lines = post.content.split('\n');
-                    const title = lines[0] || '';
-                    const imageRegex = /!\[.*?\]\((data:image\/.*?)\)/;
-                    const hasImage = imageRegex.test(post.content);
-                    const cleanTitle = title.replace(imageRegex, '').trim();
-                    const displayedTitle = cleanTitle.length > 50 ? `${cleanTitle.substring(0, 50)}...` : cleanTitle;
-
-                    return (
-                      <div key={post.id} className={styles.communityFeedItem}>
-                        <div className={styles.postAuthorRow}>
-                          <span className={styles.authorAvatar}>👤</span>
-                          <span className={styles.authorName}>{post.author ? `${post.author.firstName ?? ''} ${post.author.lastName ?? ''}`.trim() || post.author.username || 'Student' : 'Student'}</span>
+                  return (
+                    <Link 
+                      href={`/dashboard/community#post-${post.id}`} 
+                      key={post.id} 
+                      className={styles.communityFeedItem}
+                    >
+                      <div className={styles.postAuthorRow}>
+                        <div className={styles.authorProfileGroup}>
+                          <div className={styles.miniAvatar} style={{ background: avatarColor(name) }}>
+                            {post.author?.avatarUrl ? (
+                              <img src={post.author.avatarUrl} alt="" style={{ width: '100%', height: '100%', borderRadius: '50%', objectFit: 'cover' }} />
+                            ) : (
+                              post.author?.firstName?.charAt(0) || '?'
+                            )}
+                          </div>
+                          <span className={styles.authorName}>{name}</span>
                         </div>
-                        <p className={styles.postSnippet}>
-                          {displayedTitle}
-                          {hasImage && (
-                            <span style={{ 
-                              color: 'var(--text-tertiary)', 
-                              fontSize: '10px', 
-                              fontWeight: 600,
-                              display: 'inline-flex', 
-                              alignItems: 'center', 
-                              gap: '2px', 
-                              background: 'rgba(0,0,0,0.03)', 
-                              padding: '1px 6px', 
-                              borderRadius: '4px', 
-                              marginLeft: '6px' 
-                            }}>
-                              📷 Image
-                            </span>
-                          )}
-                        </p>
-                        <div className={styles.postFooterMeta}>
-                          <span>{post.likesCount || 0} likes</span>
-                          <span style={{ margin: '0 4px' }}>•</span>
-                          <span>{post.commentsCount || 0} replies</span>
-                        </div>
+                        {type && (
+                          <span className={`${styles.miniBadge} ${styles[`badge${type.charAt(0).toUpperCase() + type.slice(1)}`]}`}>
+                            {type}
+                          </span>
+                        )}
                       </div>
-                    );
-                  })
-                ) : (
-                  <div className={styles.communityEmptyState}>
-                    No discussions yet. Start one!
-                  </div>
-                )}
-              </div>
+
+                      <p className={styles.postSnippet}>
+                        {displayedTitle}
+                        {hasImage && (
+                          <span style={{ 
+                            color: 'var(--text-tertiary)', 
+                            fontSize: '10px', 
+                            fontWeight: 600,
+                            display: 'inline-flex', 
+                            alignItems: 'center', 
+                            gap: '2px', 
+                            background: 'rgba(0,0,0,0.03)', 
+                            padding: '1px 6px', 
+                            borderRadius: '4px', 
+                            marginLeft: '6px' 
+                          }}>
+                            📷 Image
+                          </span>
+                        )}
+                      </p>
+
+                      <div className={styles.miniPostMeta}>
+                        <span className={styles.miniMetaIcon}>
+                          <Heart size={12} /> {post.likesCount || 0}
+                        </span>
+                        <span className={styles.miniMetaIcon}>
+                          <MessageSquare size={12} /> {post.commentsCount || 0}
+                        </span>
+                      </div>
+                    </Link>
+                  );
+                })
+              ) : (
+                <div className={styles.communityEmptyState}>
+                  No discussions yet. Start one!
+                </div>
+              )}
             </div>
           </div>
 

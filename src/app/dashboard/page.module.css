@@ -600,9 +600,9 @@
   display: flex;
   flex-direction: column;
   gap: 6px;
-  width: fit-content;
+  width: 100%;
   max-width: 100%;
-  align-self: center;
+  align-self: flex-start;
 }
 
 .heatmapMain {
@@ -701,12 +701,10 @@
   display: flex;
   flex-direction: column;
   gap: 12px;
-  flex: 1 1 0;
-  min-width: 0;
+  width: 100%;
   overflow: hidden;
   --heatmap-cell-size: 12px;
   --heatmap-cell-gap: 2px;
-  container-type: inline-size;
 }
 
 .progressHeader {
@@ -1145,7 +1143,7 @@
   display: flex;
   flex-direction: column;
   gap: 12px;
-  flex: 1 1 0;
+  flex: none;
   min-width: 0;
   overflow: hidden;
 }
@@ -1172,36 +1170,60 @@
 }
 
 .communityFeedItem {
-  border-bottom: 1px solid var(--border-secondary);
-  padding-bottom: 10px;
+  border: 1px solid var(--border-secondary);
+  border-radius: var(--radius-lg);
+  padding: 12px 14px;
+  background: var(--bg-card);
   display: flex;
   flex-direction: column;
-  gap: 6px;
+  gap: 8px;
+  transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+  cursor: pointer;
+  text-decoration: none;
+  color: inherit;
 }
 
-.communityFeedItem:last-child {
-  border-bottom: none;
-  padding-bottom: 0;
+.communityFeedItem:hover {
+  border-color: var(--border-primary);
+  transform: translateY(-1.5px);
+  box-shadow: var(--shadow-sm);
+  background: rgba(255, 255, 255, 0.02);
 }
 
 .postAuthorRow {
   display: flex;
   align-items: center;
-  gap: 6px;
+  justify-content: space-between;
+  width: 100%;
 }
 
-.authorAvatar {
-  font-size: 11px;
+.authorProfileGroup {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.miniAvatar {
+  width: 24px;
+  height: 24px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 10px;
+  font-weight: 700;
+  color: #ffffff;
+  flex-shrink: 0;
 }
 
 .authorName {
-  font-size: 11.5px;
+  font-size: 12px;
   font-weight: 600;
   color: var(--text-primary);
 }
 
 .postSnippet {
-  font-size: 11px;
+  font-size: 11.5px;
   color: var(--text-secondary);
   margin: 0;
   line-height: 1.4;
@@ -1210,12 +1232,45 @@
   display: -webkit-box;
   -webkit-line-clamp: 2;
   -webkit-box-orient: vertical;
+  font-weight: 500;
 }
 
-.postFooterMeta {
+.miniBadge {
+  font-size: 8px;
+  font-weight: 700;
+  text-transform: uppercase;
+  padding: 2px 6px;
+  border-radius: 4px;
+  letter-spacing: 0.03em;
+}
+
+.badgeQuestion {
+  background: rgba(239, 68, 68, 0.1);
+  color: #ef4444;
+}
+
+.badgeDiscussion {
+  background: rgba(59, 130, 246, 0.1);
+  color: #3b82f6;
+}
+
+.badgeProject {
+  background: rgba(16, 185, 129, 0.1);
+  color: #10b981;
+}
+
+.miniPostMeta {
   display: flex;
   align-items: center;
-  font-size: 10px;
+  gap: 12px;
+  margin-top: 2px;
+}
+
+.miniMetaIcon {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 10.5px;
   color: var(--text-tertiary);
   font-weight: 500;
 }
@@ -1275,52 +1330,6 @@
   }
 }
 
-/* Granular Container Queries to dynamically hide columns on any screen size */
-@container (max-width: 282px) {
-  .heatmapGrid > :nth-child(-n+7) {
-    display: none !important;
-  }
-}
-@container (max-width: 260px) {
-  .heatmapGrid > :nth-child(-n+14) {
-    display: none !important;
-  }
-}
-@container (max-width: 246px) {
-  .heatmapGrid > :nth-child(-n+21) {
-    display: none !important;
-  }
-}
-@container (max-width: 232px) {
-  .heatmapGrid > :nth-child(-n+28) {
-    display: none !important;
-  }
-}
-@container (max-width: 218px) {
-  .heatmapGrid > :nth-child(-n+35) {
-    display: none !important;
-  }
-}
-@container (max-width: 204px) {
-  .heatmapGrid > :nth-child(-n+42) {
-    display: none !important;
-  }
-}
-@container (max-width: 190px) {
-  .heatmapGrid > :nth-child(-n+49) {
-    display: none !important;
-  }
-}
-@container (max-width: 168px) {
-  .heatmapGrid > :nth-child(-n+56) {
-    display: none !important;
-  }
-}
-@container (max-width: 154px) {
-  .heatmapGrid > :nth-child(-n+63) {
-    display: none !important;
-  }
-}
 
 @media (max-width: 768px) {
   .heroMiddleGrid {
