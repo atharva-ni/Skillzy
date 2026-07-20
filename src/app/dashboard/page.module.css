@@ -14,14 +14,14 @@
 /* ---- Top Grid ---- */
 .topGrid {
   display: grid;
-  grid-template-columns: 1.2fr 1fr;
+  grid-template-columns: 1.8fr 1fr;
   gap: 28px;
   align-items: stretch;
 }
 
 @media (max-width: 1440px) {
   .topGrid {
-    grid-template-columns: 1.15fr 1fr;
+    grid-template-columns: 1.5fr 1fr;
     gap: 20px;
   }
 }
@@ -602,6 +602,7 @@
   gap: 6px;
   width: fit-content;
   max-width: 100%;
+  align-self: center;
 }
 
 .heatmapMain {
@@ -654,14 +655,14 @@
   justify-content: space-between;
   font-size: 9.5px;
   color: var(--text-tertiary);
-  margin-top: 2px;
+  margin-top: 14px;
   font-weight: 500;
 }
 
 .heatmapLegendColors {
   display: flex;
   align-items: center;
-  gap: 2.5px;
+  gap: var(--heatmap-cell-gap, 3px);
 }
 
 .streakMetaRow {
@@ -700,11 +701,11 @@
   display: flex;
   flex-direction: column;
   gap: 12px;
-  flex: 1.4 1 0;
+  flex: 1 1 0;
   min-width: 0;
   overflow: hidden;
-  --heatmap-cell-size: 12px;
-  --heatmap-cell-gap: 3px;
+  --heatmap-cell-size: 11px;
+  --heatmap-cell-gap: 2.5px;
 }
 
 .progressHeader {
@@ -1226,24 +1227,15 @@
   font-style: italic;
 }
 
-/* Responsive enhancements */
 @media (max-width: 1440px) {
   .progressCard {
-    --heatmap-cell-size: 9px;
-    --heatmap-cell-gap: 1.5px;
     padding: 16px;
     gap: 10px;
+    --heatmap-cell-size: 10px;
+    --heatmap-cell-gap: 2px;
   }
-  .progressCard :global(.progressHeader) {
-    flex-direction: column;
-    align-items: flex-start;
-    gap: 8px;
-  }
-  /* Target the progressHeader inside dashboard container directly if modularized */
-  .progressHeader {
-    flex-direction: column;
-    align-items: flex-start;
-    gap: 8px;
+  .heatmapGrid > :nth-child(-n+14) {
+    display: none !important;
   }
   .progressTitle {
     font-size: 10px;
@@ -1259,19 +1251,17 @@
     padding: 16px;
     gap: 10px;
   }
-  .communityMiniCard .progressHeader {
-    flex-direction: column;
-    align-items: flex-start;
-    gap: 6px;
-  }
 }
 
 @media (max-width: 1280px) {
   .progressCard {
-    --heatmap-cell-size: 7.5px;
-    --heatmap-cell-gap: 1px;
     padding: 12px;
     gap: 8px;
+    --heatmap-cell-size: 8.5px;
+    --heatmap-cell-gap: 1.5px;
+  }
+  .heatmapGrid > :nth-child(-n+28) {
+    display: none !important;
   }
   .progressTitle {
     font-size: 9px;
@@ -1291,6 +1281,12 @@
   .communityMiniCard {
     padding: 12px;
     gap: 8px;
+  }
+}
+
+@media (max-width: 1100px) {
+  .heatmapGrid > :nth-child(-n+42) {
+    display: none !important;
   }
 }
 

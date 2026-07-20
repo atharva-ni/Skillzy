@@ -448,12 +448,12 @@ export default function StudentDashboard() {
     }
   };
 
-  // Heatmap values representation (7 rows x 15 columns = 105 cells)
+  // Heatmap values representation (7 rows x 13 columns = 91 cells)
   const heatmapCells = (() => {
     const today = new Date();
     const todayWeekday = today.getDay(); // 0 = Sun, 1 = Mon, ... 6 = Sat
     const futurePadding = 6 - todayWeekday;
-    const activeCellsCount = 105 - futurePadding;
+    const activeCellsCount = 91 - futurePadding;
     const cells: { date: string; problemsCount: number; modulesCount: number; shade: number; isFuture?: boolean }[] = [];
     const MS_PER_DAY = 24 * 60 * 60 * 1000;
 
