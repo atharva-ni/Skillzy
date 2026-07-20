@@ -11,6 +11,7 @@ import {
   ArrowLeft, ArrowRight, Folder, Terminal, Sparkles, ChevronLeft, Star,
   Volume2, Pause, Square, ClipboardList
 } from 'lucide-react';
+import CourseCertificate from '@/components/courses/CourseCertificate';
 
 interface PageProps {
   params: Promise<{ id: string }>;
@@ -659,129 +660,146 @@ export default function StepWiseLearningPage({ params }: PageProps) {
 
         {/* Step Content Area */}
         {showCompletion ? (
-          <div style={{
-            maxWidth: '680px',
-            margin: '40px auto',
-            padding: '40px',
-            background: '#ffffff',
-            border: '1px solid var(--border-primary)',
-            borderRadius: 'var(--radius-xl)',
-            boxShadow: 'var(--shadow-premium)',
-            textAlign: 'center',
-            display: 'flex',
-            flexDirection: 'column',
-            alignItems: 'center',
-            gap: '28px',
-            width: '100%',
-          }}>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '32px', width: '100%', alignItems: 'center' }}>
             <div style={{
-              width: '80px', height: '80px', borderRadius: '50%',
-              background: 'rgba(16, 185, 129, 0.1)', display: 'flex',
-              alignItems: 'center', justifyContent: 'center', color: '#10b981',
-              fontSize: '2.5rem',
+              maxWidth: '680px',
+              margin: '40px auto 0 auto',
+              padding: '40px',
+              background: '#ffffff',
+              border: '1px solid var(--border-primary)',
+              borderRadius: 'var(--radius-xl)',
+              boxShadow: 'var(--shadow-premium)',
+              textAlign: 'center',
+              display: 'flex',
+              flexDirection: 'column',
+              alignItems: 'center',
+              gap: '28px',
+              width: '100%',
             }}>
-              🎉
-            </div>
-            <div>
-              <h1 style={{ fontSize: '1.75rem', fontWeight: 800, color: 'var(--text-primary)', marginBottom: '8px' }}>
-                Course Completed successfully!
-              </h1>
-              <p style={{ color: 'var(--text-secondary)', fontSize: '0.95rem', lineHeight: '1.6' }}>
-                Congratulations! You have completed all the steps in <strong>{course.title}</strong>. 
-                We would love to hear your feedback about your learning experience.
-              </p>
-            </div>
+              <div style={{
+                width: '80px', height: '80px', borderRadius: '50%',
+                background: 'rgba(16, 185, 129, 0.1)', display: 'flex',
+                alignItems: 'center', justifyContent: 'center', color: '#10b981',
+                fontSize: '2.5rem',
+              }}>
+                🎉
+              </div>
+              <div>
+                <h1 style={{ fontSize: '1.75rem', fontWeight: 800, color: 'var(--text-primary)', marginBottom: '8px' }}>
+                  Course Completed successfully!
+                </h1>
+                <p style={{ color: 'var(--text-secondary)', fontSize: '0.95rem', lineHeight: '1.6' }}>
+                  Congratulations! You have completed all the steps in <strong>{course.title}</strong>. 
+                  We would love to hear your feedback about your learning experience.
+                </p>
+              </div>
 
-            <div style={{ width: '100%', height: '1px', background: 'var(--border-primary)' }} />
+              <div style={{ width: '100%', height: '1px', background: 'var(--border-primary)' }} />
 
-            {/* Star Rating Selector */}
-            <div>
-              <p style={{ fontWeight: 700, fontSize: '0.9rem', color: 'var(--text-primary)', marginBottom: '12px' }}>
-                How would you rate this course?
-              </p>
-              <div style={{ display: 'flex', gap: '8px', justifyContent: 'center' }}>
-                {[1, 2, 3, 4, 5].map((star) => {
-                  const active = star <= (hoverRating ?? rating);
-                  return (
-                    <Star
-                      key={star}
-                      size={36}
-                      style={{
-                        cursor: 'pointer',
-                        fill: active ? '#f59e0b' : 'none',
-                        color: active ? '#f59e0b' : 'var(--text-muted)',
-                        transition: 'all 0.15s ease',
-                      }}
-                      onClick={() => setRating(star)}
-                      onMouseEnter={() => setHoverRating(star)}
-                      onMouseLeave={() => setHoverRating(null)}
-                    />
-                  );
-                })}
+              {/* Star Rating Selector */}
+              <div>
+                <p style={{ fontWeight: 700, fontSize: '0.9rem', color: 'var(--text-primary)', marginBottom: '12px' }}>
+                  How would you rate this course?
+                </p>
+                <div style={{ display: 'flex', gap: '8px', justifyContent: 'center' }}>
+                  {[1, 2, 3, 4, 5].map((star) => {
+                    const active = star <= (hoverRating ?? rating);
+                    return (
+                      <Star
+                        key={star}
+                        size={36}
+                        style={{
+                          cursor: 'pointer',
+                          fill: active ? '#f59e0b' : 'none',
+                          color: active ? '#f59e0b' : 'var(--text-muted)',
+                          transition: 'all 0.15s ease',
+                        }}
+                        onClick={() => setRating(star)}
+                        onMouseEnter={() => setHoverRating(star)}
+                        onMouseLeave={() => setHoverRating(null)}
+                      />
+                    );
+                  })}
+                </div>
+              </div>
+
+              {/* Feedback Comments Textarea */}
+              <div style={{ width: '100%', textAlign: 'left' }}>
+                <label style={{ fontWeight: 700, fontSize: '0.9rem', color: 'var(--text-primary)', display: 'block', marginBottom: '8px' }}>
+                  Share your feedback (optional)
+                </label>
+                <textarea
+                  value={reviewText}
+                  onChange={(e) => setReviewText(e.target.value)}
+                  placeholder="What did you like? What can be improved?"
+                  rows={4}
+                  className="input"
+                  style={{
+                    width: '100%',
+                    borderRadius: 'var(--radius-md)',
+                    padding: '12px 16px',
+                    fontSize: '0.9rem',
+                    lineHeight: '1.5',
+                    resize: 'vertical',
+                  }}
+                />
+              </div>
+
+              {/* Actions */}
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '12px', width: '100%', marginTop: '8px' }}>
+                <button
+                  onClick={handleSubmitReview}
+                  disabled={submittingReview}
+                  className="btn btn-primary"
+                  style={{
+                    padding: '12px 24px',
+                    fontSize: '0.9rem',
+                    fontWeight: 700,
+                    borderRadius: '8px',
+                    width: '100%',
+                    background: '#10b981',
+                    borderColor: '#10b981',
+                    boxShadow: '0 4px 12px rgba(16, 185, 129, 0.2)',
+                    cursor: submittingReview ? 'not-allowed' : 'pointer',
+                  }}
+                >
+                  {submittingReview ? 'Submitting Review...' : 'Submit Feedback'}
+                </button>
+                
+                <button
+                  onClick={() => router.push(`/dashboard/courses/${courseId}`)}
+                  disabled={submittingReview}
+                  style={{
+                    background: 'none',
+                    border: 'none',
+                    color: 'var(--text-secondary)',
+                    fontSize: '0.85rem',
+                    fontWeight: 600,
+                    cursor: 'pointer',
+                    textDecoration: 'underline',
+                    alignSelf: 'center',
+                    marginTop: '4px',
+                  }}
+                >
+                  Skip & Return to Course Overview
+                </button>
               </div>
             </div>
 
-            {/* Feedback Comments Textarea */}
-            <div style={{ width: '100%', textAlign: 'left' }}>
-              <label style={{ fontWeight: 700, fontSize: '0.9rem', color: 'var(--text-primary)', display: 'block', marginBottom: '8px' }}>
-                Share your feedback (optional)
-              </label>
-              <textarea
-                value={reviewText}
-                onChange={(e) => setReviewText(e.target.value)}
-                placeholder="What did you like? What can be improved?"
-                rows={4}
-                className="input"
-                style={{
-                  width: '100%',
-                  borderRadius: 'var(--radius-md)',
-                  padding: '12px 16px',
-                  fontSize: '0.9rem',
-                  lineHeight: '1.5',
-                  resize: 'vertical',
-                }}
-              />
-            </div>
-
-            {/* Actions */}
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '12px', width: '100%', marginTop: '8px' }}>
-              <button
-                onClick={handleSubmitReview}
-                disabled={submittingReview}
-                className="btn btn-primary"
-                style={{
-                  padding: '12px 24px',
-                  fontSize: '0.9rem',
-                  fontWeight: 700,
-                  borderRadius: '8px',
-                  width: '100%',
-                  background: '#10b981',
-                  borderColor: '#10b981',
-                  boxShadow: '0 4px 12px rgba(16, 185, 129, 0.2)',
-                  cursor: submittingReview ? 'not-allowed' : 'pointer',
-                }}
-              >
-                {submittingReview ? 'Submitting Review...' : 'Submit Feedback'}
-              </button>
-              
-              <button
-                onClick={() => router.push(`/dashboard/courses/${courseId}`)}
-                disabled={submittingReview}
-                style={{
-                  background: 'none',
-                  border: 'none',
-                  color: 'var(--text-secondary)',
-                  fontSize: '0.85rem',
-                  fontWeight: 600,
-                  cursor: 'pointer',
-                  textDecoration: 'underline',
-                  alignSelf: 'center',
-                  marginTop: '4px',
-                }}
-              >
-                Skip & Return to Course Overview
-              </button>
-            </div>
+            {/* Course Completion Certificate for courses added by instructor sahasrabudheadwait7@gmail.com */}
+            {course?.instructor?.email === 'sahasrabudheadwait7@gmail.com' && (
+              <div style={{ width: '100%', marginTop: '16px' }}>
+                <CourseCertificate
+                  studentName={
+                    `${user?.firstName ?? ''} ${user?.lastName ?? ''}`.trim() ||
+                    user?.name ||
+                    user?.email?.split('@')[0] ||
+                    ''
+                  }
+                  courseTitle={course.title}
+                />
+              </div>
+            )}
           </div>
         ) : activeStep ? (() => {
           const textPages = activeStep && (activeStep.stepType === 'intro' || activeStep.stepType === 'text' || activeStep.stepType === 'assignment')

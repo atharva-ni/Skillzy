@@ -46,6 +46,7 @@ export async function GET(req: NextRequest, { params }: RouteParams) {
           instructor: {
             select: {
               id: true,
+              email: true,
               firstName: true,
               lastName: true,
               avatarUrl: true,

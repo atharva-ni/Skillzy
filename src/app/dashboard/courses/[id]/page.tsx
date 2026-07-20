@@ -10,6 +10,7 @@ import RazorpayCheckout from '@/components/payments/RazorpayCheckout';
 import { toast } from 'sonner';
 
 import { MarkdownRenderer } from './learn/page';
+import CourseCertificate from '@/components/courses/CourseCertificate';
 
 interface PageProps {
   params: Promise<{ id: string }>;
@@ -186,6 +187,17 @@ export default function CourseDetail({ params }: PageProps) {
             )}
           </div>
         </div>
+
+        {/* Certificate Section for completed course by target instructor */}
+        {isEnrolled && progressPct === 100 && course.instructor?.email === 'sahasrabudheadwait7@gmail.com' && (
+          <div style={{ marginTop: 'var(--spacing-xl)', borderTop: '1px solid var(--border-primary)', paddingTop: 'var(--spacing-xl)' }}>
+            <h2 className="section-title">Your Course Completion Certificate</h2>
+            <CourseCertificate
+              studentName={`${user?.firstName ?? ''} ${user?.lastName ?? ''}`.trim() || user?.name || user?.email?.split('@')[0] || ''}
+              courseTitle={course.title}
+            />
+          </div>
+        )}
       </div>
 
       {/* Pricing / Enrollment Side Card */}

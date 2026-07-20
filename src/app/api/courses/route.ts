@@ -88,7 +88,7 @@ export async function GET(req: NextRequest) {
       where,
       include: {
         category: { select: { name: true, slug: true, icon: true } },
-        instructor: { select: { firstName: true, lastName: true, avatarUrl: true } },
+        instructor: { select: { email: true, firstName: true, lastName: true, avatarUrl: true } },
         modules: {
           select: {
             lessons: {
